@@ -1,5 +1,8 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { EditorContent } from "@tiptap/react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
 import { ButtonBlock, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
@@ -81,6 +84,53 @@ describe("moving blocks", () => {
     move("prButton", "start");
     move("prHero", "end");
     expect(markdown()).toBe('{{< pr-button link="/" >}}Go{{< /pr-button >}}\n\nMiddle.\n\n{{< pr-hero >}}\n## Hi\n{{< /pr-hero >}}\n');
+    editor.destroy();
+  });
+});
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+async function mount(markdown: string) {
+  const editor = new Editor({
+    extensions: [StarterKit, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
+    content: markdownToHtml(markdown),
+  });
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  await act(async () => createRoot(host).render(<EditorContent editor={editor} />));
+  return { editor, host, markdown: () => htmlToMarkdown(editor.getHTML()) };
+}
+
+async function typeInto(input: HTMLInputElement, value: string) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
+const inputWith = (host: HTMLElement, placeholder: string) => host.querySelector<HTMLInputElement>(`input[placeholder="${placeholder}"]`)!;
+
+describe("block inputs", () => {
+  it("changes an existing button's text and link", async () => {
+    const { editor, host, markdown } = await mount('{{< pr-button link="/old/" >}}Old{{< /pr-button >}}\n');
+    expect(inputWith(host, t.editor.linkAddress).value).toBe("/old/");
+
+    await typeInto(inputWith(host, t.editor.linkAddress), "/contact/");
+    await act(async () => {
+      editor.commands.setTextSelection({ from: 1, to: editor.state.doc.firstChild!.nodeSize - 1 });
+      editor.commands.insertContent("Write to us");
+    });
+    expect(markdown()).toBe('{{< pr-button link="/contact/" >}}Write to us{{< /pr-button >}}\n');
+    editor.destroy();
+  });
+
+  it("changes a hero's button text and link", async () => {
+    const { editor, host, markdown } = await mount('{{< pr-hero button="Old" link="/old/" >}}\n## Hi\n{{< /pr-hero >}}\n');
+    expect(inputWith(host, t.editor.heroButtonText).value).toBe("Old");
+
+    await typeInto(inputWith(host, t.editor.heroButtonText), "Read more");
+    await typeInto(inputWith(host, t.editor.linkAddress), "/about/");
+    expect(markdown()).toBe('{{< pr-hero button="Read more" link="/about/" >}}\n## Hi\n{{< /pr-hero >}}\n');
     editor.destroy();
   });
 });

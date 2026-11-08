@@ -10,11 +10,11 @@ Designed and verified by experienced human developers. Built with help from Clau
 
 ## Download
 
-Get the latest build for macOS, Windows or Linux (AppImage, .deb, .rpm) from [GitHub Releases](https://github.com/myrheimb/pageroom/releases/latest). The builds aren't signed yet, so you will see a warning the first time you open one.
+Get the latest build for macOS, Windows or Linux from [GitHub Releases](https://github.com/myrheimb/pageroom/releases/latest). The builds aren't signed yet, so you will see a warning the first time you open one.
 
-- macOS: the app isn't notarized, so macOS says it can't verify it. Open System Settings, then Privacy & Security, and choose Open Anyway.
-- Windows: SmartScreen says Windows protected your PC. Choose More info, then Run anyway.
-- Linux: make the AppImage executable with `chmod +x`, or install the .deb or .rpm with your package manager.
+- macOS: download the file ending in `-mac.dmg`. The app isn't notarized, so macOS says it can't verify it. Open System Settings, then Privacy & Security, and choose Open Anyway.
+- Windows: download the file ending in `-windows-setup.exe`. SmartScreen says Windows protected your PC. Choose More info, then Run anyway.
+- Linux: download the `.deb` for Ubuntu, Debian or Linux Mint, the `.rpm` for Fedora or openSUSE, or the `.AppImage` for anything else. Make the AppImage executable with `chmod +x` before you run it.
 
 To check a download, run `shasum -a 256 -c SHA256SUMS --ignore-missing` next to the file and `SHA256SUMS` from the release.
 

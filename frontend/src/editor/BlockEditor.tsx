@@ -1,6 +1,6 @@
 import { useEditor, useEditorState, EditorContent, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import DragHandle from "@tiptap/extension-drag-handle-react";
+import DragHandle, { type DragHandleProps } from "@tiptap/extension-drag-handle-react";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TableKit } from "@tiptap/extension-table";
@@ -9,7 +9,7 @@ import { NodeSelection } from "@tiptap/pm/state";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, Bold, Code, GripVertical, Heading2, Heading3, Italic, Link2, Plus, Quote, Strikethrough, Unlink, Underline } from "lucide-react";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
-import { BlockAlign, ButtonBlock, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
+import { alignableBlock, BlockAlign, ButtonBlock, CardBlock, CardsBlock, ColumnBlock, ColumnsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, setBlockAlign, ShortcodeBlock, ShortcodeInline, VideoBlock } from "./nodes";
 import { SlashCommand, type SlashHooks } from "./slash";
 import { t } from "../i18n";
 
@@ -29,6 +29,16 @@ interface Props {
   pasteImage: (file: File) => Promise<{ ref: string } | null>;
   onChange: () => void;
 }
+
+type NestedRules = NonNullable<Exclude<NonNullable<DragHandleProps["nested"]>, boolean>["rules"]>;
+
+// Only top-level blocks and a column's direct children are dragged, so nothing else can be pulled out of its parent.
+const dragRules: NestedRules = [
+  {
+    id: "topLevelAndColumnChildren",
+    evaluate: ({ parent }) => (parent?.type.name === "doc" || parent?.type.name === "prColumn" ? 0 : 1000),
+  },
+];
 
 export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEditor(props, ref) {
   // The extensions capture hooks once. A ref keeps them fresh.
@@ -64,7 +74,10 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
       }),
       CardsBlock,
       CardBlock,
+      ColumnsBlock,
+      ColumnBlock,
       ButtonBlock,
+      VideoBlock,
       ShortcodeBlock,
       ShortcodeInline,
       RawHtmlBlock,
@@ -115,7 +128,7 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
   if (!editor) return null;
   return (
     <>
-      <DragHandle editor={editor} className="drag-handle-wrap">
+      <DragHandle editor={editor} className="drag-handle-wrap" nested={{ defaultRules: false, rules: dragRules }}>
         <div className="row" style={{ gap: 0, marginLeft: -50 }}>
           <button
             className="add-block"
@@ -161,8 +174,8 @@ function FormatBubble({ editor, addAlignTemplate }: { editor: Editor; addAlignTe
       bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline"), strike: e.isActive("strike"),
       code: e.isActive("code"), link: e.isActive("link"), h2: e.isActive("heading", { level: 2 }), h3: e.isActive("heading", { level: 3 }),
       quote: e.isActive("blockquote"),
-      alignable: e.state.selection.$from.depth === 1 && ["paragraph", "heading"].includes(e.state.selection.$from.parent.type.name),
-      align: (e.state.selection.$from.parent.attrs.align ?? "") as string,
+      alignable: alignableBlock(e.state.selection.$from) !== null,
+      align: (alignableBlock(e.state.selection.$from)?.attrs.align ?? "") as string,
     }),
   });
 
@@ -171,13 +184,7 @@ function FormatBubble({ editor, addAlignTemplate }: { editor: Editor; addAlignTe
   );
   const applyAlign = async (align: string) => {
     if (align && !(await addAlignTemplate())) return;
-    editor.chain().focus().command(({ tr, state }) => {
-      state.doc.nodesBetween(state.selection.from, state.selection.to, (node, pos, parent) => {
-        if (parent === state.doc && ["paragraph", "heading"].includes(node.type.name)) tr.setNodeAttribute(pos, "align", align || null);
-        return false;
-      });
-      return true;
-    }).run();
+    setBlockAlign(editor, align);
   };
   const applyLink = () => {
     const v = href.trim();

@@ -52,7 +52,7 @@ export function AddContactForm(): $CancellablePromise<void> {
 
 /**
  * AddPageBlock makes sure the site has the templates for a page block the
- * editor is about to insert or align. The kinds are align, hero, cards and button.
+ * editor is about to insert or align. The kinds are align, hero, cards, columns, button and video.
  */
 export function AddPageBlock(kind: string): $CancellablePromise<void> {
     return $Call.ByID(3822331560, kind);

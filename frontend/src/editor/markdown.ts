@@ -150,7 +150,10 @@ const PR_ATTRIBUTES: Record<string, string[]> = {
   "pr-hero": ["image", "alt", "button", "link", "align"],
   "pr-cards": ["align"],
   "pr-card": [],
+  "pr-columns": ["layout", "valign"],
+  "pr-column": [],
   "pr-button": ["link", "align"],
+  "pr-video": ["id"],
 };
 
 interface PrToken {
@@ -208,8 +211,28 @@ function hasRawHtml(markdown: string): boolean {
   return flatten(md.parse(liftShortcodes(markdown).text, {}));
 }
 
+const COLUMN_TAGS = /^(P|H[1-4]|UL|OL|BLOCKQUOTE|TABLE|PRE|IMG)$/;
+
+// A column holds only what the column schema accepts, so that loading never drops content.
+function renderColumn(inner: string): string | null {
+  const content = inner.trim();
+  if (content === "") return '<div data-pr="column"></div>';
+  if (prTokens(content).some((token) => !["pr-align", "pr-button", "pr-video"].includes(token.name)) || hasRawHtml(content)) return null;
+  const leftover = liftShortcodes(extractPrBlocks(content).text);
+  if (leftover.blocks.length > 0 || leftover.inlines.length > 0) return null;
+
+  const html = markdownToHtml(content);
+  const body = new DOMParser().parseFromString(html, "text/html").body;
+  const allowed = Array.from(body.children).every((element) => COLUMN_TAGS.test(element.nodeName) || ["button", "video"].includes(element.getAttribute("data-pr") ?? ""));
+  return allowed ? `<div data-pr="column">${html}</div>` : null;
+}
+
 function renderPrBlock(raw: string): string | null {
   const toks = prTokens(raw);
+  if (toks.length === 1 && toks[0].name === "pr-video") {
+    const id = parsePrAttributes(toks[0].raw, "pr-video")?.id;
+    return id && /^[\w-]+$/.test(id) ? `<div data-pr="video" data-id="${id}"></div>` : null;
+  }
   if (toks.length < 2 || toks[0].start !== 0 || toks[0].closing || toks[0].selfClosing) return null;
   const close = prMatchingClose(toks, 0);
   if (close !== toks.length - 1 || toks[close].end !== raw.length) return null;
@@ -228,10 +251,29 @@ function renderPrBlock(raw: string): string | null {
     const html = markdownToHtml(inner).trim();
     const picture = /^<p>(<img [^>]*>)<\/p>$/.exec(html);
     if (picture) return picture[1].replace("<img ", `<img data-align="${attrs.to}" `);
-    return /^<(p|h[1-6])>(?:(?!<\/\1>)[\s\S])*<\/\1>$/.test(html) ? html.replace(/^<(p|h[1-6])>/, `<$1 data-align="${attrs.to}">`) : null;
+    return /^<(p|h[1-6]|blockquote)>(?:(?!<\/\1>)[\s\S])*<\/\1>$/.test(html) ? html.replace(/^<(p|h[1-6]|blockquote)>/, `<$1 data-align="${attrs.to}">`) : null;
   }
   if (name === "pr-button") {
     return /\n|\{\{/.test(inner) ? null : wrap(esc(inner));
+  }
+  if (name === "pr-column") return null;
+  if (name === "pr-columns") {
+    if ("layout" in attrs && !["1-1-1", "1-2", "2-1"].includes(attrs.layout)) return null;
+    if ("valign" in attrs && !["bottom", "center"].includes(attrs.valign)) return null;
+    const columns: string[] = [];
+    let cursor = toks[0].end;
+    for (let i = 1; i < close; ) {
+      const open = toks[i];
+      const columnClose = open.name === "pr-column" && !open.closing && !open.selfClosing ? prMatchingClose(toks, i) : -1;
+      if (columnClose < 0 || raw.slice(cursor, open.start).trim() !== "" || !parsePrAttributes(open.raw, "pr-column")) return null;
+      const html = renderColumn(raw.slice(open.end, toks[columnClose].start));
+      if (html === null) return null;
+      columns.push(html);
+      cursor = toks[columnClose].end;
+      i = columnClose + 1;
+    }
+    const expectedColumns = attrs.layout === "1-1-1" ? 3 : 2;
+    return columns.length === expectedColumns && raw.slice(cursor, toks[close].start).trim() === "" ? wrap(columns.join("")) : null;
   }
   if (name === "pr-cards") {
     if (toks.length < 4) return null;
@@ -261,7 +303,8 @@ export function extractPrBlocks(src: string): { text: string; blocks: string[] }
   let i = 0;
   while (i < toks.length) {
     const tok = toks[i];
-    const close = tok.closing || tok.selfClosing ? -1 : prMatchingClose(toks, i);
+    const hasNoClosingTag = tok.name === "pr-video";
+    const close = tok.closing || tok.selfClosing ? -1 : hasNoClosingTag ? i : prMatchingClose(toks, i);
     if (close < 0) {
       i++;
       continue;
@@ -318,10 +361,10 @@ const td = new TurndownService({
   linkStyle: "inlined",
   br: "  ",
   // Our placeholders are empty elements. Turndown would drop them as blank.
-  blankReplacement: (_content, node) => {
+  blankReplacement: (content, node) => {
     const el = node as HTMLElement;
     const raw = (attr: string) => unb64(el.getAttribute(attr) || "");
-    if (el.hasAttribute?.("data-pr")) return prBlockMarkdown(el, "");
+    if (el.hasAttribute?.("data-pr")) return prBlockMarkdown(el, content);
     if (el.hasAttribute?.("data-shortcode")) return `\n\n${raw("data-shortcode")}\n\n`;
     if (el.hasAttribute?.("data-raw-html")) return `\n\n${raw("data-raw-html")}\n\n`;
     if (el.hasAttribute?.("data-shortcode-inline")) return raw("data-shortcode-inline");
@@ -342,6 +385,7 @@ function prBlockMarkdown(el: HTMLElement, content: string): string {
   const body = kind === "button" ? (el.textContent || "").trim() : content.replace(/\n{3,}/g, "\n\n").trim();
   const open = `{{< ${name}${attrs} >}}`;
   const close = `{{< /${name} >}}`;
+  if (kind === "video") return `\n\n${open}\n\n`;
   if (kind === "button") return `\n\n${open}${body}${close}\n\n`;
   return `\n\n${open}\n${body === "" ? "" : body + "\n"}${close}\n\n`;
 }
@@ -378,7 +422,7 @@ td.addRule("image", {
   filter: "img",
   replacement: (_c, n) => {
     const el = n as HTMLElement;
-    const block = el.parentElement?.nodeName === "BODY" || el.parentElement?.getAttribute("data-image-block") != null;
+    const block = el.parentElement?.nodeName === "BODY" || el.parentElement?.getAttribute("data-image-block") != null || el.parentElement?.getAttribute("data-pr") === "column";
     const out = imageMarkdown(el);
     return block ? `\n\n${out}\n\n` : out;
   },
@@ -415,11 +459,12 @@ td.addRule("tableCellOneLine", {
 });
 // A shortcode can't sit inside another page block or a list, so only top-level content is aligned.
 td.addRule("aligned", {
-  filter: (n) => /^(P|H[1-6]|IMG)$/.test(n.nodeName) && !!(n as HTMLElement).getAttribute("data-align") && (n as HTMLElement).parentElement?.id === "turndown-root",
+  filter: (n) => /^(P|H[1-6]|IMG|BLOCKQUOTE)$/.test(n.nodeName) && !!(n as HTMLElement).getAttribute("data-align") && ((n as HTMLElement).parentElement?.id === "turndown-root" || (n as HTMLElement).parentElement?.getAttribute("data-pr") === "column"),
   replacement: (content, n) => {
     const el = n as HTMLElement;
     const heading = /^H([1-6])$/.exec(el.nodeName);
-    const body = el.nodeName === "IMG" ? imageMarkdown(el) : heading ? `${"#".repeat(+heading[1])} ${content}` : content;
+    const quote = el.nodeName === "BLOCKQUOTE" ? content.trim().replace(/^/gm, "> ") : null;
+    const body = el.nodeName === "IMG" ? imageMarkdown(el) : heading ? `${"#".repeat(+heading[1])} ${content}` : quote ?? content;
     return `\n\n{{< pr-align to="${el.getAttribute("data-align")}" >}}\n${body}\n{{< /pr-align >}}\n\n`;
   },
 });

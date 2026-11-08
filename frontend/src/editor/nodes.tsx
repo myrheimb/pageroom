@@ -1,9 +1,10 @@
-import { Extension, mergeAttributes, Node } from "@tiptap/core";
+import { type Editor, Extension, mergeAttributes, Node } from "@tiptap/core";
+import { Fragment, type Node as ProseMirrorNode, type ResolvedPos } from "@tiptap/pm/model";
 import { NodeSelection, Plugin } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, useEditorState, type NodeViewProps } from "@tiptap/react";
 import { useState } from "react";
-import { AlertTriangle, AlignCenter, AlignLeft, AlignRight, ArrowLeft, ArrowRight, Code2, GripVertical, Image as ImageIcon, Plus, Puzzle, Scissors, Trash2, RefreshCw, SquarePlay } from "lucide-react";
+import { AlertTriangle, AlignCenter, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, ArrowLeft, ArrowRight, ArrowLeftRight, Code2, GripVertical, Image as ImageIcon, Plus, Puzzle, Scissors, Trash2, RefreshCw, SquarePlay } from "lucide-react";
 import { b64, describeShortcode, unb64 } from "./markdown";
 import { t } from "../i18n";
 
@@ -38,11 +39,32 @@ export function AlignControl({ value, onChange }: { value: string | null; onChan
   );
 }
 
+const ALIGNABLE_TEXT = ["paragraph", "heading", "blockquote"];
+
+/** The text block that alignment applies to at this position, directly on the page or directly in a column. */
+export function alignableBlock($from: ResolvedPos) {
+  let blockDepth = 1;
+  for (let depth = 1; depth <= $from.depth; depth++) if ($from.node(depth).type.name === "prColumn") blockDepth = depth + 1;
+  const block = $from.depth >= blockDepth ? $from.node(blockDepth) : null;
+  return block && ALIGNABLE_TEXT.includes(block.type.name) ? block : null;
+}
+
+export function setBlockAlign(editor: Editor, align: string) {
+  editor.chain().focus().command(({ tr, state }) => {
+    state.doc.nodesBetween(state.selection.from, state.selection.to, (node, pos, parent) => {
+      const isAlignable = ALIGNABLE_TEXT.includes(node.type.name) && (parent === state.doc || parent?.type.name === "prColumn");
+      if (isAlignable) tr.setNodeAttribute(pos, "align", align || null);
+      return !isAlignable && ["prColumns", "prColumn"].includes(node.type.name);
+    });
+    return true;
+  }).run();
+}
+
 export const BlockAlign = Extension.create({
   name: "blockAlign",
   addGlobalAttributes() {
     return [{
-      types: ["paragraph", "heading", "image"],
+      types: [...ALIGNABLE_TEXT, "image"],
       attributes: {
         align: {
           default: null,
@@ -277,7 +299,7 @@ function HeroView({ node, updateAttributes, extension }: NodeViewProps) {
   );
 }
 
-function ButtonView({ node, updateAttributes }: NodeViewProps) {
+function ButtonView({ node, updateAttributes, deleteNode }: NodeViewProps) {
   return (
     <NodeViewWrapper className="pr-button-block">
       <div className="pr-button-row" style={{ textAlign: node.attrs.align || undefined }}>
@@ -286,7 +308,25 @@ function ButtonView({ node, updateAttributes }: NodeViewProps) {
       <div className="pr-button-link" contentEditable={false}>
         <input value={node.attrs.link} placeholder={t.editor.linkAddress} onChange={(e) => updateAttributes({ link: e.target.value })} onKeyDown={(e) => e.stopPropagation()} />
         <AlignControl value={node.attrs.align} onChange={(align) => updateAttributes({ align })} />
+        <button type="button" className="btn sm ghost danger" onClick={() => deleteNode()}>
+          <Trash2 size={13} /> {t.common.remove}
+        </button>
       </div>
+    </NodeViewWrapper>
+  );
+}
+
+function VideoView({ node, deleteNode }: NodeViewProps) {
+  return (
+    <NodeViewWrapper className="atom-block pr-video-block" data-drag-handle contentEditable={false}>
+      <div className="ab-icon"><SquarePlay size={16} /></div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="ab-title">{t.shortcodes.known.youtube}</div>
+        <div className="dim small">{node.attrs.id}</div>
+      </div>
+      <button type="button" className="btn sm ghost danger" onClick={() => deleteNode()}>
+        <Trash2 size={13} /> {t.common.remove}
+      </button>
     </NodeViewWrapper>
   );
 }
@@ -352,6 +392,82 @@ function CardView({ editor, getPos, node }: NodeViewProps) {
         <button type="button" className="btn sm ghost danger" disabled={!place || place.only} title={t.editor.cardRemove} aria-label={t.editor.cardRemove} onMouseDown={keepSelection} onClick={remove}><Trash2 size={13} /></button>
       </div>
       <NodeViewContent className="pr-card-content" />
+    </NodeViewWrapper>
+  );
+}
+
+const COLUMN_LAYOUTS = [
+  { layout: "", label: "1:1" },
+  { layout: "2-1", label: "2:1" },
+  { layout: "1-2", label: "1:2" },
+  { layout: "1-1-1", label: "1:1:1" },
+];
+const MIRRORED_LAYOUT: Record<string, string> = { "2-1": "1-2", "1-2": "2-1" };
+
+// Blank paragraphs are never saved, so only the ones that would show as gaps in the merged column are dropped.
+function mergeColumns(first: ProseMirrorNode, second: ProseMirrorNode) {
+  const kept = [...first.children, ...second.children].filter((child) => child.type.name !== "paragraph" || child.content.size > 0);
+  return kept.length > 0 ? first.copy(Fragment.fromArray(kept)) : first;
+}
+
+function ColumnsOption({ on, label, onClick, children }: { on: boolean; label?: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" className={"btn sm ghost" + (on ? " on" : "")} aria-pressed={on} title={label} aria-label={label} onMouseDown={keepSelection} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+function ColumnsView({ node, editor, getPos, updateAttributes }: NodeViewProps) {
+  const replaceColumns = (columns: ProseMirrorNode[], layout: string) => {
+    const pos = getPos();
+    if (pos === undefined) return;
+    editor.chain().focus().command(({ tr }) => {
+      tr.replaceWith(pos + 1, pos + node.nodeSize - 1, columns);
+      tr.setNodeAttribute(pos, "layout", layout);
+      return true;
+    }).run();
+  };
+  const swap = () => replaceColumns([node.child(1), node.child(0)], MIRRORED_LAYOUT[node.attrs.layout] ?? node.attrs.layout);
+  const chooseLayout = (layout: string) => {
+    const [first, second, third] = node.children;
+    if (layout === "1-1-1" && !third) replaceColumns([first, second, second.type.createAndFill()!], layout);
+    else if (layout !== "1-1-1" && third) replaceColumns([first, mergeColumns(second, third)], layout);
+    else updateAttributes({ layout });
+  };
+  const positions = [
+    { valign: "", Icon: AlignVerticalJustifyStart, label: t.editor.alignTop },
+    { valign: "center", Icon: AlignVerticalJustifyCenter, label: t.editor.alignMiddle },
+    { valign: "bottom", Icon: AlignVerticalJustifyEnd, label: t.editor.alignBottom },
+  ];
+  return (
+    <NodeViewWrapper className="pr-columns" data-layout={node.attrs.layout || undefined} data-valign={node.attrs.valign || undefined}>
+      <NodeViewContent className="pr-columns-content" />
+      <div className="pr-columns-tools" contentEditable={false}>
+        <div className="block-align" role="group" aria-label={t.editor.columnsWidths}>
+          {COLUMN_LAYOUTS.map(({ layout, label }) => (
+            <ColumnsOption key={layout} on={node.attrs.layout === layout} onClick={() => chooseLayout(layout)}>{label}</ColumnsOption>
+          ))}
+        </div>
+        <div className="block-align" role="group" aria-label={t.editor.columnsPosition}>
+          {positions.map(({ valign, Icon, label }) => (
+            <ColumnsOption key={valign} on={node.attrs.valign === valign} label={label} onClick={() => updateAttributes({ valign })}><Icon size={13} /></ColumnsOption>
+          ))}
+        </div>
+        {node.childCount === 2 && (
+          <button type="button" className="btn sm ghost" onMouseDown={keepSelection} onClick={swap}>
+            <ArrowLeftRight size={13} /> {t.editor.columnsSwap}
+          </button>
+        )}
+      </div>
+    </NodeViewWrapper>
+  );
+}
+
+function ColumnView() {
+  return (
+    <NodeViewWrapper className="pr-column">
+      <NodeViewContent className="pr-column-content" />
     </NodeViewWrapper>
   );
 }
@@ -431,11 +547,22 @@ function cardDropPlugin() {
   });
 }
 
-export const HeroBlock = pageBlock<HeroOptions>("prHero", "hero", "block+", ["image", "alt", "button", "link", "align"], "block", HeroView, { resolve: (s: string) => s, pick: async () => null, describe: async () => null });
+// Spelled out instead of block+ because a nested page block or raw HTML makes the whole Banner or Card lock on reload.
+const BANNER_AND_CARD_CONTENT = "(paragraph | heading | bulletList | orderedList | taskList | blockquote | table | image | codeBlock | horizontalRule | shortcodeBlock)+";
+
+export const HeroBlock = pageBlock<HeroOptions>("prHero", "hero", BANNER_AND_CARD_CONTENT, ["image", "alt", "button", "link", "align"], "block", HeroView, { resolve: (s: string) => s, pick: async () => null, describe: async () => null });
 export const CardsBlock = pageBlock("prCards", "cards", "prCard+", ["align"], "block", CardsView).extend({
   addProseMirrorPlugins() {
     return [cardDropPlugin()];
   },
 });
-export const CardBlock = pageBlock("prCard", "card", "block+", [], "prCardItem", CardView);
+export const CardBlock = pageBlock("prCard", "card", BANNER_AND_CARD_CONTENT, [], "prCardItem", CardView);
 export const ButtonBlock = pageBlock("prButton", "button", "text*", ["link", "align"], "block", ButtonView);
+export const ColumnsBlock = pageBlock("prColumns", "columns", "prColumn{2,3}", ["layout", "valign"], "block", ColumnsView);
+export const ColumnBlock = pageBlock("prColumn", "column", "(paragraph | heading | bulletList | orderedList | taskList | blockquote | table | image | codeBlock | prButton | prVideo)+", [], "prColumnItem", ColumnView);
+export const VideoBlock = pageBlock("prVideo", "video", "", ["id"], "block", VideoView).extend({
+  atom: true,
+  renderHTML({ HTMLAttributes }) {
+    return ["div", mergeAttributes({ "data-pr": "video" }, HTMLAttributes)];
+  },
+});

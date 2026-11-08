@@ -146,7 +146,7 @@ func (a *App) AddContactForm() error {
 }
 
 // AddPageBlock makes sure the site has the templates for a page block the
-// editor is about to insert or align. The kinds are align, hero, cards and button.
+// editor is about to insert or align. The kinds are align, hero, cards, columns, button and video.
 func (a *App) AddPageBlock(kind string) error {
 	s, err := a.requireSite()
 	if err != nil {
@@ -165,10 +165,12 @@ func (a *App) AddPageBlock(kind string) error {
 }
 
 var pageBlockShortcodes = map[string][]string{
-	"align":  {"pr-align"},
-	"button": {"pr-button"},
-	"cards":  {"pr-cards", "pr-card"},
-	"hero":   {"pr-hero"},
+	"align":   {"pr-align"},
+	"button":  {"pr-button"},
+	"cards":   {"pr-cards", "pr-card"},
+	"columns": {"pr-button", "pr-column", "pr-columns"},
+	"hero":    {"pr-hero"},
+	"video":   {"pr-video"},
 }
 
 type ThemeInfo struct {

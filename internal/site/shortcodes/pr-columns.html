@@ -1,0 +1,22 @@
+{{- if not (.Page.Store.Get "pr-columns-css") }}{{ .Page.Store.Set "pr-columns-css" true -}}
+<style>
+.pr-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+.pr-columns-2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.pr-columns-1-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.pr-columns-1-1-1 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pr-columns-center { align-items: center; }
+.pr-columns-bottom { align-items: end; }
+@media (max-width: 40rem) { .pr-columns { grid-template-columns: minmax(0, 1fr); } }
+.pr-column { min-width: 0; overflow-wrap: anywhere; }
+.pr-column > :first-child { margin-top: 0; }
+.pr-column > :last-child { margin-bottom: 0; }
+.pr-column > [class^="pr-align"]:nth-child(1 of :not(style)) > :first-child { margin-top: 0; }
+.pr-column > [class^="pr-align"]:last-child > :last-child { margin-bottom: 0; }
+.pr-column img { max-width: 100%; height: auto; }
+.pr-column pre { max-width: 100%; overflow-x: auto; }
+.pr-column table { display: block; max-width: 100%; overflow-x: auto; }
+</style>
+{{ end -}}
+<div class="pr-columns{{ with .Get "layout" }} pr-columns-{{ . }}{{ end }}{{ with .Get "valign" }} pr-columns-{{ . }}{{ end }}">
+{{ .Inner }}
+</div>

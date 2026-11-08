@@ -26,7 +26,7 @@
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { font-size: clamp(17px, 15px + .4vw, 20px); -webkit-text-size-adjust: 100%; }
+html { font-size: clamp(17px, 15px + .4vw, 20px); -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 body { margin: 0; background: var(--pr-bg); color: var(--pr-text); font-family: var(--pr-body-font); line-height: 1.7; }
 ::selection { background: color-mix(in oklch, var(--pr-accent) 25%, transparent); }
 img { max-width: 100%; height: auto; }

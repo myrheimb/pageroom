@@ -34,7 +34,7 @@
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { font-size: 19px; -webkit-text-size-adjust: 100%; }
+html { font-size: 19px; -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 body { margin: 0; background: var(--pr-bg); color: var(--pr-text); font-family: var(--pr-body-font); line-height: 1.7; }
 ::selection { background: var(--pr-accent-soft); }
 img { max-width: 100%; height: auto; }

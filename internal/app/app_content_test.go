@@ -42,10 +42,12 @@ func newBlockSite(t *testing.T) (*App, string) {
 
 func TestAddPageBlockWritesTemplates(t *testing.T) {
 	cases := map[string][]string{
-		"align":  {"pr-align.html"},
-		"button": {"pr-button.html"},
-		"cards":  {"pr-card.html", "pr-cards.html"},
-		"hero":   {"pr-hero.html"},
+		"align":   {"pr-align.html"},
+		"button":  {"pr-button.html"},
+		"cards":   {"pr-card.html", "pr-cards.html"},
+		"columns": {"pr-button.html", "pr-column.html", "pr-columns.html"},
+		"hero":    {"pr-hero.html"},
+		"video":   {"pr-video.html"},
 	}
 	for kind, want := range cases {
 		t.Run(kind, func(t *testing.T) {

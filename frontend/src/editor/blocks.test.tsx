@@ -1,24 +1,26 @@
 import { Editor, type JSONContent } from "@tiptap/core";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
+import { TableKit } from "@tiptap/extension-table";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent } from "@tiptap/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
-import { BlockAlign, ButtonBlock, cardDropGap, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
+import { alignableBlock, BlockAlign, ButtonBlock, cardDropGap, CardBlock, CardsBlock, ColumnBlock, ColumnsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, setBlockAlign, ShortcodeBlock, ShortcodeInline, VideoBlock } from "./nodes";
 import { slashItems } from "./slash";
 import { t } from "../i18n";
 
 // TipTap scrolls to the selection one frame after focus, and jsdom can't measure text for that scroll.
 vi.stubGlobal("requestAnimationFrame", () => 0);
 
-function setup(markdown = "") {
+function setup(markdown = "", prompt: () => Promise<string | null> = async () => null) {
   const addPageBlock = vi.fn(async () => true);
   const editor = new Editor({
-    extensions: [StarterKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
+    extensions: [StarterKit, TaskList, TaskItem, TableKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ColumnsBlock, ColumnBlock, ButtonBlock, VideoBlock],
     content: markdownToHtml(markdown),
   });
-  const items = slashItems({ pickImage: async () => null, prompt: async () => null, addContactForm: async () => false, addPageBlock });
+  const items = slashItems({ pickImage: async () => null, prompt, addContactForm: async () => false, addPageBlock });
   return { editor, addPageBlock, markdown: () => htmlToMarkdown(editor.getHTML()), insert: (title: string) => items.find((item) => item.title === title)!.run(editor, { from: 1, to: 1 }) };
 }
 
@@ -95,7 +97,7 @@ describe("moving blocks", () => {
 
 async function mount(markdown: string) {
   const editor = new Editor({
-    extensions: [StarterKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
+    extensions: [StarterKit, TaskList, TaskItem, TableKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ColumnsBlock, ColumnBlock, ButtonBlock, VideoBlock],
     content: markdownToHtml(markdown),
   });
   const host = document.createElement("div");
@@ -119,6 +121,234 @@ const press = async (button: Element | null | undefined) => {
 };
 
 const inputWith = (host: HTMLElement, placeholder: string) => host.querySelector<HTMLInputElement>(`input[placeholder="${placeholder}"]`)!;
+
+describe("columns on the canvas", () => {
+  const columns = '{{< pr-columns >}}\n{{< pr-column >}}\nLeft.\n{{< /pr-column >}}\n\n{{< pr-column >}}\nRight.\n\n{{< pr-button link="/go/" >}}Go{{< /pr-button >}}\n{{< /pr-column >}}\n{{< /pr-columns >}}\n';
+  const swapped = '{{< pr-columns >}}\n{{< pr-column >}}\nRight.\n\n{{< pr-button link="/go/" >}}Go{{< /pr-button >}}\n{{< /pr-column >}}\n\n{{< pr-column >}}\nLeft.\n{{< /pr-column >}}\n{{< /pr-columns >}}\n';
+  const cursorIn = (editor: Editor, text: string) => {
+    let found = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === text) found = pos + 1;
+    });
+    editor.commands.setTextSelection(found);
+  };
+  const topLevel = (editor: Editor) => editor.getJSON().content!.map((node) => node.type).filter((type) => type !== "paragraph");
+  const buttonWith = (host: HTMLElement, text: string) => Array.from(host.querySelectorAll("button")).find((button) => button.textContent?.trim() === text);
+  const threeColumns = '{{< pr-columns layout="1-1-1" >}}\n{{< pr-column >}}\nA.\n{{< /pr-column >}}\n\n{{< pr-column >}}\nB.\n{{< /pr-column >}}\n\n{{< pr-column >}}\nC.\n{{< /pr-column >}}\n{{< /pr-columns >}}\n';
+  const blankColumn = "{{< pr-column >}}\n{{< /pr-column >}}";
+  const blankBesideRight = `{{< pr-columns >}}\n${blankColumn}\n\n{{< pr-column >}}\nRight.\n{{< /pr-column >}}\n{{< /pr-columns >}}\n`;
+
+  it("adds a third column and removes it again when it is blank", async () => {
+    const { editor, host, markdown } = await mount(columns);
+    await press(buttonWith(host, "1:1:1"));
+    expect(host.querySelectorAll(".pr-column")).toHaveLength(3);
+    expect(markdown()).toContain(`layout="1-1-1"`);
+    expect(markdown()).toContain(blankColumn);
+    expect(buttonWith(host, t.editor.columnsSwap)).toBeUndefined();
+
+    await press(buttonWith(host, "1:1"));
+    expect(markdown()).toBe(columns);
+    editor.destroy();
+  });
+
+  it("moves the third column's content into the second when going to two columns", async () => {
+    const { editor, host, markdown } = await mount(threeColumns);
+    await press(buttonWith(host, "2:1"));
+    expect(markdown()).toBe('{{< pr-columns layout="2-1" >}}\n{{< pr-column >}}\nA.\n{{< /pr-column >}}\n\n{{< pr-column >}}\nB.\n\nC.\n{{< /pr-column >}}\n{{< /pr-columns >}}\n');
+    editor.destroy();
+  });
+
+  it("flips the widths along with the content when swapping", async () => {
+    const { editor, host, markdown } = await mount(columns.replace("{{< pr-columns >}}", '{{< pr-columns layout="2-1" >}}'));
+    await press(buttonWith(host, t.editor.columnsSwap));
+    expect(markdown()).toBe(swapped.replace("{{< pr-columns >}}", '{{< pr-columns layout="1-2" >}}'));
+    editor.destroy();
+  });
+
+  it("sets the vertical position with the visible control", async () => {
+    const { editor, host, markdown } = await mount(columns);
+    await press(host.querySelector(`button[aria-label="${t.editor.alignMiddle}"]`));
+    expect(markdown()).toBe(columns.replace("{{< pr-columns >}}", '{{< pr-columns valign="center" >}}'));
+    editor.destroy();
+  });
+
+  it("removes a button with the visible control and keeps the column valid", async () => {
+    const { editor, host, markdown } = await mount(blankBesideRight.replace(blankColumn, '{{< pr-column >}}\n{{< pr-button link="/go/" >}}Go{{< /pr-button >}}\n{{< /pr-column >}}'));
+    await press(buttonWith(host, t.common.remove));
+    expect(markdown()).toBe(blankBesideRight);
+    expect(editor.state.doc.check()).toBeUndefined();
+    editor.destroy();
+  });
+
+  it("replaces a blank paragraph when a button is chosen in a column", async () => {
+    const { editor, insert } = setup(blankBesideRight);
+    editor.commands.setTextSelection(3);
+    await insert(t.slash.button);
+    expect((editor.getJSON().content![0].content as JSONContent[])[0].content!.map((node) => node.type)).toEqual(["prButton"]);
+    editor.destroy();
+  });
+
+  describe("alignment", () => {
+    const alignmentTarget = (editor: Editor) => alignableBlock(editor.state.selection.$from)?.type.name ?? null;
+    const quoted = '{{< pr-columns >}}\n{{< pr-column >}}\n> Said.\n{{< /pr-column >}}\n\n{{< pr-column >}}\n- Item\n{{< /pr-column >}}\n{{< /pr-columns >}}\n';
+
+    it("aligns a paragraph inside a column", () => {
+      const { editor, markdown } = setup(columns);
+      cursorIn(editor, "Left.");
+      expect(alignmentTarget(editor)).toBe("paragraph");
+      setBlockAlign(editor, "center");
+      expect(markdown()).toContain('{{< pr-column >}}\n{{< pr-align to="center" >}}\nLeft.\n{{< /pr-align >}}\n{{< /pr-column >}}');
+      setBlockAlign(editor, "");
+      expect(markdown()).toBe(columns);
+      editor.destroy();
+    });
+
+    it("aligns the whole quote from inside it", () => {
+      const { editor, markdown } = setup(quoted);
+      cursorIn(editor, "Said.");
+      expect(alignmentTarget(editor)).toBe("blockquote");
+      setBlockAlign(editor, "right");
+      expect(markdown()).toContain('{{< pr-align to="right" >}}\n> Said.\n{{< /pr-align >}}');
+      editor.destroy();
+    });
+
+    it("offers no alignment in a list or a banner", () => {
+      const list = setup(quoted);
+      cursorIn(list.editor, "Item");
+      expect(alignmentTarget(list.editor)).toBeNull();
+      list.editor.destroy();
+
+      const banner = setup("{{< pr-hero >}}\nText.\n{{< /pr-hero >}}\n");
+      cursorIn(banner.editor, "Text.");
+      expect(alignmentTarget(banner.editor)).toBeNull();
+      banner.editor.destroy();
+    });
+
+    it("aligns a picture inside a column with its visible control", async () => {
+      const picture = "{{< pr-columns >}}\n{{< pr-column >}}\n![Sea](sea.jpg)\n{{< /pr-column >}}\n\n{{< pr-column >}}\nB\n{{< /pr-column >}}\n{{< /pr-columns >}}\n";
+      const { editor, host, markdown } = await mount(picture);
+      let imagePosition = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "image") imagePosition = pos;
+      });
+      await act(async () => editor.commands.setNodeSelection(imagePosition));
+      await press(host.querySelector(`button[aria-label="${t.editor.alignCenter}"]`));
+      expect(markdown()).toContain('{{< pr-align to="center" >}}\n![Sea](sea.jpg)\n{{< /pr-align >}}');
+      editor.destroy();
+    });
+  });
+
+  describe("videos", () => {
+    const videoLink = async () => "https://www.youtube.com/watch?v=abc123";
+    const video = '{{< pr-video id="abc123" >}}';
+    const leftColumnTypes = (editor: Editor) => (editor.getJSON().content![0].content as JSONContent[])[0].content!.map((node) => node.type);
+
+    it("inserts a video on the page from the menu", async () => {
+      const { editor, addPageBlock, markdown, insert } = setup("", videoLink);
+      await insert(t.slash.youtube);
+      expect(addPageBlock).toHaveBeenCalledWith("video");
+      expect(markdown()).toBe(`${video}\n`);
+      editor.destroy();
+    });
+
+    it("puts a video after the text it is chosen in, inside the column", async () => {
+      const { editor, insert } = setup(columns, videoLink);
+      cursorIn(editor, "Left.");
+      await insert(t.slash.youtube);
+      expect(topLevel(editor)).toEqual(["prColumns"]);
+      expect(leftColumnTypes(editor)).toEqual(["paragraph", "prVideo"]);
+      editor.destroy();
+    });
+
+    it("goes after a banner it is chosen in", async () => {
+      const { editor, insert } = setup("{{< pr-hero >}}\nText.\n{{< /pr-hero >}}\n", videoLink);
+      cursorIn(editor, "Text.");
+      await insert(t.slash.youtube);
+      expect(topLevel(editor)).toEqual(["prHero", "prVideo"]);
+      editor.destroy();
+    });
+
+    it("replaces a blank paragraph when chosen in a column", async () => {
+      const { editor, insert } = setup(blankBesideRight, videoLink);
+      editor.commands.setTextSelection(3);
+      await insert(t.slash.youtube);
+      expect(leftColumnTypes(editor)).toEqual(["prVideo"]);
+      editor.destroy();
+    });
+
+    it("removes a video with the visible control and keeps the column valid", async () => {
+      const { editor, host, markdown } = await mount(blankBesideRight.replace(blankColumn, `{{< pr-column >}}\n${video}\n{{< /pr-column >}}`));
+      await press(buttonWith(host, t.common.remove));
+      expect(markdown()).toBe(blankBesideRight);
+      expect(editor.state.doc.check()).toBeUndefined();
+      editor.destroy();
+    });
+  });
+
+  it("inserts two columns from the menu", async () => {
+    const { editor, addPageBlock, insert } = setup();
+    await insert(t.slash.columns);
+    expect(addPageBlock).toHaveBeenCalledWith("columns");
+    expect(editor.getJSON().content![0].content!.map((node) => node.type)).toEqual(["prColumn", "prColumn"]);
+    editor.destroy();
+  });
+
+  it("swaps the sides with the visible button", async () => {
+    const { editor, host, markdown } = await mount(columns);
+    expect(host.querySelectorAll(".pr-column")).toHaveLength(2);
+
+    await press(Array.from(host.querySelectorAll("button")).find((button) => button.textContent?.includes(t.editor.columnsSwap)));
+    expect(markdown()).toBe(swapped);
+
+    await press(Array.from(host.querySelectorAll("button")).find((button) => button.textContent?.includes(t.editor.columnsSwap)));
+    expect(markdown()).toBe(columns);
+    editor.destroy();
+  });
+
+  it("puts a chosen button into the column and any other block after the columns", async () => {
+    const { editor, markdown, insert } = setup(columns);
+    cursorIn(editor, "Left.");
+    await insert(t.slash.button);
+    expect(topLevel(editor)).toEqual(["prColumns"]);
+    expect(((editor.getJSON().content![0].content as JSONContent[])[0].content as JSONContent[]).map((node) => node.type)).toEqual(["paragraph", "prButton"]);
+
+    for (const title of [t.slash.hero, t.slash.cards, t.slash.columns]) {
+      cursorIn(editor, "Right.");
+      await insert(title);
+    }
+    expect(topLevel(editor)).toEqual(["prColumns", "prColumns", "prCards", "prHero"]);
+    for (const column of editor.getJSON().content![0].content as JSONContent[]) {
+      expect((column.content as JSONContent[]).every((node) => ["paragraph", "prButton"].includes(node.type!))).toBe(true);
+    }
+    expect(markdown()).toContain("{{< pr-hero >}}");
+    editor.destroy();
+  });
+
+  it("puts a block chosen inside a column's button after the columns", async () => {
+    const { editor, insert } = setup(columns);
+    cursorIn(editor, "Go");
+    await insert(t.slash.hero);
+    expect(topLevel(editor)).toEqual(["prColumns", "prHero"]);
+    editor.destroy();
+  });
+
+  it("does not let a banner or card hold another page block or raw HTML", () => {
+    const { editor } = setup(columns);
+    for (const parent of ["prHero", "prCard"]) {
+      for (const child of ["prButton", "prCards", "prColumns", "prHero", "prVideo", "rawHtmlBlock"]) expect(editor.schema.nodes[parent].contentMatch.matchType(editor.schema.nodes[child])).toBeNull();
+      for (const child of ["heading", "image", "paragraph", "shortcodeBlock"]) expect(editor.schema.nodes[parent].contentMatch.matchType(editor.schema.nodes[child])).not.toBeNull();
+    }
+    editor.destroy();
+  });
+
+  it("does not let a column hold a banner, cards or columns", () => {
+    const { editor } = setup(columns);
+    const column = editor.schema.nodes.prColumn;
+    for (const name of ["prHero", "prCards", "prColumns"]) expect(column.contentMatch.matchType(editor.schema.nodes[name])).toBeNull();
+    expect(editor.schema.nodes.prColumns.contentMatch.matchType(column)).not.toBeNull();
+    editor.destroy();
+  });
+});
 
 describe("block inputs", () => {
   it("changes an existing button's text and link", async () => {

@@ -446,6 +446,7 @@ export const ja: Messages = {
 
   pageSettings: {
     label: "ページの設定",
+    homeTitleNote: "テーマによっては、トップページに表示されません。",
     publishingNote: "訪問者がこのページを見られるかどうかを設定します。",
     addressNote: "訪問者がこのページを開くときのウェブアドレスです。",
     searchSharingNote: "「短い説明」は、Googleの検索結果や、ページを共有したときのプレビューに表示されます。カバー画像はタイトルの下で設定します。",
@@ -806,7 +807,12 @@ export const ja: Messages = {
     coverAdd: "カバー画像を追加",
     coverChange: "カバー画像を変更",
     coverRemove: "カバー画像を外す",
-    coverNote: "カバー画像は、一覧ページのカードにも表示されます。",
+    coverNote: "一覧ページのカードにも表示されます。テーマによっては、この画像は表示されません。",
+    alignment: "配置",
+    alignLeft: "左揃え",
+    alignCenter: "中央揃え",
+    alignRight: "右揃え",
+    blockTextPlaceholder: "本文",
     heroButtonText: "ボタンの文字（任意）",
     cardAdd: "カードを追加",
     cardRemove: "カードを削除",

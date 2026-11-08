@@ -146,10 +146,11 @@ function findCodeRanges(src: string): [number, number][] {
 // node. Anything else (unknown attributes, raw HTML inside, odd nesting) is
 // left to liftShortcodes and stays a locked shortcode block.
 const PR_ATTRIBUTES: Record<string, string[]> = {
-  "pr-hero": ["image", "alt", "button", "link"],
-  "pr-cards": [],
+  "pr-align": ["to"],
+  "pr-hero": ["image", "alt", "button", "link", "align"],
+  "pr-cards": ["align"],
   "pr-card": [],
-  "pr-button": ["link"],
+  "pr-button": ["link", "align"],
 };
 
 interface PrToken {
@@ -222,6 +223,13 @@ function renderPrBlock(raw: string): string | null {
   const kind = name.slice("pr-".length);
   const wrap = (content: string) => `<div data-pr="${kind}"${attributeHtml}>${content}</div>`;
 
+  if (name === "pr-align") {
+    if (toks.length !== 2 || !["center", "right"].includes(attrs.to) || hasRawHtml(inner)) return null;
+    const html = markdownToHtml(inner).trim();
+    const picture = /^<p>(<img [^>]*>)<\/p>$/.exec(html);
+    if (picture) return picture[1].replace("<img ", `<img data-align="${attrs.to}" `);
+    return /^<(p|h[1-6])>(?:(?!<\/\1>)[\s\S])*<\/\1>$/.test(html) ? html.replace(/^<(p|h[1-6])>/, `<$1 data-align="${attrs.to}">`) : null;
+  }
   if (name === "pr-button") {
     return /\n|\{\{/.test(inner) ? null : wrap(esc(inner));
   }
@@ -358,16 +366,20 @@ td.addRule("rawInline", {
   filter: (n) => n.nodeName === "SPAN" && (n as HTMLElement).hasAttribute("data-raw-inline"),
   replacement: (_c, n) => unb64((n as HTMLElement).getAttribute("data-raw-inline") || ""),
 });
+function imageMarkdown(el: HTMLElement): string {
+  const alt = (el.getAttribute("alt") || "").replace(/([\[\]])/g, "\\$1");
+  const src = (el.getAttribute("data-src") || el.getAttribute("src") || "").replace(/\s/g, "%20");
+  const title = el.getAttribute("title");
+  const t = title ? ` "${title.replace(/"/g, '\\"')}"` : "";
+  return `![${alt}](${src}${t})`;
+}
+
 td.addRule("image", {
   filter: "img",
   replacement: (_c, n) => {
     const el = n as HTMLElement;
-    const alt = (el.getAttribute("alt") || "").replace(/([\[\]])/g, "\\$1");
-    const src = (el.getAttribute("data-src") || el.getAttribute("src") || "").replace(/\s/g, "%20");
-    const title = el.getAttribute("title");
-    const t = title ? ` "${title.replace(/"/g, '\\"')}"` : "";
     const block = el.parentElement?.nodeName === "BODY" || el.parentElement?.getAttribute("data-image-block") != null;
-    const out = `![${alt}](${src}${t})`;
+    const out = imageMarkdown(el);
     return block ? `\n\n${out}\n\n` : out;
   },
 });
@@ -399,6 +411,16 @@ td.addRule("tableCellOneLine", {
     const cell = content.trim().replace(/\n+/g, " ").replace(/\|/g, "\\|");
     const isFirst = !(n as HTMLElement).previousElementSibling;
     return (isFirst ? "| " : " ") + cell + " |";
+  },
+});
+// A shortcode can't sit inside another page block or a list, so only top-level content is aligned.
+td.addRule("aligned", {
+  filter: (n) => /^(P|H[1-6]|IMG)$/.test(n.nodeName) && !!(n as HTMLElement).getAttribute("data-align") && (n as HTMLElement).parentElement?.id === "turndown-root",
+  replacement: (content, n) => {
+    const el = n as HTMLElement;
+    const heading = /^H([1-6])$/.exec(el.nodeName);
+    const body = el.nodeName === "IMG" ? imageMarkdown(el) : heading ? `${"#".repeat(+heading[1])} ${content}` : content;
+    return `\n\n{{< pr-align to="${el.getAttribute("data-align")}" >}}\n${body}\n{{< /pr-align >}}\n\n`;
   },
 });
 // Keep underline and similar as HTML, since Markdown has no syntax for them.

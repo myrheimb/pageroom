@@ -7,6 +7,6 @@
 .pr-card img { max-width: 100%; height: auto; }
 </style>
 {{ end -}}
-<div class="pr-cards">
+<div class="pr-cards"{{ with .Get "align" }} style="text-align: {{ . }}"{{ end }}>
 {{ .Inner }}
 </div>

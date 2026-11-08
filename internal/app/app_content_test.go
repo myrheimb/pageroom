@@ -42,6 +42,7 @@ func newBlockSite(t *testing.T) (*App, string) {
 
 func TestAddPageBlockWritesTemplates(t *testing.T) {
 	cases := map[string][]string{
+		"align":  {"pr-align.html"},
 		"button": {"pr-button.html"},
 		"cards":  {"pr-card.html", "pr-cards.html"},
 		"hero":   {"pr-hero.html"},

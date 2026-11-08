@@ -406,6 +406,7 @@ export const en = {
 
   pageSettings: {
     label: "Page settings",
+    homeTitleNote: "Some themes don't show this on the home page.",
     publishingNote: "Decides whether visitors can see this page.",
     addressNote: "The web address visitors use to reach this page.",
     searchSharingNote: "Shown in Google results and when the page is shared. The cover picture is set below the title.",
@@ -767,7 +768,12 @@ export const en = {
     coverAdd: "Add a cover picture",
     coverChange: "Change cover picture",
     coverRemove: "Remove cover picture",
-    coverNote: "Also shows on cards in page lists.",
+    coverNote: "Also shows on cards in page lists. Some themes don't show this picture.",
+    alignment: "Alignment",
+    alignLeft: "Align left",
+    alignCenter: "Align center",
+    alignRight: "Align right",
+    blockTextPlaceholder: "Text",
     cardAdd: "Add card",
     cardRemove: "Remove card",
     cardMoveEarlier: "Move card earlier",

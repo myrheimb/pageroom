@@ -84,6 +84,10 @@ describe("page blocks", () => {
     expect(markdownToHtml(cards).match(/data-pr="card"/g)).toHaveLength(2);
   });
 
+  it("only writes alignment for top-level content", () => {
+    expect(htmlToMarkdown('<div data-pr="hero"><p data-align="center">Text.</p></div>')).toBe("{{< pr-hero >}}\nText.\n{{< /pr-hero >}}\n");
+  });
+
   it("round trips a button", () => {
     expect(roundTrip(button)).toBe(button);
     expect(markdownToHtml(button)).toContain("Get in touch");
@@ -126,6 +130,9 @@ describe("page blocks", () => {
     ["percent delimiters", "{{% pr-hero %}}\nText.\n{{% /pr-hero %}}\n"],
     ["a self-closing block", '{{< pr-button link="/" />}}\n'],
     ["an unclosed block", "{{< pr-hero >}}\n\nText.\n"],
+    ["an unknown alignment", '{{< pr-align to="middle" >}}\nText.\n{{< /pr-align >}}\n'],
+    ["two aligned paragraphs", '{{< pr-align to="center" >}}\nOne.\n\nTwo.\n{{< /pr-align >}}\n'],
+    ["an aligned block inside a banner", '{{< pr-hero >}}\n{{< pr-align to="center" >}}\nText.\n{{< /pr-align >}}\n{{< /pr-hero >}}\n'],
   ])("keeps %s as a locked block with its text unchanged", (_label, md) => {
     expect(markdownToHtml(md)).not.toContain("data-pr=");
     expect(markdownToHtml(md)).toContain("data-shortcode");

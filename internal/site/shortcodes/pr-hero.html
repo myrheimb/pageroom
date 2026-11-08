@@ -9,7 +9,7 @@
 .pr-hero img { display: block; max-width: 100%; height: auto; border-radius: .75rem; }
 </style>
 {{ end -}}
-<section class="pr-hero">
+<section class="pr-hero"{{ with .Get "align" }} style="text-align: {{ . }}"{{ end }}>
   <div class="pr-hero-text">
     {{ .Page.RenderString (dict "display" "block") .Inner }}
     {{- with .Get "button" }}

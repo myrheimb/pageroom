@@ -213,7 +213,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
             <RawFixer page={page} onFixed={load} />
           ) : (
             <div className="editor-paper">
-              <textarea
+              {!(page.isSection && page.url === "/") && <textarea
                 className="title-input"
                 rows={1}
                 placeholder={page.isSection ? t.pageEditor.sectionTitle : t.pageEditor.pageTitle}
@@ -221,7 +221,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
                 onChange={(e) => { setTitle(e.target.value); setField("title", e.target.value); autoGrow(e.target); }}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); editorRef.current?.focus(); } }}
                 ref={(el) => { if (el) autoGrow(el); }}
-              />
+              />}
               <div className="page-url">
                 {page.isSection ? t.pageEditor.sectionIntro : ""}
                 <span className="mono">{url}</span>

@@ -100,6 +100,7 @@ main { padding: 2.5rem 0 4rem; }
 .site-footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-top: 1.5rem; padding-bottom: 2rem; max-width: 64rem; }
 .site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
 .site-footer a { color: inherit; }
+li:has(> input[type="checkbox"], > p > input[type="checkbox"]) { list-style: none; }
 
 @media print {
   :root { color-scheme: light; }

@@ -134,6 +134,8 @@ main:has(> .home-hero) { padding-top: 0; }
 @media (prefers-reduced-motion: reduce) {
   .card :is(img, .card-placeholder) { transition: none; }
 }
+li:has(> input[type="checkbox"], > p > input[type="checkbox"]) { list-style: none; }
+
 @media print {
   :root { color-scheme: light; }
   .site-header, .site-footer, .skip-link { display: none; }

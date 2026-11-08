@@ -5,7 +5,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
-import { ButtonBlock, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
+import { BlockAlign, ButtonBlock, cardDropGap, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
 import { slashItems } from "./slash";
 import { t } from "../i18n";
 
@@ -15,7 +15,7 @@ vi.stubGlobal("requestAnimationFrame", () => 0);
 function setup(markdown = "") {
   const addPageBlock = vi.fn(async () => true);
   const editor = new Editor({
-    extensions: [StarterKit, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
+    extensions: [StarterKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
     content: markdownToHtml(markdown),
   });
   const items = slashItems({ pickImage: async () => null, prompt: async () => null, addContactForm: async () => false, addPageBlock });
@@ -95,7 +95,7 @@ describe("moving blocks", () => {
 
 async function mount(markdown: string) {
   const editor = new Editor({
-    extensions: [StarterKit, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
+    extensions: [StarterKit, BlockAlign, ImageBlock, ShortcodeBlock, ShortcodeInline, RawHtmlBlock, RawHtmlInline, HeroBlock, CardsBlock, CardBlock, ButtonBlock],
     content: markdownToHtml(markdown),
   });
   const host = document.createElement("div");
@@ -110,6 +110,13 @@ async function typeInto(input: HTMLInputElement, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
+
+const press = async (button: Element | null | undefined) => {
+  await act(async () => {
+    button!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    (button as HTMLElement).click();
+  });
+};
 
 const inputWith = (host: HTMLElement, placeholder: string) => host.querySelector<HTMLInputElement>(`input[placeholder="${placeholder}"]`)!;
 
@@ -140,11 +147,6 @@ describe("block inputs", () => {
 
 describe("cards on the canvas", () => {
   const cards = '{{< pr-cards >}}\n{{< pr-card >}}\n### One\n\nFirst.\n{{< /pr-card >}}\n{{< pr-card >}}\n### Two\n\nSecond.\n{{< /pr-card >}}\n{{< /pr-cards >}}\n';
-  const press = async (button: Element | null | undefined) => {
-    await act(async () => {
-      button!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
-    });
-  };
   const tools = (host: HTMLElement, label: string) => Array.from(host.querySelectorAll(`button[aria-label="${label}"]`));
   const cardTitles = (editor: Editor) => (editor.getJSON().content![0].content as JSONContent[]).map((card) => card.content![0].content?.[0].text);
 
@@ -180,10 +182,79 @@ describe("cards on the canvas", () => {
     editor.destroy();
   });
 
+  it("keeps every card's arrows correct as the cards change", async () => {
+    const { editor, host } = await mount(cards);
+    const enabled = (label: string) => tools(host, label).map((button) => !(button as HTMLButtonElement).disabled);
+    expect(enabled(t.editor.cardMoveEarlier)).toEqual([false, true]);
+    expect(enabled(t.editor.cardMoveLater)).toEqual([true, false]);
+
+    await press(Array.from(host.querySelectorAll("button")).find((button) => button.textContent?.includes(t.editor.cardAdd)));
+    expect(enabled(t.editor.cardMoveEarlier)).toEqual([false, true, true]);
+    expect(enabled(t.editor.cardMoveLater)).toEqual([true, true, false]);
+
+    await press(tools(host, t.editor.cardRemove)[0]);
+    expect(enabled(t.editor.cardMoveEarlier)).toEqual([false, true]);
+    expect(enabled(t.editor.cardMoveLater)).toEqual([true, false]);
+    editor.destroy();
+  });
+
+  it("gives every card a drag grip", async () => {
+    const { editor, host } = await mount(cards);
+    expect(host.querySelectorAll('.pr-card [data-drag-handle][draggable="true"]')).toHaveLength(2);
+    expect(editor.schema.nodes.prCard.spec.draggable).toBe(true);
+    editor.destroy();
+  });
+
   it("keeps the last card", async () => {
     const { editor, host } = await mount('{{< pr-cards >}}\n{{< pr-card >}}\nOnly\n{{< /pr-card >}}\n{{< /pr-cards >}}\n');
     await press(tools(host, t.editor.cardRemove)[0]);
     expect(host.querySelectorAll(".pr-card")).toHaveLength(1);
+    editor.destroy();
+  });
+});
+
+describe("dropping a card", () => {
+  const box = (left: number, top: number) => ({ left, top, right: left + 100, bottom: top + 100 });
+  const row = [box(0, 0), box(120, 0), box(240, 0)];
+  const stack = [box(0, 0), box(0, 120), box(0, 240)];
+  const grid = [box(0, 0), box(120, 0), box(0, 120), box(120, 120)];
+
+  it.each([
+    ["the left half of a card in a row", row, 130, 50, { index: 1, inRow: true }],
+    ["the right half of a card in a row", row, 210, 50, { index: 2, inRow: true }],
+    ["the gap between two cards in a row", row, 112, 50, { index: 1, inRow: true }],
+    ["past the last card in a row", row, 400, 50, { index: 3, inRow: true }],
+    ["the top half of a stacked card", stack, 50, 130, { index: 1, inRow: false }],
+    ["the bottom half of a stacked card", stack, 50, 210, { index: 2, inRow: false }],
+    ["the second row of a grid", grid, 210, 150, { index: 4, inRow: true }],
+  ])("picks the right gap for %s", (_label, cards, x, y, expected) => {
+    expect(cardDropGap(cards, x, y)).toMatchObject(expected);
+  });
+});
+
+describe("alignment", () => {
+  const alignButton = (host: HTMLElement, label: string) => host.querySelector(`.block-align button[aria-label="${label}"]`);
+
+  it.each([
+    ["button", '{{< pr-button link="/" >}}Go{{< /pr-button >}}\n', '{{< pr-button link="/" align="center" >}}Go{{< /pr-button >}}\n'],
+    ["banner", "{{< pr-hero >}}\n## Hi\n{{< /pr-hero >}}\n", '{{< pr-hero align="center" >}}\n## Hi\n{{< /pr-hero >}}\n'],
+    ["cards block", "{{< pr-cards >}}\n{{< pr-card >}}\nOne\n{{< /pr-card >}}\n{{< /pr-cards >}}\n", '{{< pr-cards align="center" >}}\n{{< pr-card >}}\nOne\n{{< /pr-card >}}\n{{< /pr-cards >}}\n'],
+  ])("centers a %s and clears it again", async (_label, plain, centered) => {
+    const { editor, host, markdown } = await mount(plain);
+    await press(alignButton(host, t.editor.alignCenter));
+    expect(markdown()).toBe(centered);
+    await press(alignButton(host, t.editor.alignLeft));
+    expect(markdown()).toBe(plain);
+    editor.destroy();
+  });
+
+  it.each([
+    ["paragraph", '{{< pr-align to="center" >}}\nSome **bold** text.\n{{< /pr-align >}}\n'],
+    ["heading", '{{< pr-align to="right" >}}\n## Hello\n{{< /pr-align >}}\n'],
+    ["picture", '{{< pr-align to="center" >}}\n![A beach](beach.jpg)\n{{< /pr-align >}}\n'],
+  ])("keeps an aligned %s through the editor", (_label, source) => {
+    const { editor, markdown } = setup(source);
+    expect(markdown()).toBe(source);
     editor.destroy();
   });
 });

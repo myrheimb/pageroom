@@ -75,6 +75,23 @@ describe("saving the cover", () => {
   });
 });
 
+describe("the page editor's title", () => {
+  const titleField = async () => {
+    const host = document.createElement("div");
+    await act(async () => createRoot(host).render(<PageEditor path="content/a.md" onPathChange={() => {}} onDeleted={() => {}} />));
+    return host.querySelector(".title-input");
+  };
+
+  it("is on the canvas on normal pages", async () => {
+    expect(await titleField()).not.toBeNull();
+  });
+
+  it("is left to the panel on the home page", async () => {
+    api.getPage.mockResolvedValueOnce({ path: "content/_index.md", url: "/", isSection: true, fields: { title: "Home" }, keys: ["title"], body: "", hash: "h1" });
+    expect(await titleField()).toBeNull();
+  });
+});
+
 describe("the page editor's cover", () => {
   it("saves the picked picture to image and the typed description to imageAlt", async () => {
     const host = document.createElement("div");

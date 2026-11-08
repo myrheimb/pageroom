@@ -10,17 +10,24 @@ vi.mock("../api", () => ({ api: {} }));
 
 const page = { path: "/content/posts/a/index.md", url: "/posts/a/", isSection: false, fields: {}, keys: [], body: "", hash: "" };
 
-async function render(fields: Record<string, unknown>) {
+async function render(fields: Record<string, unknown>, shown = page) {
   const host = document.createElement("div");
   await act(async () =>
     createRoot(host).render(
-      <PageSettings page={page as never} fields={fields} setField={() => {}} resolveImage={() => null} pickImage={async () => null} onRenamed={() => {}} save={async () => {}} />,
+      <PageSettings page={shown as never} fields={fields} setField={() => {}} resolveImage={() => null} pickImage={async () => null} onRenamed={() => {}} save={async () => {}} />,
     ),
   );
   return host;
 }
 
 describe("page settings panel", () => {
+  it("has a Page title field on the home page only", async () => {
+    const home = await render({ title: "Welcome" }, { ...page, url: "/", isSection: true });
+    expect(home.querySelector<HTMLInputElement>("#ps-title")!.value).toBe("Welcome");
+    expect(home.textContent).toContain(t.pageEditor.pageTitle);
+    expect((await render({ title: "A" })).querySelector("#ps-title")).toBeNull();
+  });
+
   it("has no Featured image control, even when the page has an image", async () => {
     const host = await render({ title: "A", image: "beach.jpg", imageAlt: "A beach" });
     expect(host.textContent).not.toMatch(/featured image/i);

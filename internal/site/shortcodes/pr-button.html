@@ -4,4 +4,4 @@
 .pr-button:hover, .pr-button:focus-visible { filter: brightness(1.1); text-decoration: none; }
 </style>
 {{ end -}}
-<a class="pr-button" href="{{ .Get "link" | default "#" }}">{{ .Inner | strings.TrimSpace }}</a>
+{{ with .Get "align" }}<div style="text-align: {{ . }}">{{ end }}<a class="pr-button" href="{{ .Get "link" | default "#" }}">{{ .Inner | strings.TrimSpace }}</a>{{ with .Get "align" }}</div>{{ end }}

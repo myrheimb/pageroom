@@ -41,6 +41,22 @@ First _card_.
 
 {{< pr-button link="/contact/" >}}Get in touch{{< /pr-button >}}
 
+{{< pr-align to="center" >}}
+Centered text.
+{{< /pr-align >}}
+
+{{< pr-button link="/right/" align="right" >}}Right{{< /pr-button >}}
+
+{{< pr-hero align="center" >}}
+Centered banner.
+{{< /pr-hero >}}
+
+{{< pr-cards align="center" >}}
+{{< pr-card >}}
+Centered card.
+{{< /pr-card >}}
+{{< /pr-cards >}}
+
 After.
 `
 
@@ -60,7 +76,7 @@ func buildBlocksSite(t *testing.T, theme string, extraEnv ...string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"pr-button", "pr-card", "pr-cards", "pr-hero"} {
+	for _, name := range []string{"pr-align", "pr-button", "pr-card", "pr-cards", "pr-hero"} {
 		if err := s.AddShortcode(name); err != nil {
 			t.Fatal(err)
 		}
@@ -99,6 +115,10 @@ func TestBlockTemplatesBuildOnEveryStarterTheme(t *testing.T) {
 				`<em>card</em>`,
 				`<li>a</li>`,
 				`<a class="pr-button" href="/contact/">Get in touch</a>`,
+				`<div class="pr-align-center">`,
+				`<div style="text-align: right"><a class="pr-button" href="/right/">Right</a></div>`,
+				`<section class="pr-hero" style="text-align: center">`,
+				`<div class="pr-cards" style="text-align: center">`,
 				`minmax(min(100%, 14rem), 1fr)`,
 				`var(--pr-primary`,
 			} {
@@ -106,8 +126,8 @@ func TestBlockTemplatesBuildOnEveryStarterTheme(t *testing.T) {
 					t.Errorf("missing %q", want)
 				}
 			}
-			if got := strings.Count(html, `<div class="pr-card">`); got != 2 {
-				t.Errorf("%d cards, want 2", got)
+			if got := strings.Count(html, `<div class="pr-card">`); got != 3 {
+				t.Errorf("%d cards, want 3", got)
 			}
 			if got := strings.Count(html, ".pr-cards {"); got != 1 {
 				t.Errorf("cards CSS written %d times, want 1", got)

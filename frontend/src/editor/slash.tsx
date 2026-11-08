@@ -22,7 +22,7 @@ export interface SlashHooks {
   pickImage: () => Promise<{ ref: string; alt?: string } | null>;
   prompt: (title: string, label: string, placeholder?: string) => Promise<string | null>;
   addContactForm: () => Promise<boolean>;
-  addPageBlock: (kind: "button" | "cards" | "hero") => Promise<boolean>;
+  addPageBlock: (kind: "align" | "button" | "cards" | "hero") => Promise<boolean>;
 }
 
 export function slashItems(h: SlashHooks): SlashItem[] {

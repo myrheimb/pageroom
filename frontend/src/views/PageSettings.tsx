@@ -35,6 +35,15 @@ export function PageSettings({ page, fields, setField, resolveImage, pickImage, 
 
   return (
     <aside className="side-panel" aria-label={t.pageSettings.label}>
+      {page.isSection && page.url === "/" && (
+        <div className="side-section">
+          <div className="field">
+            <label htmlFor="ps-title">{t.pageEditor.pageTitle}</label>
+            <input id="ps-title" className="input" value={fields.title ?? ""} onChange={(e) => setField("title", e.target.value)} />
+            <span className="help">{t.pageSettings.homeTitleNote}</span>
+          </div>
+        </div>
+      )}
       <div className="side-section">
         <h4>{t.pageSettings.publishing}</h4>
         <p className="help side-note">{t.pageSettings.publishingNote}</p>

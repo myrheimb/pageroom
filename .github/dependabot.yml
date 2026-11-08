@@ -21,3 +21,6 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+    ignore:
+      # It must match the Chromium that devenv.nix takes from nixpkgs, so it moves with `devenv update`.
+      - dependency-name: playwright-core

@@ -107,6 +107,15 @@ jobs:
           path: dist
           pattern: release-*
           merge-multiple: true
+      - name: Name the files for each system
+        working-directory: dist
+        run: |
+          version="${TAG#v}"
+          mv Pageroom.dmg "Pageroom-${version}-mac.dmg"
+          mv Pageroom-amd64-installer.exe "Pageroom-${version}-windows-setup.exe"
+          mv pageroom-x86_64.AppImage "Pageroom-${version}-linux.AppImage"
+          mv Pageroom.deb "Pageroom-${version}-ubuntu-debian.deb"
+          mv Pageroom.rpm "Pageroom-${version}-fedora.rpm"
       - name: Checksums
         working-directory: dist
         run: |
@@ -117,4 +126,4 @@ jobs:
         run: |
           git tag "$TAG"
           git push origin "refs/tags/$TAG"
-          gh release create "$TAG" dist/* --draft --title "Pageroom ${TAG#v}" --generate-notes --verify-tag
+          gh release create "$TAG" dist/* --draft --title "Pageroom ${TAG#v}" --generate-notes --notes-file .github/release-notes.md --verify-tag

@@ -35,7 +35,7 @@ Publish integrates, commits and pushes with compare-and-swap. `gitsync.integrate
 
 Without a git host, Pageroom builds the site with the preview's Hugo and uploads it to Cloudflare as a Worker. Changes are committed locally only after the upload succeeds.
 
-The editor converts Markdown to HTML (markdown-it) to ProseMirror, and back with Turndown. Shortcodes, raw HTML and `<!--more-->` are lifted out as locked nodes that keep their exact text. A body is only re-serialized if the user edits it. `markdown.test.ts` pins the round trip.
+The editor converts Markdown to HTML (markdown-it) to ProseMirror, and back with Turndown. Shortcodes, raw HTML and `<!--more-->` are lifted out as locked nodes that keep their exact text. Hero, Cards (with Card items) and Button are the shortcodes `pr-hero`, `pr-cards`, `pr-card` and `pr-button`. They load as editable TipTap nodes and write back as the same shortcodes, and anything the editor can't represent stays a locked block. The cover picture sits on the canvas and is saved as `image` and `imageAlt`, so the right panel holds only metadata. A body is only re-serialized if the user edits it. `markdown.test.ts` pins the round trip.
 
 Front matter edits are surgical. YAML goes through `yaml.Node` to keep comments and order, TOML is edited line by line, and JSON keeps key order. Unchanged documents stay byte-identical.
 

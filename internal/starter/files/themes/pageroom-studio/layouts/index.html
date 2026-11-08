@@ -1,6 +1,6 @@
 {{ define "main" }}
 <section class="home-hero">
-  {{ with .Params.image }}{{ with or ($.Resources.GetMatch .) (resources.Get .) }}<img src="{{ .RelPermalink }}" alt="">{{ else }}<img src="{{ . | relURL }}" alt="">{{ end }}{{ end }}
+  {{ with .Params.image }}{{ with or ($.Resources.GetMatch .) (resources.Get .) }}<img src="{{ .RelPermalink }}" alt="{{ $.Params.imageAlt }}">{{ else }}<img src="{{ . | relURL }}" alt="{{ $.Params.imageAlt }}">{{ end }}{{ end }}
   <div class="wrap prose">{{ .Content }}</div>
 </section>
 {{ with where site.RegularPages "Section" "in" site.MainSections }}

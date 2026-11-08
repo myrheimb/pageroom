@@ -22,7 +22,9 @@ sections:
 menus: [main, footer]
 
 # Extra front matter fields shown under "Details" in Page settings. Keys with
-# their own controls (title, description, image, tags, categories, …) are skipped.
+# their own controls (title, description, image, imageAlt, tags, categories, …) are skipped.
+# Custom fields are for metadata. Text and pictures that visitors read belong in
+# the page body as blocks, because editors can see and place those on the canvas.
 fields:
   - key: subtitle
     label: Subtitle
@@ -61,6 +63,8 @@ appearance:
 | Menus | `menus` in the site config (or `config/_default/menus.*`). Entries declared in a page's own front matter move there when a menu is saved |
 | Style panel | `assets/css/pageroom.css`, linked from the theme's head hook. Themes that load `assets/css/custom.css` get a marked block in that file instead. |
 | Theme gallery | A new folder in `themes/` and `theme` in the config file. Going back deletes the folder and restores the config file. |
+| Blocks | Banner (`pr-hero`), Cards and Button are the paired shortcodes `pr-hero`, `pr-cards` with `pr-card` items, and `pr-button` in the page body. Inserting one copies its template to `layouts/shortcodes/` unless the site already has a file with that name. Each template carries its own CSS, uses `--pr-primary` when set, and renders its inner content as Markdown. |
+| Cover picture | `image` and `imageAlt` front matter. The starter themes use `imageAlt` as the alt text. Other themes can print it with `{{ .Params.imageAlt }}`. |
 | Contact form | `{{< contact-form >}}` in the page, and `layouts/shortcodes/contact-form.html` unless the site already has one. The form posts to a form service such as Formspree, and shows the contact email until there is one. The preview doesn't send the form. |
 | Site settings | `title`, `baseURL`, `locale`/`languageCode`, `copyright`, `theme`, `params.description` and `params.contactForm` (form address and contact email) in the config file, edited in place, keeping comments |
 

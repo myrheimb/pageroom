@@ -9,6 +9,9 @@ import { ButtonBlock, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock
 import { slashItems } from "./slash";
 import { t } from "../i18n";
 
+// TipTap scrolls to the selection one frame after focus, and jsdom can't measure text for that scroll.
+vi.stubGlobal("requestAnimationFrame", () => 0);
+
 function setup(markdown = "") {
   const addPageBlock = vi.fn(async () => true);
   const editor = new Editor({

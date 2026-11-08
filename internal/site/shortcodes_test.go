@@ -119,6 +119,62 @@ func TestBlockTemplatesBuildOnEveryStarterTheme(t *testing.T) {
 	}
 }
 
+func TestStarterThemesUseImageAltAsAltText(t *testing.T) {
+	hugo, err := exec.LookPath("hugo")
+	if err != nil {
+		t.Skip("hugo is not installed")
+	}
+	const alt = `alt="A sandy beach"`
+	pages := map[string]string{
+		"_index.md":        "---\ntitle: Home\nimage: beach.jpg\nimageAlt: A sandy beach\n---\n\nHome.\n",
+		"landing/index.md": "---\ntitle: Landing\nimage: beach.jpg\nimageAlt: A sandy beach\n---\n\nBody.\n",
+		"posts/_index.md":  "---\ntitle: Posts\n---\n",
+		"posts/first.md":   "---\ntitle: First\ndate: 2026-01-01\nimage: beach.jpg\nimageAlt: A sandy beach\n---\n\nBody.\n",
+	}
+	wantFiles := map[string][]string{
+		"pageroom-paper":  {"landing/index.html"},
+		"pageroom-soft":   {"landing/index.html", "posts/index.html"},
+		"pageroom-studio": {"landing/index.html", "posts/index.html", "index.html"},
+		"pageroom-tinted": {"landing/index.html", "posts/index.html"},
+	}
+	for _, theme := range starterThemes {
+		t.Run(theme, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "site")
+			if err := starter.Create(dir, "Alt", "0.166.0"); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.MkdirAll(filepath.Join(dir, "assets"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "assets", "beach.jpg"), []byte("not really a jpeg"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			for name, body := range pages {
+				path := filepath.Join(dir, "content", filepath.FromSlash(name))
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(hugo, "--source", dir, "--destination", filepath.Join(dir, "public"), "--theme", theme, "--cacheDir", t.TempDir())
+			if out, err := cmd.CombinedOutput(); err != nil {
+				t.Fatalf("hugo: %v\n%s", err, out)
+			}
+			for _, name := range wantFiles[theme] {
+				raw, err := os.ReadFile(filepath.Join(dir, "public", filepath.FromSlash(name)))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !strings.Contains(string(raw), alt) {
+					t.Errorf("%s has no alt text:\n%s", name, raw)
+				}
+			}
+		})
+	}
+}
+
 func TestAddShortcodeKeepsExistingTemplate(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "site")
 	if err := starter.Create(dir, "Blocks", "0.166.0"); err != nil {

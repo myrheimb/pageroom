@@ -171,3 +171,28 @@ export const ShortcodeBlock = atomNode("shortcodeBlock", "data-shortcode", false
 export const ShortcodeInline = atomNode("shortcodeInline", "data-shortcode-inline", true, InlineChip);
 export const RawHtmlBlock = atomNode("rawHtmlBlock", "data-raw-html", false, RawHtmlView);
 export const RawHtmlInline = atomNode("rawHtmlInline", "data-raw-inline", true, InlineChip);
+
+
+function pageBlock(name: string, kind: string, content: string, attributeNames: string[], group = "block") {
+  return Node.create({
+    name,
+    group,
+    content,
+    defining: true,
+    draggable: group === "block",
+    addAttributes() {
+      return Object.fromEntries(attributeNames.map((attribute) => [attribute, { default: "", parseHTML: (el: HTMLElement) => el.getAttribute(`data-${attribute}`) || "", renderHTML: (attrs: Record<string, string>) => ({ [`data-${attribute}`]: attrs[attribute] }) }]));
+    },
+    parseHTML() {
+      return [{ tag: `div[data-pr="${kind}"]` }];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return ["div", mergeAttributes({ "data-pr": kind }, HTMLAttributes), 0];
+    },
+  });
+}
+
+export const HeroBlock = pageBlock("prHero", "hero", "block+", ["image", "alt", "button", "link"]);
+export const CardsBlock = pageBlock("prCards", "cards", "prCard+", []);
+export const CardBlock = pageBlock("prCard", "card", "block+", [], "prCardItem");
+export const ButtonBlock = pageBlock("prButton", "button", "text*", ["link"]);

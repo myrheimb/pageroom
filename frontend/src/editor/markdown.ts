@@ -141,9 +141,142 @@ function findCodeRanges(src: string): [number, number][] {
   return ranges;
 }
 
+// Page blocks: {{< pr-hero >}}, {{< pr-cards >}} with {{< pr-card >}} items and
+// {{< pr-button >}}. A block the editor can represent exactly becomes a TipTap
+// node. Anything else (unknown attributes, raw HTML inside, odd nesting) is
+// left to liftShortcodes and stays a locked shortcode block.
+const PR_ATTRIBUTES: Record<string, string[]> = {
+  "pr-hero": ["image", "alt", "button", "link"],
+  "pr-cards": [],
+  "pr-card": [],
+  "pr-button": ["link"],
+};
+
+interface PrToken {
+  start: number;
+  end: number;
+  name: string;
+  closing: boolean;
+  selfClosing: boolean;
+  raw: string;
+}
+
+function prTokens(src: string): PrToken[] {
+  const codeRanges = findCodeRanges(src);
+  const toks: PrToken[] = [];
+  const re = new RegExp(SC.source, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) {
+    const at = m.index;
+    if (!m[4].startsWith("pr-") || codeRanges.some(([a, b]) => at >= a && at < b)) continue;
+    toks.push({ start: at, end: at + m[0].length, name: m[4], closing: !!m[3], selfClosing: /\/\s*$/.test((m[5] ?? "").trim()) && !m[2], raw: m[0] });
+  }
+  return toks;
+}
+
+function prMatchingClose(toks: PrToken[], open: number): number {
+  let depth = 0;
+  for (let j = open + 1; j < toks.length; j++) {
+    if (toks[j].name !== toks[open].name) continue;
+    if (toks[j].closing) {
+      if (depth === 0) return j;
+      depth--;
+    } else if (!toks[j].selfClosing) depth++;
+  }
+  return -1;
+}
+
+function parsePrAttributes(openTag: string, name: string): Record<string, string> | null {
+  const m = /^\{\{<\s*pr-[\w-]+([\s\S]*?)\s*>\}\}$/.exec(openTag);
+  if (!m) return null;
+  const attrs: Record<string, string> = {};
+  const pair = /^\s+(\w+)="((?:[^"\\]|\\.)*)"/;
+  let rest = m[1];
+  let found: RegExpExecArray | null;
+  while ((found = pair.exec(rest))) {
+    if (!PR_ATTRIBUTES[name].includes(found[1]) || found[1] in attrs) return null;
+    attrs[found[1]] = found[2].replace(/\\(.)/g, "$1");
+    rest = rest.slice(found[0].length);
+  }
+  return rest.trim() === "" ? attrs : null;
+}
+
+function hasRawHtml(markdown: string): boolean {
+  const flatten = (tokens: { type: string; children?: unknown }[]): boolean =>
+    tokens.some((token) => token.type === "html_block" || token.type === "html_inline" || (Array.isArray(token.children) && flatten(token.children)));
+  return flatten(md.parse(liftShortcodes(markdown).text, {}));
+}
+
+function renderPrBlock(raw: string): string | null {
+  const toks = prTokens(raw);
+  if (toks.length < 2 || toks[0].start !== 0 || toks[0].closing || toks[0].selfClosing) return null;
+  const close = prMatchingClose(toks, 0);
+  if (close !== toks.length - 1 || toks[close].end !== raw.length) return null;
+
+  const name = toks[0].name;
+  if (!(name in PR_ATTRIBUTES)) return null;
+  const attrs = parsePrAttributes(toks[0].raw, name);
+  if (!attrs) return null;
+  const inner = raw.slice(toks[0].end, toks[close].start).trim();
+  const attributeHtml = Object.entries(attrs).map(([key, value]) => ` data-${key}="${esc(value)}"`).join("");
+  const kind = name.slice("pr-".length);
+  const wrap = (content: string) => `<div data-pr="${kind}"${attributeHtml}>${content}</div>`;
+
+  if (name === "pr-button") {
+    return /\n|\{\{/.test(inner) ? null : wrap(esc(inner));
+  }
+  if (name === "pr-cards") {
+    if (toks.length < 4) return null;
+    let cards = "";
+    let cursor = toks[0].end;
+    for (let i = 1; i < toks.length - 1; i += 2) {
+      const card = toks[i];
+      const cardClose = toks[i + 1];
+      if (card.name !== "pr-card" || card.closing || card.selfClosing || cardClose.name !== "pr-card" || !cardClose.closing) return null;
+      if (raw.slice(cursor, card.start).trim() !== "") return null;
+      const html = renderPrBlock(raw.slice(card.start, cardClose.end));
+      if (html === null) return null;
+      cards += html;
+      cursor = cardClose.end;
+    }
+    return raw.slice(cursor, toks[close].start).trim() === "" ? wrap(cards) : null;
+  }
+  if (toks.length !== 2 || hasRawHtml(inner)) return null;
+  return wrap(inner === "" ? "" : markdownToHtml(inner));
+}
+
+export function extractPrBlocks(src: string): { text: string; blocks: string[] } {
+  const toks = prTokens(src);
+  const blocks: string[] = [];
+  let out = "";
+  let pos = 0;
+  let i = 0;
+  while (i < toks.length) {
+    const tok = toks[i];
+    const close = tok.closing || tok.selfClosing ? -1 : prMatchingClose(toks, i);
+    if (close < 0) {
+      i++;
+      continue;
+    }
+    const end = toks[close].end;
+    const lineStart = tok.start === 0 || src[tok.start - 1] === "\n";
+    const lineEnd = /^[ \t]*$/.test(src.slice(end, src.indexOf("\n", end) === -1 ? src.length : src.indexOf("\n", end)));
+    const html = lineStart && lineEnd ? renderPrBlock(src.slice(tok.start, end)) : null;
+    if (html !== null) {
+      out += `${src.slice(pos, tok.start)}\n\nPRBLOCK${blocks.length}X\n\n`;
+      blocks.push(html);
+      pos = end;
+    }
+    while (i < toks.length && toks[i].start < end) i++;
+  }
+  return { text: out + src.slice(pos), blocks };
+}
+
 export function markdownToHtml(src: string): string {
-  const lifted = liftShortcodes(src);
+  const extracted = extractPrBlocks(src);
+  const lifted = liftShortcodes(extracted.text);
   let html = md.render(lifted.text);
+  html = html.replace(/<p>PRBLOCK(\d+)X<\/p>\n?/g, (_, i) => extracted.blocks[+i]);
   html = html.replace(/<p>PRSCBLOCK(\d+)X<\/p>\n?/g, (_, i) => `<div data-shortcode="${b64(lifted.blocks[+i])}"></div>`);
   // a block placeholder that markdown-it merged into a paragraph
   html = html.replace(/PRSCBLOCK(\d+)X/g, (_, i) => `<span data-shortcode-inline="${b64(lifted.blocks[+i])}">${esc(lifted.blocks[+i])}</span>`);
@@ -180,6 +313,7 @@ const td = new TurndownService({
   blankReplacement: (_content, node) => {
     const el = node as HTMLElement;
     const raw = (attr: string) => unb64(el.getAttribute(attr) || "");
+    if (el.hasAttribute?.("data-pr")) return prBlockMarkdown(el, "");
     if (el.hasAttribute?.("data-shortcode")) return `\n\n${raw("data-shortcode")}\n\n`;
     if (el.hasAttribute?.("data-raw-html")) return `\n\n${raw("data-raw-html")}\n\n`;
     if (el.hasAttribute?.("data-shortcode-inline")) return raw("data-shortcode-inline");
@@ -189,6 +323,25 @@ const td = new TurndownService({
 });
 td.use(gfm);
 
+function prBlockMarkdown(el: HTMLElement, content: string): string {
+  const kind = el.getAttribute("data-pr") || "";
+  const name = `pr-${kind}`;
+  const attrs = (PR_ATTRIBUTES[name] ?? [])
+    .map((key) => [key, el.getAttribute(`data-${key}`) || ""])
+    .filter(([, value]) => value !== "")
+    .map(([key, value]) => ` ${key}="${value.replace(/[\\"]/g, "\\$&")}"`)
+    .join("");
+  const body = kind === "button" ? (el.textContent || "").trim() : content.replace(/\n{3,}/g, "\n\n").trim();
+  const open = `{{< ${name}${attrs} >}}`;
+  const close = `{{< /${name} >}}`;
+  if (kind === "button") return `\n\n${open}${body}${close}\n\n`;
+  return `\n\n${open}\n${body === "" ? "" : body + "\n"}${close}\n\n`;
+}
+
+td.addRule("prBlock", {
+  filter: (n) => n.nodeName === "DIV" && (n as HTMLElement).hasAttribute("data-pr"),
+  replacement: (content, n) => prBlockMarkdown(n as HTMLElement, content),
+});
 td.addRule("shortcodeBlock", {
   filter: (n) => n.nodeName === "DIV" && (n as HTMLElement).hasAttribute("data-shortcode"),
   replacement: (_c, n) => `\n\n${unb64((n as HTMLElement).getAttribute("data-shortcode") || "")}\n\n`,

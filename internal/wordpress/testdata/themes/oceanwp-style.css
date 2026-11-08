@@ -1,0 +1,6 @@
+html{font-size:62.5%;overflow-y:scroll}
+body{background-color:#fff}
+a{color:var(--owp-link-color, #333)}
+body{font-family:"Open Sans",sans-serif;font-size:14px;line-height:1.8;color:#4a4a4a}
+h1,h2,h3,h4,h5,h6{font-weight:600;margin:0 0 20px;color:#333;line-height:1.4}
+input[type=button],input[type=reset],input[type=submit],button[type=submit],.button,#comments input[type=submit],.page-numbers a,.page-numbers span:not(.elementor-screen-only),.page-links span{background-color:#13aff0}

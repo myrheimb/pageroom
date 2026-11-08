@@ -1,0 +1,9 @@
+{{ define "main" }}
+<section class="wrap">
+  <header class="page-head"><h1>{{ .Title }}</h1></header>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  <ul class="terms">
+    {{ range .Pages.ByTitle }}<li><a href="{{ .RelPermalink }}">{{ .LinkTitle }} <span class="count">{{ len .Pages }}</span></a></li>{{ end }}
+  </ul>
+</section>
+{{ end }}

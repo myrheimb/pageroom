@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Pageroom
+Comment=Desktop CMS for Hugo
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/Pageroom %u
+Terminal=false
+Type=Application
+Icon=Pageroom
+Categories=Utility;
+StartupWMClass=Pageroom
+
+ 

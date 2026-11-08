@@ -1,0 +1,11 @@
+# Hugo build output
+/public/
+/resources/_gen/
+.hugo_build.lock
+# Secrets must never be published
+.env
+.env.*
+!.env.example
+# OS clutter
+.DS_Store
+Thumbs.db

@@ -1,0 +1,61 @@
+version: "3"
+
+vars:
+  APP_NAME: Pageroom
+  BIN_DIR: bin
+  GOOS: '{{.GOOS | default OS}}'
+  PACKAGE_MANAGER: npm
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+
+includes:
+  common: ./build/Taskfile.yml
+  darwin: ./build/darwin/Taskfile.yml
+  linux: ./build/linux/Taskfile.yml
+  windows: ./build/windows/Taskfile.yml
+
+tasks:
+  build:
+    desc: Build the app for this platform into bin/.
+    cmds:
+      - task: "{{.GOOS}}:build"
+
+  default:
+    desc: Available tasks for this project.
+    cmds: [task --list]
+
+  dev:
+    desc: Run the app with hot reload.
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  lint:
+    cmds:
+      - prek run --all-files
+
+  package:
+    desc: Package a production build for this platform.
+    cmds:
+      - task: "{{.GOOS}}:package"
+
+  run:
+    cmds:
+      - task: "{{.GOOS}}:run"
+
+  screenshots:
+    desc: Regenerate the README screenshots.
+    cmds:
+      - npm --prefix frontend run screenshots
+
+  test:
+    cmds:
+      - go test -race ./...
+      - npm --prefix frontend test
+
+  theme-index:
+    desc: Rebuild the theme gallery's list of themes.
+    cmds:
+      - go run ./cmd/themeindex
+
+  type:
+    cmds:
+      - npm --prefix frontend run typecheck

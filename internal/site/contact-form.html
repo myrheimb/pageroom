@@ -1,0 +1,22 @@
+{{- /* Pageroom's contact form. Its form address and email are set in Pageroom under Settings → Site (params.contactForm in the site config). */ -}}
+{{- $action := "" }}{{ $email := "" }}
+{{- with site.Params.contactForm }}{{ $action = .action }}{{ $email = .email }}{{ end }}
+{{- if $action }}
+<form class="contact-form" action="{{ $action }}" method="post"{{ if hugo.IsServer }} onsubmit="return false"{{ end }}>
+  <p><label>[[ .Name ]]<br><input type="text" name="name" autocomplete="name" required></label></p>
+  <p><label>[[ .Email ]]<br><input type="email" name="email" autocomplete="email" required></label></p>
+  <p><label>[[ .Message ]]<br><textarea name="message" rows="6" required></textarea></label></p>
+  <p><button type="submit">[[ .Send ]]</button></p>
+  {{- if hugo.IsServer }}
+  <p><small>[[ .PreviewOnly ]]</small></p>
+  {{- end }}
+</form>
+<style>
+.contact-form input, .contact-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 0.5em; }
+.contact-form button { font: inherit; padding: 0.6em 1.4em; border: 0; border-radius: 0.5em; background: #1f2937; color: #fff; cursor: pointer; }
+</style>
+{{- else if $email }}
+<p class="contact-form">[[ .EmailUs ]]</p>
+{{- else if hugo.IsServer }}
+<p class="contact-form">[[ .SetUp ]]</p>
+{{- end }}

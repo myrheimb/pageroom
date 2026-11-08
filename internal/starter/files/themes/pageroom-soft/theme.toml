@@ -1,0 +1,4 @@
+name = "Pageroom Soft"
+license = "MIT"
+description = "Friendly and rounded, with gentle motion between pages."
+min_version = "0.158.0"

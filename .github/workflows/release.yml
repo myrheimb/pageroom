@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Read the version and make sure it is unreleased
+        id: read
+        run: |
+          version="$(sed -n 's/^  version: "\(.*\)".*/\1/p' build/config.yml)"
+          test -n "$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/v${version}" > /dev/null; then
+            echo "Tag v${version} already exists. Bump info.version in build/config.yml." >&2
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: version
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: macos-latest
+            tasks: darwin:package:universal darwin:create:dmg
+            files: bin/*.dmg
+          - os: windows-latest
+            tasks: windows:package
+            files: bin/*-installer.exe
+          - os: ubuntu-24.04
+            tasks: linux:package
+            files: |
+              bin/*.AppImage
+              bin/*.deb
+              bin/*.rpm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Linux libraries
+        if: runner.os == 'Linux'
+        timeout-minutes: 15
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: NSIS
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          command -v makensis > /dev/null || choco install nsis -y --no-progress
+          for dir in "$PROGRAMFILES (x86)/NSIS" "$PROGRAMFILES/NSIS" "$(dirname "$(command -v makensis || true)")"; do
+            if [ -x "$dir/makensis.exe" ]; then
+              cygpath -w "$dir" >> "$GITHUB_PATH"
+              exit 0
+            fi
+          done
+          echo "makensis not found after installing NSIS" >&2
+          exit 1
+      - name: Install Wails
+        run: go install tool
+      - name: Build
+        shell: bash
+        run: |
+          # PAGEROOM_GITHUB_CLIENT_ID is a variable, not a secret: the device flow has no secret and the ID ships in the app.
+          # wails3 task runs only its first argument as a task, so call it once per task.
+          for name in ${{ matrix.tasks }}; do
+            wails3 task "$name" EXTRA_LDFLAGS="-X github.com/myrheimb/pageroom/internal/secrets.GitHubClientID=${{ vars.PAGEROOM_GITHUB_CLIENT_ID }}"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ runner.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Draft release
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: v${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          pattern: release-*
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum -- * > ../SHA256SUMS
+          mv ../SHA256SUMS .
+          cat SHA256SUMS
+      - name: Tag and draft release
+        run: |
+          git tag "$TAG"
+          git push origin "refs/tags/$TAG"
+          gh release create "$TAG" dist/* --draft --title "Pageroom ${TAG#v}" --generate-notes --verify-tag

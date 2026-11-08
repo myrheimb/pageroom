@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+	<title>Hannah's Bakery</title>
+	<link>https://hannahsbakery.example</link>
+	<description>Fresh bread daily</description>
+	<wp:author><wp:author_login><![CDATA[hannah]]></wp:author_login><wp:author_display_name><![CDATA[Hannah Baker]]></wp:author_display_name></wp:author>
+	<wp:category><wp:term_id>5</wp:term_id><wp:category_nicename><![CDATA[bread]]></wp:category_nicename><wp:category_parent><![CDATA[]]></wp:category_parent><wp:cat_name><![CDATA[Bread]]></wp:cat_name></wp:category>
+	<wp:category><wp:term_id>6</wp:term_id><wp:category_nicename><![CDATA[coffee-cake]]></wp:category_nicename><wp:category_parent><![CDATA[]]></wp:category_parent><wp:cat_name><![CDATA[Coffee &amp; cake]]></wp:cat_name></wp:category>
+	<wp:tag><wp:term_id>7</wp:term_id><wp:tag_slug><![CDATA[sourdough]]></wp:tag_slug><wp:tag_name><![CDATA[sourdough]]></wp:tag_name></wp:tag>
+
+	<item>
+		<title><![CDATA[Our new sourdough]]></title>
+		<link>https://hannahsbakery.example/2024/03/02/our-new-sourdough/</link>
+		<dc:creator><![CDATA[hannah]]></dc:creator>
+		<content:encoded><![CDATA[<!-- wp:paragraph -->
+<p>We spent <strong>months</strong> perfecting this loaf. See our <a href="https://hannahsbakery.example/about/">story</a>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":11} -->
+<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="A sourdough loaf" class="wp-image-11"/></figure>
+<!-- /wp:image -->
+
+<!-- wp:embed {"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} -->
+<figure class="wp-block-embed is-type-video"><div class="wp-block-embed__wrapper">
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+</div></figure>
+<!-- /wp:embed -->
+
+<!-- wp:list -->
+<ul><li>Flour</li><li>Water</li></ul>
+<!-- /wp:list -->
+
+<p>[contact-form-7 id="5"]</p>
+<p><img src="https://evil.internal/x.jpg" alt="tracker"></p>]]></content:encoded>
+		<excerpt:encoded><![CDATA[<p>The loaf we're proudest of.</p>]]></excerpt:encoded>
+		<wp:post_id>10</wp:post_id>
+		<wp:post_date_gmt><![CDATA[2024-03-02 09:30:00]]></wp:post_date_gmt>
+		<wp:post_name><![CDATA[our-new-sourdough]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type><![CDATA[post]]></wp:post_type>
+		<category domain="category" nicename="bread"><![CDATA[Bread]]></category>
+		<category domain="category" nicename="coffee-cake"><![CDATA[Coffee &amp; cake]]></category>
+		<category domain="post_tag" nicename="sourdough"><![CDATA[sourdough]]></category>
+		<wp:postmeta><wp:meta_key><![CDATA[_thumbnail_id]]></wp:meta_key><wp:meta_value><![CDATA[11]]></wp:meta_value></wp:postmeta>
+		<wp:comment><wp:comment_approved>1</wp:comment_approved></wp:comment>
+	</item>
+
+	<item>
+		<title><![CDATA[Classic post]]></title>
+		<link>https://hannahsbakery.example/?p=12</link>
+		<content:encoded><![CDATA[First paragraph with a line
+break.
+
+[caption id="attachment_11" align="aligncenter" width="300"]<img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-300x200.jpg" alt="Loaf" /> Our loaf[/caption]
+<!--more-->
+Second paragraph.]]></content:encoded>
+		<wp:post_id>12</wp:post_id>
+		<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+		<wp:post_date><![CDATA[2024-04-01 10:00:00]]></wp:post_date>
+		<wp:post_name><![CDATA[]]></wp:post_name>
+		<wp:status><![CDATA[draft]]></wp:status>
+		<wp:post_type><![CDATA[post]]></wp:post_type>
+		<category domain="category" nicename="uncategorized"><![CDATA[Uncategorized]]></category>
+	</item>
+
+	<item>
+		<title><![CDATA[Baking day]]></title>
+		<link>https://hannahsbakery.example/2024/04/10/baking-day/</link>
+		<dc:creator><![CDATA[hannah]]></dc:creator>
+		<content:encoded><![CDATA[<!-- wp:paragraph -->
+<p>Rye<sup data-fn="abc-123" class="fn"><a href="#abc-123" id="abc-123-link">1</a></sup> is in the oven.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:more -->
+<!--more-->
+<!-- /wp:more -->
+
+<!-- wp:paragraph -->
+<p>See the <a href="https://hannahsbakery.example/wp-content/uploads/2024/04/menu.pdf">menu</a>.</p>
+<!-- /wp:paragraph -->
+
+[audio mp3="https://hannahsbakery.example/wp-content/uploads/2024/04/oven.mp3"][/audio]
+
+<!-- wp:video -->
+<figure class="wp-block-video"><video controls src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"></video></figure>
+<!-- /wp:video -->
+
+<!-- wp:html -->
+<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" width="600" height="450"></iframe>
+<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+<iframe src="https://forms.example.com/embed/signup"></iframe>
+<!-- /wp:html -->
+
+[gist]https://gist.github.com/hannah/0123abcd[/gist]
+
+<script>var tracking = 1;</script>
+
+<!-- wp:footnotes /-->]]></content:encoded>
+		<wp:post_id>13</wp:post_id>
+		<wp:post_date_gmt><![CDATA[2024-04-10 08:00:00]]></wp:post_date_gmt>
+		<wp:post_name><![CDATA[baking-day]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[post]]></wp:post_type>
+		<wp:postmeta><wp:meta_key><![CDATA[footnotes]]></wp:meta_key><wp:meta_value><![CDATA[[{"content":"Mostly <em>whole</em> rye.","id":"abc-123"}]]]></wp:meta_value></wp:postmeta>
+	</item>
+
+	<item>
+		<title><![CDATA[Sourdough starter kit]]></title>
+		<wp:post_id>50</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[product]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Price]]></title>
+		<link>https://hannahsbakery.example/?post_type=acf-field&amp;p=52</link>
+		<wp:post_id>52</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[acf-field]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Opening hours]]></title>
+		<content:encoded><![CDATA[<!-- wp:paragraph -->
+<p>Open daily from 7.</p>
+<!-- /wp:paragraph -->
+<!-- wp:block {"ref":61} /-->]]></content:encoded>
+		<wp:post_id>60</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[wp_block]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Get in touch]]></title>
+		<content:encoded><![CDATA[<p>Closed on Mondays.</p>
+<p>[contact-form-7 id="5"]</p>
+<!-- wp:block {"ref":61} /-->]]></content:encoded>
+		<wp:post_id>61</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[wp_block]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Global Styles]]></title>
+		<wp:post_id>51</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[wp_global_styles]]></wp:post_type>
+	</item>
+
+	<item>
+		<title><![CDATA[About]]></title>
+		<link>https://hannahsbakery.example/about/</link>
+		<content:encoded><![CDATA[<p>We bake.</p>
+<!-- wp:block {"ref":60} /-->]]></content:encoded>
+		<wp:post_id>20</wp:post_id>
+		<wp:post_date_gmt><![CDATA[2023-01-01 00:00:00]]></wp:post_date_gmt>
+		<wp:post_name><![CDATA[about]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>2</wp:menu_order>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Our Team]]></title>
+		<link>https://hannahsbakery.example/about/team/</link>
+		<content:encoded><![CDATA[<p>Hannah and Ben.</p>]]></content:encoded>
+		<wp:post_id>21</wp:post_id>
+		<wp:post_name><![CDATA[team]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>20</wp:post_parent>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Contact form 1]]></title>
+		<wp:post_id>5</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[wpcf7_contact_form]]></wp:post_type>
+		<wp:postmeta><wp:meta_key><![CDATA[_form]]></wp:meta_key><wp:meta_value><![CDATA[<label> Your name [text* your-name autocomplete:name] </label>
+<label> Your email [email* your-email autocomplete:email] </label>
+<label> Your phone [tel your-phone] </label>
+<label> Your message [textarea your-message] </label>
+[submit "Submit"]]]></wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key><![CDATA[_mail]]></wp:meta_key><wp:meta_value><![CDATA[a:2:{s:7:"subject";s:13:"[your-subject]";s:9:"recipient";s:28:"hannah@hannahsbakery.example";}]]></wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title><![CDATA[Trashed]]></title>
+		<wp:post_id>22</wp:post_id>
+		<wp:status><![CDATA[trash]]></wp:status>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+	</item>
+
+	<item>
+		<title><![CDATA[loaf]]></title>
+		<wp:post_id>11</wp:post_id>
+		<wp:post_type><![CDATA[attachment]]></wp:post_type>
+		<wp:status><![CDATA[inherit]]></wp:status>
+		<wp:attachment_url><![CDATA[https://hannahsbakery.example/wp-content/uploads/2024/03/loaf.jpg]]></wp:attachment_url>
+	</item>
+
+	<item>
+		<title><![CDATA[cropped-icon.png]]></title>
+		<wp:post_id>41</wp:post_id>
+		<wp:post_type><![CDATA[attachment]]></wp:post_type>
+		<wp:status><![CDATA[inherit]]></wp:status>
+		<wp:attachment_url><![CDATA[https://hannahsbakery.example/wp-content/uploads/2024/05/cropped-icon.png]]></wp:attachment_url>
+		<wp:postmeta><wp:meta_key>_wp_attachment_context</wp:meta_key><wp:meta_value><![CDATA[site-icon]]></wp:meta_value></wp:postmeta>
+	</item>
+
+	<item>
+		<title><![CDATA[cropped-old-icon.png]]></title>
+		<wp:post_id>40</wp:post_id>
+		<wp:post_type><![CDATA[attachment]]></wp:post_type>
+		<wp:status><![CDATA[inherit]]></wp:status>
+		<wp:attachment_url><![CDATA[https://hannahsbakery.example/wp-content/uploads/2024/05/cropped-old-icon.png]]></wp:attachment_url>
+		<wp:postmeta><wp:meta_key>_wp_attachment_context</wp:meta_key><wp:meta_value><![CDATA[site-icon]]></wp:meta_value></wp:postmeta>
+	</item>
+
+	<item>
+		<title><![CDATA[]]></title>
+		<wp:post_id>30</wp:post_id>
+		<wp:menu_order>1</wp:menu_order>
+		<wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<category domain="nav_menu" nicename="primary"><![CDATA[Primary]]></category>
+		<wp:postmeta><wp:meta_key>_menu_item_type</wp:meta_key><wp:meta_value>post_type</wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key>_menu_item_object_id</wp:meta_key><wp:meta_value>20</wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key>_menu_item_menu_item_parent</wp:meta_key><wp:meta_value>0</wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title><![CDATA[Instagram]]></title>
+		<wp:post_id>31</wp:post_id>
+		<wp:menu_order>2</wp:menu_order>
+		<wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<category domain="nav_menu" nicename="primary"><![CDATA[Primary]]></category>
+		<wp:postmeta><wp:meta_key>_menu_item_type</wp:meta_key><wp:meta_value>custom</wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key>_menu_item_url</wp:meta_key><wp:meta_value>https://instagram.com/hannahsbakery</wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title><![CDATA[]]></title>
+		<wp:post_id>32</wp:post_id>
+		<wp:menu_order>3</wp:menu_order>
+		<wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<category domain="nav_menu" nicename="primary"><![CDATA[Primary]]></category>
+		<wp:postmeta><wp:meta_key>_menu_item_type</wp:meta_key><wp:meta_value>taxonomy</wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key>_menu_item_object</wp:meta_key><wp:meta_value>category</wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key>_menu_item_object_id</wp:meta_key><wp:meta_value>6</wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title><![CDATA[twentytwentyfour]]></title>
+		<content:encoded><![CDATA[.hero { color: red; } /* old note */ .cta { margin: 0; }]]></content:encoded>
+		<wp:post_id>90</wp:post_id>
+		<wp:post_name><![CDATA[twentytwentyfour]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[custom_css]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[oceanwp]]></title>
+		<content:encoded><![CDATA[.menu { display: none; }]]></content:encoded>
+		<wp:post_id>91</wp:post_id>
+		<wp:post_name><![CDATA[oceanwp]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[custom_css]]></wp:post_type>
+	</item>
+</channel>
+</rss>

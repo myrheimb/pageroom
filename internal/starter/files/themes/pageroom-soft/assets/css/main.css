@@ -1,0 +1,145 @@
+:root {
+  color-scheme: light dark;
+  --pr-primary: #d9476d;
+  --pr-bg: #fdf6f4;
+  --pr-surface: #ffffff;
+  --pr-line: #f0dfe2;
+  --pr-text: #3b2f35;
+  --pr-heading: #2a1f25;
+  --pr-muted: #86737c;
+  --pr-accent: var(--pr-primary);
+  --pr-accent-soft: #fbe3ea;
+  --pr-accent-warm: #ffb36b;
+  --pr-on-accent: #fff;
+  --pr-shadow: 0 1px 2px rgb(60 30 40 / .06), 0 12px 32px -12px rgb(60 30 40 / .22);
+  --pr-shadow-lifted: 0 2px 4px rgb(60 30 40 / .06), 0 20px 40px -12px rgb(60 30 40 / .3);
+  --pr-heading-font: ui-rounded, "SF Pro Rounded", "Nunito", "Varela Round", "Hiragino Maru Gothic ProN", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+  --pr-body-font: ui-rounded, "SF Pro Rounded", "Nunito", "Varela Round", "Hiragino Maru Gothic ProN", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+}
+/* Every color is mixed from --pr-primary, so picking one color in Pageroom's Appearance panel re-tints the whole site, in light and dark mode. */
+@supports (color: oklch(from red l c h)) and (color: light-dark(red, red)) {
+  :root {
+    --pr-bg: light-dark(oklch(from var(--pr-primary) .975 .014 h), oklch(from var(--pr-primary) .19 .025 h));
+    --pr-surface: light-dark(oklch(from var(--pr-primary) .998 .003 h), oklch(from var(--pr-primary) .245 .03 h));
+    --pr-line: light-dark(oklch(from var(--pr-primary) .91 .03 h), oklch(from var(--pr-primary) .32 .035 h));
+    --pr-text: light-dark(oklch(from var(--pr-primary) .32 .03 h), oklch(from var(--pr-primary) .92 .015 h));
+    --pr-heading: light-dark(oklch(from var(--pr-primary) .25 .035 h), oklch(from var(--pr-primary) .97 .01 h));
+    --pr-muted: light-dark(oklch(from var(--pr-primary) .55 .035 h), oklch(from var(--pr-primary) .74 .03 h));
+    --pr-accent: light-dark(oklch(from var(--pr-primary) min(l, .58) c h), oklch(from var(--pr-primary) max(l, .78) min(c, .14) h));
+    --pr-accent-soft: color-mix(in oklch, var(--pr-accent) 14%, var(--pr-surface));
+    --pr-accent-warm: oklch(from var(--pr-accent) max(l, .75) c calc(h + 50));
+    --pr-on-accent: light-dark(#fff, oklch(from var(--pr-primary) .2 .03 h));
+    --pr-shadow: 0 1px 2px oklch(from var(--pr-primary) .3 .05 h / .07), 0 12px 32px -12px light-dark(oklch(from var(--pr-primary) .3 .08 h / .25), oklch(from var(--pr-primary) .05 .02 h / .6));
+    --pr-shadow-lifted: 0 2px 4px oklch(from var(--pr-primary) .3 .05 h / .07), 0 20px 40px -12px light-dark(oklch(from var(--pr-primary) .3 .08 h / .35), oklch(from var(--pr-primary) .05 .02 h / .7));
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 19px; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--pr-bg); color: var(--pr-text); font-family: var(--pr-body-font); line-height: 1.7; }
+::selection { background: var(--pr-accent-soft); }
+img { max-width: 100%; height: auto; }
+a { color: var(--pr-accent); text-underline-offset: .2em; text-decoration-thickness: 2px; text-decoration-color: color-mix(in oklch, var(--pr-accent) 35%, transparent); }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 3px solid color-mix(in oklch, var(--pr-accent) 60%, transparent); outline-offset: 3px; }
+h1, h2, h3, h4 { font-family: var(--pr-heading-font); color: var(--pr-heading); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+p, li { text-wrap: pretty; }
+:lang(ja) :is(h1, h2, h3, h4) { letter-spacing: 0; line-height: 1.35; word-break: auto-phrase; }
+.wrap { max-width: 40rem; margin: 0 auto; padding: 0 1.25rem; }
+.wrap.wide { max-width: 62rem; }
+
+.skip-link { position: absolute; left: 1rem; top: .75rem; z-index: 20; background: var(--pr-accent); color: var(--pr-on-accent); padding: .5rem 1rem; border-radius: 999px; font-weight: 700; text-decoration: none; translate: 0 -300%; }
+.skip-link:focus { translate: 0 0; }
+
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-top: 1.25rem; padding-bottom: 1.25rem; max-width: 62rem; }
+.brand { display: flex; align-items: center; gap: .6rem; font-family: var(--pr-heading-font); font-size: 1.2rem; font-weight: 800; color: var(--pr-heading); text-decoration: none; }
+.brand img { height: 2rem; width: auto; }
+.brand-mark { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50% 50% 50% 18%; background: linear-gradient(135deg, var(--pr-accent), var(--pr-accent-warm)); color: var(--pr-on-accent); font-size: .85rem; }
+.menu-button { display: none; align-items: center; gap: .5rem; font: inherit; font-size: .95rem; font-weight: 700; background: var(--pr-surface); color: var(--pr-heading); border: 0; border-radius: 999px; padding: .5rem 1rem; box-shadow: var(--pr-shadow); cursor: pointer; anchor-name: --site-menu; }
+.menu-button::before { content: ""; width: 1rem; height: .7rem; background: linear-gradient(currentColor 0 0) top / 100% 2px no-repeat, linear-gradient(currentColor 0 0) center / 100% 2px no-repeat, linear-gradient(currentColor 0 0) bottom / 100% 2px no-repeat; }
+/* The menu is a popover on phones. On wider screens it's an ordinary nav, so undo the browser's popover styles. */
+.site-nav { display: block; position: static; inset: auto; margin: 0; padding: 0; border: 0; background: none; color: inherit; overflow: visible; }
+.site-nav > ul { background: var(--pr-surface); padding: .3rem; border-radius: 999px; box-shadow: var(--pr-shadow); }
+.site-nav ul { list-style: none; margin: 0; display: flex; gap: .2rem; flex-wrap: wrap; }
+.site-nav a { display: block; color: var(--pr-muted); text-decoration: none; padding: .35rem 1rem; border-radius: 999px; font-weight: 700; font-size: .9rem; transition: background-color .2s, color .2s; }
+.site-nav a:hover { color: var(--pr-heading); }
+.site-nav a[aria-current] { background: var(--pr-accent-soft); color: var(--pr-accent); }
+.has-children { position: relative; }
+.has-children > ul { display: none; position: absolute; top: calc(100% + .4rem); left: 0; z-index: 10; flex-direction: column; min-width: 12rem; padding: .4rem; background: var(--pr-surface); border-radius: 1.25rem; box-shadow: var(--pr-shadow-lifted); }
+/* Bridges the gap above the dropdown so it stays open on the way down. */
+.has-children > ul::before { content: ""; position: absolute; inset: -.5rem 0 auto; height: .5rem; }
+.has-children:hover > ul, .has-children:focus-within > ul { display: flex; }
+@media (width < 40rem) {
+  .menu-button { display: inline-flex; }
+  .site-nav { position: fixed; position-anchor: --site-menu; position-area: bottom span-left; margin: .6rem 0 0; min-width: 15rem; max-height: 80vh; overflow: auto; padding: .5rem; border-radius: 1.5rem; background: var(--pr-surface); color: var(--pr-text); box-shadow: var(--pr-shadow-lifted); opacity: 1; scale: 1; transform-origin: top right; transition: opacity .2s, scale .2s, display .2s allow-discrete, overlay .2s allow-discrete; }
+  .site-nav:not(:popover-open) { display: none; opacity: 0; scale: .95; }
+  @starting-style { .site-nav:popover-open { opacity: 0; scale: .95; } }
+  @supports not (position-area: bottom) { .site-nav { inset: 4.5rem 1rem auto auto; } }
+  .site-nav > ul { background: none; padding: 0; box-shadow: none; border-radius: 0; }
+  .site-nav ul { flex-direction: column; gap: .1rem; }
+  .site-nav a { padding: .6rem 1rem; color: var(--pr-text); }
+  .has-children > ul { display: flex; position: static; min-width: 0; padding: 0 0 0 .75rem; background: none; box-shadow: none; }
+}
+
+main { padding: 2rem 0 5rem; }
+.home-hero { text-align: center; margin-top: 2rem; }
+.home-hero h1 { font-size: clamp(2.2rem, 1.2rem + 4vw, 3.4rem); line-height: 1.08; margin: 0 0 1rem; }
+.home-hero p { color: var(--pr-muted); font-size: 1.1rem; }
+.page-head { margin-bottom: 1.75rem; }
+.page-head h1, .prose h1 { font-size: clamp(2rem, 1.3rem + 3vw, 3rem); margin: 0 0 .5rem; }
+.meta { color: var(--pr-muted); font-size: .85rem; font-weight: 600; margin: 0 0 1rem; }
+.meta a { color: var(--pr-accent); background: var(--pr-accent-soft); padding: .1rem .6rem; border-radius: 999px; text-decoration: none; }
+.cover { width: 100%; border-radius: 1.75rem; margin: 1.5rem 0 0; box-shadow: var(--pr-shadow); }
+.prose h2 { font-size: 1.6rem; margin: 2.5rem 0 .75rem; }
+.prose h3 { font-size: 1.25rem; margin: 2rem 0 .5rem; }
+.prose blockquote { margin: 2rem 0; padding: 1.25rem 1.5rem; background: var(--pr-accent-soft); border-radius: 1.5rem; color: var(--pr-heading); font-weight: 600; }
+.prose blockquote p { margin: .25rem 0; }
+.prose code { background: var(--pr-accent-soft); padding: .1em .4em; border-radius: 6px; font-size: .88em; }
+.prose pre { background: var(--pr-surface); padding: 1.1rem 1.35rem; border-radius: 1.25rem; box-shadow: var(--pr-shadow); overflow-x: auto; font-size: .82rem; }
+.prose pre code { background: none; padding: 0; }
+.prose figure { margin: 2rem 0; }
+.prose img { border-radius: 1.25rem; }
+.prose figcaption { color: var(--pr-muted); font-size: .85rem; text-align: center; margin-top: .5rem; }
+.prose table { border-collapse: separate; border-spacing: 0; width: 100%; background: var(--pr-surface); border-radius: 1rem; box-shadow: var(--pr-shadow); overflow: hidden; }
+.prose th, .prose td { border-bottom: 1px solid var(--pr-line); padding: .6rem .9rem; text-align: left; }
+.prose tr:last-child td { border-bottom: 0; }
+.prose hr { border: 0; height: .5rem; width: 3.5rem; margin: 3rem auto; border-radius: 999px; background: linear-gradient(90deg, var(--pr-accent), var(--pr-accent-warm)); }
+.button { display: inline-block; background: var(--pr-accent); color: var(--pr-on-accent) !important; font-weight: 700; padding: .75rem 1.6rem; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 20px -8px var(--pr-accent); transition: translate .2s, box-shadow .2s; }
+.button:hover { translate: 0 -2px; box-shadow: 0 12px 24px -8px var(--pr-accent); }
+.section-title { font-size: 1.4rem; text-align: center; margin: 4rem 0 1.75rem; }
+.cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); gap: 1.5rem; }
+.card a { display: block; height: 100%; background: var(--pr-surface); border-radius: 1.5rem; padding: .6rem .6rem 1.25rem; box-shadow: var(--pr-shadow); color: inherit; text-decoration: none; transition: translate .25s, box-shadow .25s; }
+.card a:hover { translate: 0 -4px; box-shadow: var(--pr-shadow-lifted); }
+.card img, .card-placeholder { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 1.1rem; }
+.card-placeholder { background: radial-gradient(circle at 30% 30%, var(--pr-accent-warm), transparent 60%), linear-gradient(135deg, var(--pr-accent-soft), var(--pr-accent)); }
+.card h3 { margin: 1rem .75rem .2rem; font-size: 1.1rem; line-height: 1.3; }
+.card .meta { margin: 0 .75rem .4rem; }
+.card p { margin: 0 .75rem; color: var(--pr-muted); font-size: .9rem; }
+.site-footer { color: var(--pr-muted); font-size: .85rem; }
+.terms { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .75rem; }
+.terms a { display: block; background: var(--pr-accent-soft); padding: .4rem 1rem; border-radius: 999px; font-weight: 600; text-decoration: none; }
+.terms .count { color: var(--pr-muted); font-size: .85rem; }
+.site-footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-top: 1.5rem; padding-bottom: 2.5rem; max-width: 62rem; border-top: 2px dotted var(--pr-line); }
+.site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 1rem; flex-wrap: wrap; }
+.site-footer a { color: inherit; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  @supports (animation-timeline: view()) {
+    .card { animation: card-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+  }
+}
+@keyframes card-rise { from { opacity: 0; translate: 0 2rem; scale: .96; } }
+@media (prefers-reduced-motion: reduce) {
+  .site-nav, .site-nav a, .button, .card a { transition: none; }
+}
+@media print {
+  :root { color-scheme: light; }
+  .site-header, .site-footer, .skip-link { display: none; }
+  body { background: #fff; color: #000; font-size: 12pt; }
+  a { color: inherit; }
+  .card a, .cover, .prose pre, .prose table { box-shadow: none; border: 1px solid #ccc; }
+  .card { animation: none; }
+  .prose a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .85em; }
+  img, figure, pre, blockquote, table, .card { break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; }
+}

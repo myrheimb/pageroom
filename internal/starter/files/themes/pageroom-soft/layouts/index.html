@@ -1,0 +1,9 @@
+{{ define "main" }}
+<section class="wrap home-hero prose">{{ .Content }}</section>
+{{ with where site.RegularPages "Section" "in" site.MainSections }}
+<section class="wrap wide">
+  <h2 class="section-title">{{ i18n "latestPosts" }}</h2>
+  {{ partial "cards.html" (first 6 .) }}
+</section>
+{{ end }}
+{{ end }}

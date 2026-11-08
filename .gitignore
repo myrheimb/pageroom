@@ -1,0 +1,25 @@
+# Build output
+/.task/
+/bin/
+/build/bin/
+/build/linux/appimage/build/
+/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+/frontend/dist/*
+!/frontend/dist/.gitkeep
+/frontend/node_modules/
+# Local
+.DS_Store
+*.log
+.env
+.env.*
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

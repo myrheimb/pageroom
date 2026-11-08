@@ -1,0 +1,2 @@
+a{color:var(--global-palette-highlight);text-underline-offset:.1em;transition:all .1s linear}
+.button,.wp-block-button__link,.wp-element-button,input[type=button],input[type=reset],input[type=submit]{border-radius:3px;background:var(--global-palette-btn-bg);color:var(--global-palette-btn);padding:.4em 1em;border:0;font-size:1.125rem;line-height:1.6;display:inline-block;font-family:inherit;cursor:pointer;text-decoration:none}

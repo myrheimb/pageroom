@@ -1,0 +1,7 @@
+{{ define "main" }}
+<section class="wrap wide">
+  <header class="page-head"><h1>{{ .Title }}</h1></header>
+  {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  {{ partial "cards.html" .Pages }}
+</section>
+{{ end }}

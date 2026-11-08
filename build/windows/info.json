@@ -1,0 +1,15 @@
+{
+	"fixed": {
+		"file_version": "0.1.0"
+	},
+	"info": {
+		"0409": {
+			"ProductVersion": "0.1.0",
+			"CompanyName": "Pageroom",
+			"FileDescription": "Desktop CMS for Hugo",
+			"LegalCopyright": "Copyright © 2026 Bjørnar Myrheim",
+			"ProductName": "Pageroom",
+			"Comments": "Desktop CMS for Hugo"
+		}
+	}
+}

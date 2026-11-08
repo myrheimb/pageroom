@@ -1,0 +1,9 @@
+{{ define "main" }}
+<section class="wrap">
+  <div class="prose intro">{{ .Content }}</div>
+  {{ with where site.RegularPages "Section" "in" site.MainSections }}
+  <h2 class="section-title">{{ i18n "latestPosts" }}</h2>
+  {{ partial "post-list.html" (first 8 .) }}
+  {{ end }}
+</section>
+{{ end }}

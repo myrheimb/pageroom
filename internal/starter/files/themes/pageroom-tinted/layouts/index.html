@@ -1,0 +1,13 @@
+{{ define "main" }}
+<section class="wrap">
+  <div class="prose">{{ .Content }}</div>
+  {{ with where site.RegularPages "Section" "in" site.MainSections }}
+  <h2 class="section-title">{{ i18n "latestPosts" }}</h2>
+  <ul class="cards">
+    {{ range first 6 . }}
+    <li class="card"><a href="{{ .RelPermalink }}"><h3>{{ .Title }}</h3>{{ if not .Date.IsZero }}<p class="meta">{{ .Date | time.Format ":date_medium" }}</p>{{ end }}<p>{{ .Summary | plainify | truncate 160 }}</p></a></li>
+    {{ end }}
+  </ul>
+  {{ end }}
+</section>
+{{ end }}

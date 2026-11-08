@@ -1,0 +1,4 @@
+name = "Pageroom Paper"
+license = "MIT"
+description = "Made for reading, with classic type and a simple list of posts."
+min_version = "0.158.0"

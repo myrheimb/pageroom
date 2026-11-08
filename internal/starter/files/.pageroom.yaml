@@ -1,0 +1,9 @@
+# Pageroom settings for this site. Developers can tailor the editor here.
+version: 1
+hugo:
+  version: "{{HUGO_VERSION}}"
+sections:
+  posts:
+    label: Blog posts
+    icon: newspaper
+menus: [main, footer]

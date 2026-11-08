@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUGO_VERSION: "0.168.0"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: System libraries for Wails
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Install Hugo (used by preview and import integration tests)
+        run: |
+          base="https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}"
+          archive="hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          curl -fsSL -O "${base}/${archive}" -O "${base}/hugo_${HUGO_VERSION}_checksums.txt"
+          grep -F " ${archive}" "hugo_${HUGO_VERSION}_checksums.txt" | sha256sum --check -
+          tar -xzf "${archive}" hugo && sudo mv hugo /usr/local/bin/ && hugo version
+      - name: Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx vitest run
+          npx vite build
+      - name: Go
+        run: |
+          test -z "$(gofmt -l . | grep -v node_modules)" || (gofmt -l . && exit 1)
+          go vet ./...
+          go test -race ./...
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            task: darwin:package:universal
+          - os: windows-latest
+            task: windows:build
+          - os: ubuntu-24.04
+            task: linux:build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Linux libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Install Wails
+        run: go install tool
+      - name: Build
+        shell: bash
+        run: |
+          # The GitHub sign-in app's client ID is public (device flow has no secret).
+          wails3 task ${{ matrix.task }} EXTRA_LDFLAGS="-X github.com/myrheimb/pageroom/internal/secrets.GitHubClientID=${{ vars.PAGEROOM_GITHUB_CLIENT_ID }}"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pageroom-${{ runner.os }}
+          path: bin/
+          retention-days: 14

@@ -1,0 +1,4 @@
+name = "Pageroom Studio"
+license = "MIT"
+description = "A big photo up top and posts as picture cards. Suits shops and portfolios."
+min_version = "0.158.0"

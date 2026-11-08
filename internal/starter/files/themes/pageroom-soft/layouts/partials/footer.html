@@ -1,0 +1,6 @@
+<footer class="site-footer">
+  <div class="wrap">
+    <p>{{ with site.Copyright }}{{ . | markdownify }}{{ else }}© {{ now.Year }} {{ site.Title }}{{ end }}</p>
+    {{ with site.Menus.footer }}<nav aria-label="{{ i18n "footerMenu" }}"><ul>{{ range . }}<li><a href="{{ .URL }}">{{ .Name }}</a></li>{{ end }}</ul></nav>{{ end }}
+  </div>
+</footer>

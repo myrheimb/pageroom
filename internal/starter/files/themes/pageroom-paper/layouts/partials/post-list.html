@@ -1,0 +1,11 @@
+<ol class="post-list">
+  {{ range . }}
+  <li>
+    {{ if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_medium" }}</time>{{ else }}<span></span>{{ end }}
+    <div>
+      <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+      <p>{{ .Summary | plainify | truncate 160 }}</p>
+    </div>
+  </li>
+  {{ end }}
+</ol>

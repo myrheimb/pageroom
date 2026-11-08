@@ -8,7 +8,7 @@ import { Placeholder } from "@tiptap/extensions";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Bold, Code, GripVertical, Heading2, Heading3, Italic, Link2, Plus, Quote, Strikethrough, Unlink, Underline } from "lucide-react";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
-import { ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
+import { ButtonBlock, CardBlock, CardsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
 import { SlashCommand, type SlashHooks } from "./slash";
 import { t } from "../i18n";
 
@@ -24,6 +24,7 @@ interface Props {
   pickImage: () => Promise<{ ref: string; alt?: string } | null>;
   prompt: SlashHooks["prompt"];
   addContactForm: SlashHooks["addContactForm"];
+  addPageBlock: SlashHooks["addPageBlock"];
   pasteImage: (file: File) => Promise<{ ref: string } | null>;
   onChange: () => void;
 }
@@ -50,6 +51,14 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
         resolve: (s: string) => hooks.current.resolveImage(s),
         pick: () => hooks.current.pickImage(),
       }),
+      HeroBlock.configure({
+        resolve: (s: string) => hooks.current.resolveImage(s),
+        pick: () => hooks.current.pickImage(),
+        describe: () => hooks.current.prompt(t.editor.heroImageDescribeTitle, t.editor.heroImageDescribeLabel),
+      }),
+      CardsBlock,
+      CardBlock,
+      ButtonBlock,
       ShortcodeBlock,
       ShortcodeInline,
       RawHtmlBlock,
@@ -59,6 +68,7 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
           pickImage: () => hooks.current.pickImage(),
           prompt: (...a) => hooks.current.prompt(...a),
           addContactForm: () => hooks.current.addContactForm(),
+          addPageBlock: (kind) => hooks.current.addPageBlock(kind),
         },
       }),
     ],
@@ -118,6 +128,18 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
       </DragHandle>
       <FormatBubble editor={editor} />
       <EditorContent editor={editor} />
+      <button
+        className="btn add-block-canvas"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          const last = editor.state.doc.lastChild;
+          const chain = editor.chain().focus("end");
+          if (!last || last.type.name !== "paragraph" || last.content.size > 0) chain.insertContentAt(editor.state.doc.content.size, { type: "paragraph" });
+          chain.insertContent("/").run();
+        }}
+      >
+        <Plus size={15} /> {t.editor.addBlockButton}
+      </button>
     </>
   );
 });

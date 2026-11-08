@@ -1,7 +1,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
-import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
+import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from "@tiptap/react";
 import { useState } from "react";
-import { AlertTriangle, Code2, Image as ImageIcon, Puzzle, Scissors, Trash2, RefreshCw, SquarePlay } from "lucide-react";
+import { AlertTriangle, Code2, Image as ImageIcon, MousePointerClick, Puzzle, Scissors, Trash2, RefreshCw, SquarePlay } from "lucide-react";
 import { b64, describeShortcode, unb64 } from "./markdown";
 import { t } from "../i18n";
 
@@ -173,13 +173,16 @@ export const RawHtmlBlock = atomNode("rawHtmlBlock", "data-raw-html", false, Raw
 export const RawHtmlInline = atomNode("rawHtmlInline", "data-raw-inline", true, InlineChip);
 
 
-function pageBlock(name: string, kind: string, content: string, attributeNames: string[], group = "block") {
-  return Node.create({
+function pageBlock<Options = unknown>(name: string, kind: string, content: string, attributeNames: string[], group = "block", view?: (props: NodeViewProps) => React.ReactElement, options?: Options) {
+  return Node.create<Options>({
     name,
     group,
     content,
     defining: true,
     draggable: group === "block",
+    addOptions() {
+      return options as Options;
+    },
     addAttributes() {
       return Object.fromEntries(attributeNames.map((attribute) => [attribute, { default: "", parseHTML: (el: HTMLElement) => el.getAttribute(`data-${attribute}`) || "", renderHTML: (attrs: Record<string, string>) => ({ [`data-${attribute}`]: attrs[attribute] }) }]));
     },
@@ -189,10 +192,61 @@ function pageBlock(name: string, kind: string, content: string, attributeNames: 
     renderHTML({ HTMLAttributes }) {
       return ["div", mergeAttributes({ "data-pr": kind }, HTMLAttributes), 0];
     },
+    addNodeView: view ? () => ReactNodeViewRenderer(view) : undefined,
   });
 }
 
-export const HeroBlock = pageBlock("prHero", "hero", "block+", ["image", "alt", "button", "link"]);
+export interface HeroOptions extends ImageOptions {
+  /** Ask for a description of a newly chosen picture. */
+  describe: () => Promise<string | null>;
+}
+
+function HeroView({ node, updateAttributes, extension }: NodeViewProps) {
+  const opts = extension.options as HeroOptions;
+  const url = node.attrs.image ? opts.resolve(node.attrs.image) : null;
+  const stop = (e: React.KeyboardEvent) => e.stopPropagation();
+  const choose = async () => {
+    const picked = await opts.pick();
+    if (!picked) return;
+    const alt = (picked as { alt?: string }).alt || (await opts.describe()) || "";
+    updateAttributes({ image: picked.ref, alt });
+  };
+  return (
+    <NodeViewWrapper className="pr-hero">
+      <div className="pr-hero-text">
+        <NodeViewContent className="pr-hero-content" />
+        <div className="pr-hero-button" contentEditable={false}>
+          <MousePointerClick size={14} />
+          <input value={node.attrs.button} placeholder={t.editor.heroButtonText} onChange={(e) => updateAttributes({ button: e.target.value })} onKeyDown={stop} />
+          <input value={node.attrs.link} placeholder={t.editor.linkAddress} onChange={(e) => updateAttributes({ link: e.target.value })} onKeyDown={stop} />
+        </div>
+      </div>
+      <div className="pr-hero-media" contentEditable={false}>
+        <button type="button" className="pr-hero-picture" onClick={choose} title={url ? t.editor.heroChangePicture : t.editor.heroAddPicture}>
+          {url ? <img src={url} alt={node.attrs.alt} draggable={false} /> : <><ImageIcon size={22} /> <span>{t.editor.heroAddPicture}</span></>}
+        </button>
+        {url && (
+          <button type="button" className="btn sm ghost danger" onClick={() => updateAttributes({ image: "", alt: "" })}>
+            <Trash2 size={13} /> {t.common.remove}
+          </button>
+        )}
+      </div>
+    </NodeViewWrapper>
+  );
+}
+
+function ButtonView({ node, updateAttributes }: NodeViewProps) {
+  return (
+    <NodeViewWrapper className="pr-button-block">
+      <div className="pr-button-face"><NodeViewContent className="pr-button-text" /></div>
+      <span className="pr-button-link" contentEditable={false}>
+        <input value={node.attrs.link} placeholder={t.editor.linkAddress} onChange={(e) => updateAttributes({ link: e.target.value })} onKeyDown={(e) => e.stopPropagation()} />
+      </span>
+    </NodeViewWrapper>
+  );
+}
+
+export const HeroBlock = pageBlock<HeroOptions>("prHero", "hero", "block+", ["image", "alt", "button", "link"], "block", HeroView, { resolve: (s: string) => s, pick: async () => null, describe: async () => null });
 export const CardsBlock = pageBlock("prCards", "cards", "prCard+", []);
 export const CardBlock = pageBlock("prCard", "card", "block+", [], "prCardItem");
-export const ButtonBlock = pageBlock("prButton", "button", "text*", ["link"]);
+export const ButtonBlock = pageBlock("prButton", "button", "text*", ["link"], "block", ButtonView);

@@ -50,6 +50,14 @@ export function AddContactForm(): $CancellablePromise<void> {
     return $Call.ByID(2987914886);
 }
 
+/**
+ * AddPageBlock makes sure the site has the templates for a page block the
+ * editor is about to insert. The kinds are hero, cards and button.
+ */
+export function AddPageBlock(kind: string): $CancellablePromise<void> {
+    return $Call.ByID(3822331560, kind);
+}
+
 export function CancelSignIn(): $CancellablePromise<void> {
     return $Call.ByID(1406891873);
 }
@@ -182,7 +190,7 @@ export function EndThemeTrial(keep: boolean): $CancellablePromise<void> {
 }
 
 /**
- * ForgetSite removes a site from the recent list; nothing is deleted.
+ * ForgetSite removes a site from the recent list. Nothing is deleted.
  */
 export function ForgetSite(path: string): $CancellablePromise<void> {
     return $Call.ByID(2597998223, path);

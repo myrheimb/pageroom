@@ -151,6 +151,7 @@ export const OpenExternal: Handler<"OpenExternal"> = nothing;
 export const StopPreview: Handler<"StopPreview"> = nothing;
 
 export const AddContactForm = unused;
+export const AddPageBlock = unused;
 export const CancelSignIn = unused;
 export const CheckTheme = unused;
 export const ChooseFolder = unused;

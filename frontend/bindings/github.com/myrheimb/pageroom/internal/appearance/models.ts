@@ -41,7 +41,7 @@ export interface SiteFont {
     "family": string;
 
     /**
-     * FontStacks key used when the files fail to load; empty means "system"
+     * FontStacks key used when the files fail to load. Empty means "system".
      */
     "fallback": string;
     "files": FontFile[] | null;

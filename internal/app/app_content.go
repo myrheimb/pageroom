@@ -145,6 +145,31 @@ func (a *App) AddContactForm() error {
 	return s.AddContactForm()
 }
 
+// AddPageBlock makes sure the site has the templates for a page block the
+// editor is about to insert. The kinds are hero, cards and button.
+func (a *App) AddPageBlock(kind string) error {
+	s, err := a.requireSite()
+	if err != nil {
+		return err
+	}
+	names, ok := pageBlockShortcodes[kind]
+	if !ok {
+		return &AppError{Code: "page-block", Message: "Unknown page block: " + kind}
+	}
+	for _, name := range names {
+		if err := s.AddShortcode(name); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var pageBlockShortcodes = map[string][]string{
+	"button": {"pr-button"},
+	"cards":  {"pr-cards", "pr-card"},
+	"hero":   {"pr-hero"},
+}
+
 type ThemeInfo struct {
 	Name       string `json:"name"`
 	Active     bool   `json:"active"`

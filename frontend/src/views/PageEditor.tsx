@@ -235,6 +235,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
                 pickImage={pickImage}
                 prompt={(title, label, placeholder) => ask.prompt(title, label, placeholder)}
                 addContactForm={async () => { try { await api.addContactForm(); refreshChanges(); return true; } catch (e) { error(e); return false; } }}
+                addPageBlock={async (kind) => { try { await api.addPageBlock(kind); refreshChanges(); return true; } catch (e) { error(e); return false; } }}
                 pasteImage={pasteImage}
                 onChange={() => { pending.current.body = true; schedule(); }}
               />

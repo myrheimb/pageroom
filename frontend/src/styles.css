@@ -353,6 +353,20 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.01em; }
 .img-block .alt-bar input:hover, .img-block .alt-bar input:focus { border-color: var(--line-strong); background: var(--surface); }
 .img-block .alt-warn { color: var(--warning); display: inline-flex; gap: 4px; align-items: center; white-space: nowrap; font-size: 12px; }
 
+.pr-hero { display: grid; grid-template-columns: 1fr minmax(0, 40%); gap: 20px; align-items: center; margin: 1.2em 0; padding: 24px; border-radius: 12px; background: var(--accent-soft); }
+.pr-hero-content > :first-child { margin-top: 0; }
+.pr-hero-content > :last-child { margin-bottom: 0; }
+.pr-hero-button { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 14px; font-family: var(--font); font-size: 13px; color: var(--accent); }
+.pr-hero-button input, .pr-button-link input { flex: 1; min-width: 120px; border: 1px solid var(--line-strong); background: var(--surface); padding: 4px 8px; border-radius: 6px; color: var(--text-2); font: inherit; outline: none; }
+.pr-hero-media { display: flex; flex-direction: column; gap: 6px; align-items: center; font-family: var(--font); }
+.pr-hero-picture { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; width: 100%; min-height: 120px; padding: 0; border: 1px dashed var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text-3); font-size: 13px; cursor: pointer; overflow: hidden; }
+.pr-hero-picture img { display: block; width: 100%; height: auto; }
+.pr-button-block { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 1.2em 0; font-family: var(--font); }
+.pr-button-face { display: inline-block; padding: 8px 18px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; min-width: 3em; }
+.pr-button-text { outline: none; }
+.pr-button-text p { margin: 0; }
+.add-block-canvas { margin-top: 18px; color: var(--text-3); }
+@media (max-width: 700px) { .pr-hero { grid-template-columns: 1fr; } }
 .atom-block { font-family: var(--font); font-size: 13px; border: 1px dashed var(--line-strong); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); display: flex; gap: 10px; align-items: flex-start; }
 .atom-block .ab-icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
 .atom-block .ab-title { font-weight: 600; }

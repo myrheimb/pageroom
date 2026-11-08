@@ -3,7 +3,7 @@ import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import {
-  CheckSquare, Code, Heading1, Heading2, Heading3, Image, List, ListOrdered, Mail, Minus, Puzzle, Quote, Scissors, Table, Type, SquarePlay, MousePointerClick, PanelTop,
+  CheckSquare, Code, Heading1, Heading2, Heading3, Image, List, ListOrdered, Mail, Minus, Puzzle, Quote, Scissors, Table, Type, SquarePlay, MousePointerClick, PanelTop, Columns3,
 } from "lucide-react";
 import { t } from "../i18n";
 
@@ -30,7 +30,7 @@ export function slashItems(h: SlashHooks): SlashItem[] {
     e.chain().focus().deleteRange(r).run();
     fn(e);
   };
-  const pageBlock = (kind: "button" | "hero", content: () => object) => async (e: Editor, r: Range) => {
+  const pageBlock = (kind: "button" | "cards" | "hero", content: () => object) => async (e: Editor, r: Range) => {
     e.chain().focus().deleteRange(r).run();
     if (!(await h.addPageBlock(kind))) return;
     const { $from } = e.state.selection;
@@ -53,6 +53,10 @@ export function slashItems(h: SlashHooks): SlashItem[] {
     {
       group: t.slash.sections, title: t.slash.hero, description: t.slash.heroHint, keywords: ["banner", "intro", "header"], icon: <PanelTop size={16} />,
       run: pageBlock("hero", () => ({ type: "prHero", content: [{ type: "heading", attrs: { level: 2 } }, { type: "paragraph" }] })),
+    },
+    {
+      group: t.slash.sections, title: t.slash.cards, description: t.slash.cardsHint, keywords: ["columns", "features", "grid"], icon: <Columns3 size={16} />,
+      run: pageBlock("cards", () => ({ type: "prCards", content: [0, 1, 2].map(() => ({ type: "prCard", content: [{ type: "heading", attrs: { level: 3 } }, { type: "paragraph" }] })) })),
     },
     {
       group: t.slash.sections, title: t.slash.button, description: t.slash.buttonHint, keywords: ["cta", "link"], icon: <MousePointerClick size={16} />,

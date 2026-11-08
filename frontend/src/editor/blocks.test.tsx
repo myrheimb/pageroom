@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/core";
+import { Editor, type JSONContent } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent } from "@tiptap/react";
 import { act } from "react";
@@ -131,6 +131,56 @@ describe("block inputs", () => {
     await typeInto(inputWith(host, t.editor.heroButtonText), "Read more");
     await typeInto(inputWith(host, t.editor.linkAddress), "/about/");
     expect(markdown()).toBe('{{< pr-hero button="Read more" link="/about/" >}}\n## Hi\n{{< /pr-hero >}}\n');
+    editor.destroy();
+  });
+});
+
+describe("cards on the canvas", () => {
+  const cards = '{{< pr-cards >}}\n{{< pr-card >}}\n### One\n\nFirst.\n{{< /pr-card >}}\n{{< pr-card >}}\n### Two\n\nSecond.\n{{< /pr-card >}}\n{{< /pr-cards >}}\n';
+  const press = async (button: Element | null | undefined) => {
+    await act(async () => {
+      button!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    });
+  };
+  const tools = (host: HTMLElement, label: string) => Array.from(host.querySelectorAll(`button[aria-label="${label}"]`));
+  const cardTitles = (editor: Editor) => (editor.getJSON().content![0].content as JSONContent[]).map((card) => card.content![0].content?.[0].text);
+
+  it("inserts three cards from the menu", async () => {
+    const { editor, addPageBlock, insert } = setup();
+    await insert(t.slash.cards);
+    expect(addPageBlock).toHaveBeenCalledWith("cards");
+    expect(editor.getJSON().content![0].content!.map((node) => node.type)).toEqual(["prCard", "prCard", "prCard"]);
+    editor.destroy();
+  });
+
+  it("adds, edits, reorders and removes cards with the visible controls", async () => {
+    const { editor, host, markdown } = await mount(cards);
+    expect(host.querySelectorAll(".pr-card")).toHaveLength(2);
+
+    await press(Array.from(host.querySelectorAll("button")).find((button) => button.textContent?.includes(t.editor.cardAdd)));
+    expect(host.querySelectorAll(".pr-card")).toHaveLength(3);
+
+    await act(async () => {
+      editor.commands.insertContentAt(editor.state.doc.firstChild!.nodeSize - 3 - 2, "Three");
+    });
+    expect(cardTitles(editor)).toEqual(["One", "Two", "Three"]);
+
+    await press(tools(host, t.editor.cardMoveLater)[0]);
+    expect(cardTitles(editor).slice(0, 2)).toEqual(["Two", "One"]);
+
+    await press(tools(host, t.editor.cardMoveEarlier)[1]);
+    expect(cardTitles(editor).slice(0, 2)).toEqual(["One", "Two"]);
+
+    await press(tools(host, t.editor.cardRemove)[2]);
+    expect(host.querySelectorAll(".pr-card")).toHaveLength(2);
+    expect(markdown()).toBe('{{< pr-cards >}}\n{{< pr-card >}}\n### One\n\nFirst.\n{{< /pr-card >}}\n\n{{< pr-card >}}\n### Two\n\nSecond.\n{{< /pr-card >}}\n{{< /pr-cards >}}\n');
+    editor.destroy();
+  });
+
+  it("keeps the last card", async () => {
+    const { editor, host } = await mount('{{< pr-cards >}}\n{{< pr-card >}}\nOnly\n{{< /pr-card >}}\n{{< /pr-cards >}}\n');
+    await press(tools(host, t.editor.cardRemove)[0]);
+    expect(host.querySelectorAll(".pr-card")).toHaveLength(1);
     editor.destroy();
   });
 });

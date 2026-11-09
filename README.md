@@ -4,6 +4,8 @@ A desktop editor for Hugo sites. You write pages, manage images and publish with
 
 ![The Pageroom editor](docs/screenshots/editor.png)
 
+Visit [pageroom.site](https://pageroom.site) for downloads and news.
+
 Pageroom is for people who are used to the WordPress dashboard or a word processor. They open their site, click a page, type, and press Publish. Underneath it is an ordinary Hugo site in git, so developers keep full control.
 
 Designed and verified by experienced human developers. Built with help from Claude.

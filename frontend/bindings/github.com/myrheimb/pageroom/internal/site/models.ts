@@ -41,7 +41,7 @@ export interface MediaPrefs {
     "maxWidth": number;
 
     /**
-     * for pages that are not bundles; default static/images
+     * for pages that are not bundles, default static/images
      */
     "folder": string;
 }

@@ -3,7 +3,7 @@ import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import {
-  CheckSquare, Code, Heading1, Heading2, Heading3, Image, List, ListOrdered, Mail, Minus, Puzzle, Quote, Scissors, Table, Type, SquarePlay, MousePointerClick,
+  CheckSquare, Code, Heading1, Heading2, Heading3, Image, List, ListOrdered, Mail, Minus, Puzzle, Quote, Scissors, Table, Type, SquarePlay, MousePointerClick, PanelTop, Columns2, Columns3,
 } from "lucide-react";
 import { t } from "../i18n";
 
@@ -16,16 +16,39 @@ export interface SlashItem {
   run: (editor: Editor, range: Range) => void;
 }
 
+const PAGE_BLOCKS = ["prHero", "prCards", "prCard", "prButton", "prColumns", "prColumn"];
+
 export interface SlashHooks {
   pickImage: () => Promise<{ ref: string; alt?: string } | null>;
   prompt: (title: string, label: string, placeholder?: string) => Promise<string | null>;
   addContactForm: () => Promise<boolean>;
+  addPageBlock: (kind: "align" | "button" | "cards" | "columns" | "hero" | "video") => Promise<boolean>;
 }
 
 export function slashItems(h: SlashHooks): SlashItem[] {
   const block = (fn: (e: Editor) => void) => (e: Editor, r: Range) => {
     e.chain().focus().deleteRange(r).run();
     fn(e);
+  };
+  const placePageBlock = async (e: Editor, kind: "button" | "cards" | "columns" | "hero" | "video", content: () => object) => {
+    if (!(await h.addPageBlock(kind))) return;
+    const { $from } = e.state.selection;
+    const pageBlockDepths: number[] = [];
+    for (let depth = 1; depth <= $from.depth; depth++) if (PAGE_BLOCKS.includes($from.node(depth).type.name)) pageBlockDepths.push(depth);
+    // A Button or video goes into the column it is chosen in. Every other block goes after the outermost block, so none nests.
+    const columnDepth = pageBlockDepths.find((depth) => $from.node(depth).type.name === "prColumn");
+    const chain = e.chain().focus();
+    if ((kind === "button" || kind === "video") && columnDepth !== undefined) {
+      const current = $from.node(columnDepth + 1);
+      const end = $from.after(columnDepth + 1);
+      const isBlankParagraph = current.type.name === "paragraph" && current.content.size === 0;
+      chain.insertContentAt(isBlankParagraph ? { from: $from.before(columnDepth + 1), to: end } : end, content()).run();
+    } else if (pageBlockDepths.length > 0) chain.insertContentAt($from.after(pageBlockDepths[0]), content()).run();
+    else chain.insertContent(content()).run();
+  };
+  const pageBlock = (kind: "button" | "cards" | "columns" | "hero", content: () => object) => async (e: Editor, r: Range) => {
+    e.chain().focus().deleteRange(r).run();
+    await placePageBlock(e, kind, content);
   };
   return [
     { group: t.slash.basic, title: t.slash.text, description: t.slash.textHint, icon: <Type size={16} />, run: block((e) => e.chain().setParagraph().run()) },
@@ -37,6 +60,22 @@ export function slashItems(h: SlashHooks): SlashItem[] {
     { group: t.slash.basic, title: t.slash.checklist, description: t.slash.checklistHint, keywords: ["todo", "task"], icon: <CheckSquare size={16} />, run: block((e) => e.chain().toggleTaskList().run()) },
     { group: t.slash.basic, title: t.slash.quote, description: t.slash.quoteHint, keywords: ["blockquote"], icon: <Quote size={16} />, run: block((e) => e.chain().toggleBlockquote().run()) },
     { group: t.slash.basic, title: t.slash.divider, description: t.slash.dividerHint, keywords: ["hr", "line", "separator"], icon: <Minus size={16} />, run: block((e) => e.chain().setHorizontalRule().run()) },
+    {
+      group: t.slash.sections, title: t.slash.hero, description: t.slash.heroHint, keywords: ["banner", "intro", "header"], icon: <PanelTop size={16} />,
+      run: pageBlock("hero", () => ({ type: "prHero", content: [{ type: "heading", attrs: { level: 2 } }, { type: "paragraph" }] })),
+    },
+    {
+      group: t.slash.sections, title: t.slash.cards, description: t.slash.cardsHint, keywords: ["features", "grid"], icon: <Columns3 size={16} />,
+      run: pageBlock("cards", () => ({ type: "prCards", content: [0, 1, 2].map(() => ({ type: "prCard", content: [{ type: "heading", attrs: { level: 3 } }, { type: "paragraph" }] })) })),
+    },
+    {
+      group: t.slash.sections, title: t.slash.columns, description: t.slash.columnsHint, keywords: ["side", "split", "three", "two"], icon: <Columns2 size={16} />,
+      run: pageBlock("columns", () => ({ type: "prColumns", content: [0, 1].map(() => ({ type: "prColumn", content: [{ type: "paragraph" }] })) })),
+    },
+    {
+      group: t.slash.sections, title: t.slash.button, description: t.slash.buttonHint, keywords: ["cta", "link"], icon: <MousePointerClick size={16} />,
+      run: pageBlock("button", () => ({ type: "prButton", content: [{ type: "text", text: t.slash.buttonTextPlaceholder }] })),
+    },
     {
       group: t.slash.media, title: t.slash.image, description: t.slash.imageHint, keywords: ["photo", "picture", "img"], icon: <Image size={16} />,
       run: async (e, r) => {
@@ -51,18 +90,7 @@ export function slashItems(h: SlashHooks): SlashItem[] {
         e.chain().focus().deleteRange(r).run();
         const url = await h.prompt(t.slash.youtubeTitle, t.slash.youtubeLabel, "https://www.youtube.com/watch?v=…");
         const id = url && (/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/.exec(url)?.[1] ?? (/^[\w-]{6,}$/.test(url) ? url : null));
-        if (id) e.chain().focus().insertContent({ type: "shortcodeBlock", attrs: { raw: `{{< youtube ${id} >}}` } }).run();
-      },
-    },
-    {
-      group: t.slash.media, title: t.slash.button, description: t.slash.buttonHint, keywords: ["cta", "link"], icon: <MousePointerClick size={16} />,
-      run: async (e, r) => {
-        e.chain().focus().deleteRange(r).run();
-        const text = await h.prompt(t.slash.buttonTitle, t.slash.buttonText, t.slash.buttonTextPlaceholder);
-        if (!text) return;
-        const href = await h.prompt(t.slash.buttonTitle, t.slash.buttonTarget, t.slash.buttonTargetPlaceholder);
-        if (!href) return;
-        e.chain().focus().insertContent({ type: "paragraph", content: [{ type: "text", text, marks: [{ type: "link", attrs: { href } }, { type: "bold" }] }] }).run();
+        if (id) await placePageBlock(e, "video", () => ({ type: "prVideo", attrs: { id } }));
       },
     },
     {
@@ -139,7 +167,7 @@ const SlashList = forwardRef<ListRef, SuggestionProps<SlashItem>>((props, ref) =
 export const SlashCommand = Extension.create<{ hooks: SlashHooks }>({
   name: "slashCommand",
   addOptions() {
-    return { hooks: { pickImage: async () => null, prompt: async () => null, addContactForm: async () => false } };
+    return { hooks: { pickImage: async () => null, prompt: async () => null, addContactForm: async () => false, addPageBlock: async () => false } };
   },
   addProseMirrorPlugins() {
     const all = slashItems(this.options.hooks);

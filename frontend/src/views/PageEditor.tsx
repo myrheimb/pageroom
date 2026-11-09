@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, CloudOff, Eye, EyeOff, FolderTree, History, Loader2, Monitor, MoreHorizontal, PanelRight, Trash2, ExternalLink, RotateCw } from "lucide-react";
+import { CheckCircle2, CloudOff, Eye, EyeOff, FolderTree, History, ImagePlus, Loader2, Monitor, MoreHorizontal, PanelRight, Trash2, ExternalLink, RotateCw } from "lucide-react";
 import { api, on, resolveImageRef, siteFileURL, translate, type AppError, type MediaItem, type Page, type TreeNode } from "../api";
 import { useStore, flatPages } from "../store";
 import { ask, Banner, Dialog, Menu, Spinner, Tip, timeAgo } from "../ui";
@@ -213,7 +213,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
             <RawFixer page={page} onFixed={load} />
           ) : (
             <div className="editor-paper">
-              <textarea
+              {!(page.isSection && page.url === "/") && <textarea
                 className="title-input"
                 rows={1}
                 placeholder={page.isSection ? t.pageEditor.sectionTitle : t.pageEditor.pageTitle}
@@ -221,12 +221,20 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
                 onChange={(e) => { setTitle(e.target.value); setField("title", e.target.value); autoGrow(e.target); }}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); editorRef.current?.focus(); } }}
                 ref={(el) => { if (el) autoGrow(el); }}
-              />
+              />}
               <div className="page-url">
                 {page.isSection ? t.pageEditor.sectionIntro : ""}
                 <span className="mono">{url}</span>
                 {isDraft && <span className="pill draft">{t.common.draft}</span>}
               </div>
+              <CoverPicture
+                image={typeof fields.image === "string" ? fields.image : ""}
+                alt={typeof fields.imageAlt === "string" ? fields.imageAlt : ""}
+                resolve={resolveImage}
+                pick={pickImage}
+                describe={() => ask.prompt(t.editor.heroImageDescribeTitle, t.editor.heroImageDescribeLabel)}
+                onChange={(image, alt) => setCoverFields(setField, image, alt)}
+              />
               <BlockEditor
                 key={version}
                 ref={editorRef}
@@ -235,6 +243,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
                 pickImage={pickImage}
                 prompt={(title, label, placeholder) => ask.prompt(title, label, placeholder)}
                 addContactForm={async () => { try { await api.addContactForm(); refreshChanges(); return true; } catch (e) { error(e); return false; } }}
+                addPageBlock={async (kind) => { try { await api.addPageBlock(kind); refreshChanges(); return true; } catch (e) { error(e); return false; } }}
                 pasteImage={pasteImage}
                 onChange={() => { pending.current.body = true; schedule(); }}
               />
@@ -276,6 +285,44 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
           <Banner kind="info"><span className="small">{t.pageEditor.conflictNote}</span></Banner>
         </Dialog>
       )}
+    </div>
+  );
+}
+
+export function setCoverFields(setField: (key: string, value: any) => void, image: string | undefined, alt: string | undefined) {
+  setField("image", image);
+  setField("imageAlt", alt);
+}
+
+export function CoverPicture({ image, alt, resolve, pick, describe, onChange }: {
+  image: string;
+  alt: string;
+  resolve: (src: string) => string | null;
+  pick: () => Promise<{ ref: string; alt?: string } | null>;
+  describe: () => Promise<string | null | undefined>;
+  onChange: (image: string | undefined, alt: string | undefined) => void;
+}) {
+  const choose = async () => {
+    const picked = await pick();
+    if (!picked) return;
+    const description = picked.alt || (await describe()) || "";
+    onChange(picked.ref, description || undefined);
+  };
+  const url = image ? resolve(image) : null;
+  return (
+    <div className="cover-picture">
+      {image ? (
+        <>
+          {url ? <img src={url} alt={alt} /> : <div className="cover-missing small">{image}</div>}
+          <div className="cover-actions">
+            <button className="btn sm" onClick={choose}>{t.editor.coverChange}</button>
+            <button className="btn sm ghost danger" onClick={() => onChange(undefined, undefined)}>{t.editor.coverRemove}</button>
+          </div>
+        </>
+      ) : (
+        <button className="btn ghost sm" onClick={choose}><ImagePlus size={14} /> {t.editor.coverAdd}</button>
+      )}
+      <span className="help">{t.editor.coverNote}</span>
     </div>
   );
 }

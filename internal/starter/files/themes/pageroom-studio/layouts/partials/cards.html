@@ -3,7 +3,7 @@
   {{ $page := . }}
   <li class="card">
     <a href="{{ .RelPermalink }}">
-      {{ with .Params.image }}{{ with or ($page.Resources.GetMatch .) (resources.Get .) }}<img src="{{ .RelPermalink }}" alt="" loading="lazy">{{ else }}<img src="{{ . | relURL }}" alt="" loading="lazy">{{ end }}{{ else }}<span class="card-placeholder"></span>{{ end }}
+      {{ with .Params.image }}{{ with or ($page.Resources.GetMatch .) (resources.Get .) }}<img src="{{ .RelPermalink }}" alt="{{ $page.Params.imageAlt }}" loading="lazy">{{ else }}<img src="{{ . | relURL }}" alt="{{ $page.Params.imageAlt }}" loading="lazy">{{ end }}{{ else }}<span class="card-placeholder"></span>{{ end }}
       <h3>{{ .Title }}</h3>
       <p>{{ .Summary | plainify | truncate 120 }}</p>
       {{ if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_medium" }}</time>{{ else }}<span></span>{{ end }}

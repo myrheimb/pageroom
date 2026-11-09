@@ -16,7 +16,7 @@ interface Props {
 }
 
 // Keys with their own controls, hidden from "Other settings".
-const handled = new Set(["title", "draft", "date", "description", "summary", "image", "tags", "categories", "weight", "slug", "url", "aliases", "menus", "menu", "lastmod", "publishDate"]);
+const handled = new Set(["title", "draft", "date", "description", "summary", "image", "imageAlt", "tags", "categories", "weight", "slug", "url", "aliases", "menus", "menu", "lastmod", "publishDate"]);
 
 export function PageSettings({ page, fields, setField, resolveImage, pickImage, onRenamed, save }: Props) {
   const site = useStore((s) => s.site);
@@ -35,8 +35,18 @@ export function PageSettings({ page, fields, setField, resolveImage, pickImage, 
 
   return (
     <aside className="side-panel" aria-label={t.pageSettings.label}>
+      {page.isSection && page.url === "/" && (
+        <div className="side-section">
+          <div className="field">
+            <label htmlFor="ps-title">{t.pageEditor.pageTitle}</label>
+            <input id="ps-title" className="input" value={fields.title ?? ""} onChange={(e) => setField("title", e.target.value)} />
+            <span className="help">{t.pageSettings.homeTitleNote}</span>
+          </div>
+        </div>
+      )}
       <div className="side-section">
         <h4>{t.pageSettings.publishing}</h4>
+        <p className="help side-note">{t.pageSettings.publishingNote}</p>
         <div className="status-card" style={{ marginBottom: 14 }}>
           <Switch on={!fields.draft} onChange={(v) => setField("draft", v ? undefined : true)} label={t.pageSettings.visibleOnSite} />
           <div>
@@ -55,6 +65,7 @@ export function PageSettings({ page, fields, setField, resolveImage, pickImage, 
 
       <div className="side-section">
         <h4>{t.pageSettings.address}</h4>
+        <p className="help side-note">{t.pageSettings.addressNote}</p>
         <div className="row" style={{ gap: 6 }}>
           <Link2 size={14} className="dim" />
           <span className="mono truncate" style={{ flex: 1 }} title={page.url}>{page.url}</span>
@@ -74,17 +85,18 @@ export function PageSettings({ page, fields, setField, resolveImage, pickImage, 
 
       <div className="side-section">
         <h4>{t.pageSettings.searchSharing}</h4>
+        <p className="help side-note">{t.pageSettings.searchSharingNote}</p>
         <div className="field">
           <label htmlFor="ps-desc">{t.pageSettings.shortDescription}</label>
           <textarea id="ps-desc" className="textarea" rows={3} value={fields[descKey] ?? ""} onChange={(e) => setField(descKey, e.target.value)} placeholder={t.pageSettings.descriptionPlaceholder} maxLength={300} />
           <span className="help">{t.pageSettings.descriptionCount((fields[descKey] ?? "").length)}</span>
         </div>
-        <ImageField label={t.pageSettings.featuredImage} value={fields.image} onChange={(v) => setField("image", v)} resolve={resolveImage} pick={pickImage} />
       </div>
 
       {(isPost || "tags" in fields || "categories" in fields) && (
         <div className="side-section">
           <h4>{t.pageSettings.organize}</h4>
+          <p className="help side-note">{t.pageSettings.organizeNote}</p>
           <ListField label={t.pageSettings.categories} value={fields.categories} onChange={(v) => setField("categories", v)} placeholder={t.pageSettings.addCategory} />
           <ListField label={t.pageSettings.tags} value={fields.tags} onChange={(v) => setField("tags", v)} placeholder={t.pageSettings.addTag} />
         </div>
@@ -93,6 +105,7 @@ export function PageSettings({ page, fields, setField, resolveImage, pickImage, 
       {custom.length > 0 && (
         <div className="side-section">
           <h4>{t.pageSettings.details}</h4>
+          <p className="help side-note">{t.pageSettings.detailsNote}</p>
           {custom.map((f) => <CustomField key={f.key} def={f} value={fields[f.key]} onChange={(v) => setField(f.key, v)} resolve={resolveImage} pick={pickImage} />)}
         </div>
       )}

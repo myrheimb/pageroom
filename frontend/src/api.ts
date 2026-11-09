@@ -145,6 +145,7 @@ export const api = {
   saveMenu: (m: Menu) => call<void>(g.SaveMenu(m)),
   saveSettings: (s: Settings) => call<void>(g.SaveSettings(s)),
   addContactForm: () => call<void>(g.AddContactForm()),
+  addPageBlock: (kind: string) => call<void>(g.AddPageBlock(kind)),
   getSiteIcon: () => call<SiteIcon>(g.GetSiteIcon()),
   chooseSiteIcon: () => call<SiteIcon | null>(g.ChooseSiteIcon()),
   useLetterIcon: () => call<SiteIcon>(g.UseLetterIcon()),

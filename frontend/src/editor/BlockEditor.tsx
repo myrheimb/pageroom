@@ -1,14 +1,15 @@
 import { useEditor, useEditorState, EditorContent, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import DragHandle from "@tiptap/extension-drag-handle-react";
+import DragHandle, { type DragHandleProps } from "@tiptap/extension-drag-handle-react";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TableKit } from "@tiptap/extension-table";
 import { Placeholder } from "@tiptap/extensions";
+import { NodeSelection } from "@tiptap/pm/state";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { Bold, Code, GripVertical, Heading2, Heading3, Italic, Link2, Plus, Quote, Strikethrough, Unlink, Underline } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Code, GripVertical, Heading2, Heading3, Italic, Link2, Plus, Quote, Strikethrough, Unlink, Underline } from "lucide-react";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
-import { ImageBlock, RawHtmlBlock, RawHtmlInline, ShortcodeBlock, ShortcodeInline } from "./nodes";
+import { alignableBlock, BlockAlign, ButtonBlock, CardBlock, CardsBlock, ColumnBlock, ColumnsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, setBlockAlign, ShortcodeBlock, ShortcodeInline, VideoBlock } from "./nodes";
 import { SlashCommand, type SlashHooks } from "./slash";
 import { t } from "../i18n";
 
@@ -24,9 +25,20 @@ interface Props {
   pickImage: () => Promise<{ ref: string; alt?: string } | null>;
   prompt: SlashHooks["prompt"];
   addContactForm: SlashHooks["addContactForm"];
+  addPageBlock: SlashHooks["addPageBlock"];
   pasteImage: (file: File) => Promise<{ ref: string } | null>;
   onChange: () => void;
 }
+
+type NestedRules = NonNullable<Exclude<NonNullable<DragHandleProps["nested"]>, boolean>["rules"]>;
+
+// Only top-level blocks and a column's direct children are dragged, so nothing else can be pulled out of its parent.
+const dragRules: NestedRules = [
+  {
+    id: "topLevelAndColumnChildren",
+    evaluate: ({ parent }) => (parent?.type.name === "doc" || parent?.type.name === "prColumn" ? 0 : 1000),
+  },
+];
 
 export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEditor(props, ref) {
   // The extensions capture hooks once. A ref keeps them fresh.
@@ -44,12 +56,28 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
       TaskItem.configure({ nested: true }),
       TableKit.configure({ table: { resizable: false } }),
       Placeholder.configure({
-        placeholder: ({ node }) => (node.type.name === "heading" ? t.editor.headingPlaceholder : t.editor.bodyPlaceholder),
+        includeChildren: true,
+        showOnlyCurrent: false,
+        emptyNodeClass: ({ hasAnchor }) => (hasAnchor ? "is-empty is-current" : "is-empty"),
+        placeholder: ({ node }) => (node.type.name === "codeBlock" ? "" : node.type.name === "heading" ? t.editor.headingPlaceholder : t.editor.bodyPlaceholder),
       }),
+      BlockAlign,
       ImageBlock.configure({
         resolve: (s: string) => hooks.current.resolveImage(s),
         pick: () => hooks.current.pickImage(),
+        addAlignTemplate: () => hooks.current.addPageBlock("align"),
       }),
+      HeroBlock.configure({
+        resolve: (s: string) => hooks.current.resolveImage(s),
+        pick: () => hooks.current.pickImage(),
+        describe: () => hooks.current.prompt(t.editor.heroImageDescribeTitle, t.editor.heroImageDescribeLabel),
+      }),
+      CardsBlock,
+      CardBlock,
+      ColumnsBlock,
+      ColumnBlock,
+      ButtonBlock,
+      VideoBlock,
       ShortcodeBlock,
       ShortcodeInline,
       RawHtmlBlock,
@@ -59,12 +87,13 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
           pickImage: () => hooks.current.pickImage(),
           prompt: (...a) => hooks.current.prompt(...a),
           addContactForm: () => hooks.current.addContactForm(),
+          addPageBlock: (kind) => hooks.current.addPageBlock(kind),
         },
       }),
     ],
     content: markdownToHtml(props.markdown),
     editorProps: {
-      attributes: { class: "prose-editor", spellcheck: "true" },
+      attributes: { class: "prose-editor", spellcheck: "true", style: `--block-text-hint: ${JSON.stringify(t.editor.blockTextPlaceholder)}` },
       handlePaste: (view, event) => {
         const files = Array.from(event.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/"));
         if (!files.length) return false;
@@ -99,7 +128,7 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
   if (!editor) return null;
   return (
     <>
-      <DragHandle editor={editor} className="drag-handle-wrap">
+      <DragHandle editor={editor} className="drag-handle-wrap" nested={{ defaultRules: false, rules: dragRules }}>
         <div className="row" style={{ gap: 0, marginLeft: -50 }}>
           <button
             className="add-block"
@@ -116,13 +145,25 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
           <div className="drag-handle" title={t.editor.dragToMove}><GripVertical size={15} /></div>
         </div>
       </DragHandle>
-      <FormatBubble editor={editor} />
+      <FormatBubble editor={editor} addAlignTemplate={() => hooks.current.addPageBlock("align")} />
       <EditorContent editor={editor} />
+      <button
+        className="btn add-block-canvas"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          const last = editor.state.doc.lastChild;
+          const chain = editor.chain().focus("end");
+          if (!last || last.type.name !== "paragraph" || last.content.size > 0) chain.insertContentAt(editor.state.doc.content.size, { type: "paragraph" });
+          chain.insertContent("/").run();
+        }}
+      >
+        <Plus size={15} /> {t.editor.addBlockButton}
+      </button>
     </>
   );
 });
 
-function FormatBubble({ editor }: { editor: Editor }) {
+function FormatBubble({ editor, addAlignTemplate }: { editor: Editor; addAlignTemplate: () => Promise<boolean> }) {
   const [linking, setLinking] = useState(false);
   const [href, setHref] = useState("");
   // Re-render only when these values change (re-rendering on every
@@ -133,12 +174,18 @@ function FormatBubble({ editor }: { editor: Editor }) {
       bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline"), strike: e.isActive("strike"),
       code: e.isActive("code"), link: e.isActive("link"), h2: e.isActive("heading", { level: 2 }), h3: e.isActive("heading", { level: 3 }),
       quote: e.isActive("blockquote"),
+      alignable: alignableBlock(e.state.selection.$from) !== null,
+      align: (alignableBlock(e.state.selection.$from)?.attrs.align ?? "") as string,
     }),
   });
 
   const B = (p: { on?: boolean; title: string; run: () => void; children: React.ReactNode }) => (
     <button className={p.on ? "on" : ""} title={p.title} onMouseDown={(e) => { e.preventDefault(); p.run(); }}>{p.children}</button>
   );
+  const applyAlign = async (align: string) => {
+    if (align && !(await addAlignTemplate())) return;
+    setBlockAlign(editor, align);
+  };
   const applyLink = () => {
     const v = href.trim();
     if (!v) editor.chain().focus().unsetLink().run();
@@ -148,7 +195,7 @@ function FormatBubble({ editor }: { editor: Editor }) {
   return (
     <BubbleMenu
       editor={editor}
-      shouldShow={({ editor: e, from, to }) => from !== to && !e.isActive("image") && !e.isActive("shortcodeBlock") && !e.isActive("rawHtmlBlock") && !e.isActive("codeBlock")}
+      shouldShow={({ editor: e, from, to }) => from !== to && !(e.state.selection instanceof NodeSelection) && !e.isActive("image") && !e.isActive("shortcodeBlock") && !e.isActive("rawHtmlBlock") && !e.isActive("codeBlock")}
       options={{ placement: "top" }}
     >
       <div className="bubble">
@@ -180,6 +227,14 @@ function FormatBubble({ editor }: { editor: Editor }) {
             <B title={t.editor.heading} on={active.h2} run={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 size={15} /></B>
             <B title={t.editor.subheading} on={active.h3} run={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 size={15} /></B>
             <B title={t.editor.quote} on={active.quote} run={() => editor.chain().focus().toggleBlockquote().run()}><Quote size={15} /></B>
+            {active.alignable && (
+              <>
+                <div className="bsep" />
+                <B title={t.editor.alignLeft} on={active.align === ""} run={() => applyAlign("")}><AlignLeft size={15} /></B>
+                <B title={t.editor.alignCenter} on={active.align === "center"} run={() => applyAlign("center")}><AlignCenter size={15} /></B>
+                <B title={t.editor.alignRight} on={active.align === "right"} run={() => applyAlign("right")}><AlignRight size={15} /></B>
+              </>
+            )}
           </>
         )}
       </div>

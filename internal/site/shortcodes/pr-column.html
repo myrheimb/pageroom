@@ -1,0 +1,15 @@
+{{- /* A nested pr-align, pr-button or pr-video wraps its HTML in comments, because rendering it as Markdown would drop it as raw HTML. */ -}}
+{{- $open := "<!--pr-button-->" -}}
+{{- $close := "<!--/pr-button-->" -}}
+<div class="pr-column">
+{{- $parts := split .Inner $open -}}
+{{- range $index, $part := $parts }}
+{{- if eq $index 0 }}
+{{ $.Page.RenderString (dict "display" "block") $part }}
+{{- else }}
+{{- $pair := split $part $close }}
+{{ index $pair 0 | safeHTML }}
+{{ $.Page.RenderString (dict "display" "block") (index $pair 1) }}
+{{- end }}
+{{- end }}
+</div>

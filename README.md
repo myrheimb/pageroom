@@ -20,7 +20,7 @@ To check a download, run `shasum -a 256 -c SHA256SUMS --ignore-missing` next to 
 
 ## What it does
 
-- Write: a block editor. Type `/` for headings, lists, images, YouTube videos, buttons, contact forms and tables. Edits save on your computer as you type.
+- Write: a block editor. Add Banner, Cards, Columns and Button blocks from the Add block button or by typing `/`, and drag them into any order. Align text, quotes, pictures and blocks left, center or right, including inside a column. Columns can be two equal columns, one wide beside one narrow, or three equal columns, with their content at the top, middle or bottom. Type `/` for headings, lists, images, YouTube videos, contact forms and tables. The cover picture sits above the page text, and the right panel holds only page settings, along with the home page's title. Edits save on your computer as you type.
 - Organize: a page tree you can drag to reorder or move between sections. Moved and renamed pages get Hugo aliases, so old addresses keep working.
 - Images: drag photos onto the window. Large photos are resized and camera and GPS data is removed. The editor asks for a description for screen readers.
 - Preview: the real site, rendered by Hugo on your computer, at desktop, tablet and phone sizes.

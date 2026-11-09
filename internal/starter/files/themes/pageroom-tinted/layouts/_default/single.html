@@ -3,7 +3,7 @@
   <header class="page-head">
     <h1>{{ .Title }}</h1>
     {{ if and (in site.MainSections .Section) (not .Date.IsZero) }}<p class="meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time>{{ with union (.GetTerms "categories") (.GetTerms "tags") }} · {{ range $i, $term := . }}{{ if $i }}, {{ end }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>{{ end }}{{ end }}</p>{{ end }}
-    {{ with .Params.image }}{{ with or ($.Resources.GetMatch .) (resources.Get .) }}<img class="cover" src="{{ .RelPermalink }}" alt="">{{ else }}<img class="cover" src="{{ . | relURL }}" alt="">{{ end }}{{ end }}
+    {{ with .Params.image }}{{ with or ($.Resources.GetMatch .) (resources.Get .) }}<img class="cover" src="{{ .RelPermalink }}" alt="{{ $.Params.imageAlt }}">{{ else }}<img class="cover" src="{{ . | relURL }}" alt="{{ $.Params.imageAlt }}">{{ end }}{{ end }}
   </header>
   {{ .Content }}
 </article>

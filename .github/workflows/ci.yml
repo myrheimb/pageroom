@@ -20,6 +20,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -46,6 +48,9 @@ jobs:
           npx tsc --noEmit
           npx vitest run
           npx vite build
+      - name: Install Chromium headless shell (used by the block layout tests)
+        working-directory: frontend
+        run: npx playwright-core install --with-deps chromium-headless-shell
       - name: Go
         run: |
           test -z "$(gofmt -l . | grep -v node_modules)" || (gofmt -l . && exit 1)

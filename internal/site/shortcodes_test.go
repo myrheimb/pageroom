@@ -1,10 +1,13 @@
 package site_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -557,5 +560,89 @@ func TestBlocksDoNotScrollSidewaysOnAPhone(t *testing.T) {
 				t.Errorf("page is %spx wide in a %spx viewport", match[1], match[2])
 			}
 		})
+	}
+}
+
+func openSiteWithTemplate(t *testing.T, name, content string) (*site.Site, string) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "site")
+	if err := starter.Create(dir, "Blocks", "0.166.0"); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "layouts", "shortcodes", name+".html")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if content != "" {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s, err := site.Open(dir, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, path
+}
+
+func shippedVersion(t *testing.T, file string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", file))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+func TestUpdateShortcodesReplacesShippedVersion(t *testing.T) {
+	older := shippedVersion(t, "pr-hero-e211718.html")
+	s, path := openSiteWithTemplate(t, "pr-hero", older)
+	updated, err := s.UpdateShortcodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, _ := os.ReadFile("shortcodes/pr-hero.html")
+	if got, _ := os.ReadFile(path); string(got) != string(current) {
+		t.Fatalf("older template not replaced")
+	}
+	if len(updated) != 1 || updated[0] != "pr-hero" {
+		t.Fatalf("updated = %v", updated)
+	}
+}
+
+func TestUpdateShortcodesKeepsEditedFile(t *testing.T) {
+	edited := shippedVersion(t, "pr-hero-e211718.html") + "<!-- mine -->"
+	s, path := openSiteWithTemplate(t, "pr-hero", edited)
+	updated, err := s.UpdateShortcodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); string(got) != edited || len(updated) != 0 {
+		t.Fatalf("edited template touched: %q %v", got, updated)
+	}
+}
+
+func TestUpdateShortcodesDoesNotCreateMissingFile(t *testing.T) {
+	s, path := openSiteWithTemplate(t, "pr-hero", "")
+	if _, err := s.UpdateShortcodes(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("missing template was created: %v", err)
+	}
+}
+
+func TestEveryCurrentTemplateIsInTheShippedHashes(t *testing.T) {
+	files, err := filepath.Glob("shortcodes/pr-*.html")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no templates: %v", err)
+	}
+	for _, file := range files {
+		name := strings.TrimSuffix(filepath.Base(file), ".html")
+		data, _ := os.ReadFile(file)
+		sum := sha256.Sum256(data)
+		if !slices.Contains(site.ShippedShortcodeHashes[name], hex.EncodeToString(sum[:])) {
+			t.Errorf("%s: current hash missing from shippedShortcodeHashes", name)
+		}
 	}
 }

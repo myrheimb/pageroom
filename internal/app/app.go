@@ -189,6 +189,8 @@ func (a *App) OpenSite(path string) (*SiteState, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A template that can't be updated leaves the site working with the older one.
+	_, _ = s.UpdateShortcodes()
 	var repo *gitsync.Repo
 	if r, err := gitsync.Open(s.Root, a.gitOptions()); err == nil {
 		repo = r

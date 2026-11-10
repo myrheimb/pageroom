@@ -7,6 +7,14 @@ import { SignInDialog } from "../dialogs/SignIn";
 import { WordPressImport } from "../dialogs/WordPress";
 import { languageNames, setLanguage, systemLanguage, t, type Language } from "../i18n";
 
+// Hugo needs the scheme and a trailing slash in baseURL.
+export function webAddress(typed: string): string {
+  const address = typed.trim();
+  if (!address) return "";
+  const withScheme = /^https?:\/\//i.test(address) ? address : `https://${address}`;
+  return withScheme.replace(/\/?$/, "/");
+}
+
 export function SettingsView({ tab }: { tab: "general" | "account" | "publishing" }) {
   const go = useStore((s) => s.go);
   return (
@@ -63,7 +71,7 @@ function General() {
         <div className="spacer" />
         <button className="btn primary" disabled={!dirty || saving} onClick={async () => {
           setSaving(true);
-          try { await api.saveSettings(s); await refresh(); refreshChanges(); toast({ kind: "success", title: t.settings.saved, body: t.common.publishToUpdate }); } catch (e) { error(e); } finally { setSaving(false); }
+          try { const saved = { ...s, baseURL: webAddress(s.baseURL) }; await api.saveSettings(saved); setS(saved); await refresh(); refreshChanges(); toast({ kind: "success", title: t.settings.saved, body: t.common.publishToUpdate }); } catch (e) { error(e); } finally { setSaving(false); }
         }}>{saving ? <Spinner /> : <Save size={15} />} {t.settings.saveSettings}</button>
       </div>
     </div>
@@ -174,7 +182,7 @@ function CloudflareCard({ cloudflare, liveURL }: { cloudflare: Cloudflare; liveU
   const saveAddress = async () => {
     if (!site) return;
     try {
-      await api.saveSettings({ ...site.settings, baseURL: address.trim().replace(/\/?$/, "/") });
+      await api.saveSettings({ ...site.settings, baseURL: webAddress(address) });
       await refresh();
       toast({ kind: "success", title: t.settings.addressSaved, body: t.settings.addressSavedBody });
     } catch (e) { error(e); }
@@ -202,7 +210,7 @@ function CloudflareCard({ cloudflare, liveURL }: { cloudflare: Cloudflare; liveU
                 {t.settings.pasteAddress(<span className="mono">.workers.dev</span>)}
                 <div className="row" style={{ gap: 6, marginTop: 4 }}>
                   <input className="input mono" placeholder={`https://${cloudflare.name}.you.workers.dev`} value={address} onChange={(e) => setAddress(e.target.value)} />
-                  <button className="btn sm" disabled={!/^https:\/\/\S+\.\S+/.test(address.trim())} onClick={saveAddress}>{t.common.save}</button>
+                  <button className="btn sm" disabled={!/^\S+\.\S+$/.test(address.trim())} onClick={saveAddress}>{t.common.save}</button>
                 </div>
               </>
             )}

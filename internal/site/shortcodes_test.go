@@ -497,10 +497,6 @@ func findBrowser() string {
 	return ""
 }
 
-// chrome-headless-shell honours --window-size=360,800 exactly, unlike the full
-// Chromium whose headless window stays at about 500px wide. --single-process
-// is what lets it start inside the Claude Code sandbox, and HUGO_RELATIVEURLS lets
-// the built page load its CSS from file://.
 const phoneProbe = `<script>document.documentElement.dataset.probe = document.documentElement.scrollWidth + "/" + document.documentElement.clientWidth + "/" + window.innerWidth + "/" + Array.from(document.querySelectorAll(".pr-column")).every((column, index, all) => index === 0 || column.offsetTop > all[index - 1].offsetTop)</script>`
 
 const desktopProbe = `<script>const wide = document.querySelector(".pr-columns-2-1").children; const three = document.querySelector(".pr-columns-1-1-1").children; document.documentElement.dataset.probe = (Math.round(wide[0].offsetWidth / wide[1].offsetWidth) === 2) + "/" + (wide[1].getBoundingClientRect().top > wide[0].getBoundingClientRect().top && wide[1].getBoundingClientRect().bottom === wide[0].getBoundingClientRect().bottom) + "/" + (three[0].offsetTop === three[2].offsetTop && three[0].offsetLeft < three[1].offsetLeft && three[1].offsetLeft < three[2].offsetLeft)</script>`
@@ -509,6 +505,9 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 	t.Helper()
 	browser := findBrowser()
 	if browser == "" {
+		if os.Getenv("CI") != "" {
+			t.Fatal("no Chromium or Chrome installed")
+		}
 		t.Skip("no Chromium or Chrome installed")
 	}
 	page := buildBlocksSite(t, theme, "HUGO_RELATIVEURLS=true")
@@ -520,6 +519,10 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 		t.Fatal(err)
 	}
 
+	// chrome-headless-shell honours --window-size=360,800 exactly, unlike the full
+	// Chromium whose headless window stays at about 500px wide. --single-process
+	// is what lets it start inside the Claude Code sandbox, and HUGO_RELATIVEURLS
+	// lets the built page load its CSS from file://.
 	args := []string{"--no-sandbox", "--single-process", "--disable-gpu", "--user-data-dir=" + t.TempDir(), "--window-size=" + windowSize, "--dump-dom", "file://" + page}
 	if filepath.Base(browser) != "chrome-headless-shell" {
 		args = append([]string{"--headless=new"}, args...)

@@ -1,13 +1,11 @@
 {{- $inColumn := and .Parent (eq .Parent.Name "pr-column") -}}
 {{- if $inColumn }}{{ "<!--pr-button-->" | safeHTML }}{{ end -}}
-{{- if not (.Page.Store.Get "pr-align-css") }}{{ .Page.Store.Set "pr-align-css" true -}}
 <style>
 .pr-align-center { text-align: center; }
 .pr-align-center img { margin-inline: auto; }
 .pr-align-right { text-align: right; }
 .pr-align-right img { margin-inline-start: auto; }
 </style>
-{{ end -}}
 <div class="pr-align-{{ .Get "to" }}">
 {{ .Page.RenderString (dict "display" "block") .Inner }}
 </div>

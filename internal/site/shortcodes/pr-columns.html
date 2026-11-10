@@ -1,4 +1,3 @@
-{{- if not (.Page.Store.Get "pr-columns-css") }}{{ .Page.Store.Set "pr-columns-css" true -}}
 <style>
 .pr-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; margin: 2rem 0; }
 .pr-columns-2-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
@@ -16,7 +15,6 @@
 .pr-column pre { max-width: 100%; overflow-x: auto; }
 .pr-column table { display: block; max-width: 100%; overflow-x: auto; }
 </style>
-{{ end -}}
 <div class="pr-columns{{ with .Get "layout" }} pr-columns-{{ . }}{{ end }}{{ with .Get "valign" }} pr-columns-{{ . }}{{ end }}">
 {{ .Inner }}
 </div>

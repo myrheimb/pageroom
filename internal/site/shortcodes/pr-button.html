@@ -1,10 +1,8 @@
 {{- $inColumn := and .Parent (eq .Parent.Name "pr-column") -}}
 {{- if $inColumn }}{{ "<!--pr-button-->" | safeHTML }}{{ end -}}
-{{- if not (.Page.Store.Get "pr-button-css") }}{{ .Page.Store.Set "pr-button-css" true -}}
 <style>
 .pr-button { display: inline-block; box-sizing: border-box; max-width: 100%; padding: .65em 1.3em; border-radius: .5em; background: var(--pr-primary, #2563eb); color: #fff; font-weight: 600; line-height: 1.3; text-align: center; text-decoration: none; overflow-wrap: anywhere; }
 .pr-button:hover, .pr-button:focus-visible { filter: brightness(1.1); text-decoration: none; }
 </style>
-{{ end -}}
 {{ with .Get "align" }}<div style="text-align: {{ . }}">{{ end }}<a class="pr-button" href="{{ .Get "link" | default "#" }}">{{ .Inner | strings.TrimSpace }}</a>{{ with .Get "align" }}</div>{{ end }}
 {{- if $inColumn }}{{ "<!--/pr-button-->" | safeHTML }}{{ end }}

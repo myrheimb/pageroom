@@ -6,20 +6,24 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+
+	"github.com/myrheimb/pageroom/internal/site"
 )
 
 // watcher notices files changed outside Pageroom (a developer in VS Code,
-// a sync) and tells the UI to refresh, debounced.
+// a sync) and tells the UI to refresh, debounced. onChange learns whether
+// the site preferences file was among the changes.
 type watcher struct {
 	w    *fsnotify.Watcher
 	stop chan struct{}
 	once sync.Once
 }
 
-func newWatcher(root string, onChange func()) (*watcher, error) {
+func newWatcher(root string, onChange func(prefsChanged bool)) (*watcher, error) {
 	fw, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -42,6 +46,7 @@ func newWatcher(root string, onChange func()) (*watcher, error) {
 	for _, d := range []string{"content", "static", "assets", "config", "data"} {
 		add(filepath.Join(root, d))
 	}
+	var prefsTouched atomic.Bool
 	go func() {
 		var timer *time.Timer
 		for {
@@ -55,6 +60,9 @@ func newWatcher(root string, onChange func()) (*watcher, error) {
 				if strings.Contains(filepath.Base(ev.Name), ".pageroom-") {
 					continue // our own atomic-write temp files
 				}
+				if filepath.Base(ev.Name) == site.PrefsFile {
+					prefsTouched.Store(true)
+				}
 				if ev.Op&fsnotify.Create != 0 {
 					if st, err := os.Stat(ev.Name); err == nil && st.IsDir() {
 						add(ev.Name)
@@ -63,7 +71,7 @@ func newWatcher(root string, onChange func()) (*watcher, error) {
 				if timer != nil {
 					timer.Stop()
 				}
-				timer = time.AfterFunc(400*time.Millisecond, onChange)
+				timer = time.AfterFunc(400*time.Millisecond, func() { onChange(prefsTouched.Swap(false)) })
 			case <-fw.Errors:
 			}
 		}

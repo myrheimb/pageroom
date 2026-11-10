@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
 import { alignableBlock, BlockAlign, ButtonBlock, cardDropGap, CardBlock, CardsBlock, ColumnBlock, ColumnsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, setBlockAlign, ShortcodeBlock, ShortcodeInline, VideoBlock } from "./nodes";
-import { slashItems } from "./slash";
+import { availableItems, slashItems } from "./slash";
 import { t } from "../i18n";
 
 // TipTap scrolls to the selection one frame after focus, and jsdom can't measure text for that scroll.
@@ -21,7 +21,7 @@ function setup(markdown = "", prompt: () => Promise<string | null> = async () =>
     content: markdownToHtml(markdown),
   });
   const items = slashItems({ pickImage: async () => null, prompt, addContactForm: async () => false, addPageBlock });
-  return { editor, addPageBlock, markdown: () => htmlToMarkdown(editor.getHTML()), insert: (title: string) => items.find((item) => item.title === title)!.run(editor, { from: 1, to: 1 }) };
+  return { editor, addPageBlock, menu: (query = "") => availableItems(items, editor, query).map((item) => item.title), markdown: () => htmlToMarkdown(editor.getHTML()), insert: (title: string) => items.find((item) => item.title === title)!.run(editor, { from: 1, to: 1 }) };
 }
 
 const find = (editor: Editor, type: string) => {
@@ -69,6 +69,35 @@ describe("button on the canvas", () => {
     editor.commands.selectAll();
     editor.commands.insertContent({ type: "prButton", attrs: { link: "/contact/" }, content: [{ type: "text", text: "Write to us" }] });
     expect(markdown()).toBe('{{< pr-button link="/contact/" >}}Write to us{{< /pr-button >}}\n');
+    editor.destroy();
+  });
+});
+
+describe("summary break in the slash menu", () => {
+  const cursorIn = (editor: Editor, text: string) => {
+    let found = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text === text) found = pos + 1;
+    });
+    editor.commands.setTextSelection(found);
+  };
+
+  it("is offered in a plain paragraph", () => {
+    const { editor, menu } = setup("Plain.\n");
+    cursorIn(editor, "Plain.");
+    expect(menu()).toContain(t.slash.summaryBreak);
+    editor.destroy();
+  });
+
+  it.each([
+    ["a banner", "{{< pr-hero >}}\n## Hi\n{{< /pr-hero >}}\n", "Hi"],
+    ["a card", "{{< pr-cards >}}\n{{< pr-card >}}\n### One\n{{< /pr-card >}}\n{{< /pr-cards >}}\n", "One"],
+  ])("is left out inside %s", (_label, md, text) => {
+    const { editor, menu } = setup(md);
+    cursorIn(editor, text);
+    expect(menu()).not.toContain(t.slash.summaryBreak);
+    expect(menu("more")).toEqual([]);
+    expect(menu()).toContain(t.slash.divider);
     editor.destroy();
   });
 });

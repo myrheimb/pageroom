@@ -251,7 +251,9 @@ function renderPrBlock(raw: string): string | null {
     const html = markdownToHtml(inner).trim();
     const picture = /^<p>(<img [^>]*>)<\/p>$/.exec(html);
     if (picture) return picture[1].replace("<img ", `<img data-align="${attrs.to}" `);
-    return /^<(p|h[1-6]|blockquote)>(?:(?!<\/\1>)[\s\S])*<\/\1>$/.test(html) ? html.replace(/^<(p|h[1-6]|blockquote)>/, `<$1 data-align="${attrs.to}">`) : null;
+    const parsed = new DOMParser().parseFromString(html, "text/html").body;
+    const single = parsed.children.length === 1 && /^(P|H[1-6]|BLOCKQUOTE)$/.test(parsed.children[0].nodeName) ? parsed.children[0] : null;
+    return single ? html.replace(/^<(p|h[1-6]|blockquote)>/, `<$1 data-align="${attrs.to}">`) : null;
   }
   if (name === "pr-button") {
     return /\n|\{\{/.test(inner) ? null : wrap(esc(inner));

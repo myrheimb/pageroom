@@ -140,6 +140,7 @@ describe("page blocks", () => {
     ["a heading", "## Title"],
     ["a quote", "> Said once."],
     ["a quote with two paragraphs", "> One.\n> \n> Two."],
+    ["a quote with a nested quote", "> Outer.\n> \n> > Inner."],
     ["a picture", "![Sea](sea.jpg)"],
   ])("round trips %s aligned inside a column", (_label, body) => {
     const md = alignedInColumn(body);
@@ -148,6 +149,18 @@ describe("page blocks", () => {
     expect(roundTrip(md)).toBe(md);
 
     const editor = editorFor(md);
+    expect(htmlToMarkdown(editor.getHTML())).toBe(md);
+    editor.destroy();
+  });
+
+  it("loads an aligned quote with a nested quote as an editable quote on the page", () => {
+    const md = '{{< pr-align to="right" >}}\n> Outer.\n> \n> > Inner.\n{{< /pr-align >}}\n';
+    expect(markdownToHtml(md)).toContain('<blockquote data-align="right">');
+    expect(markdownToHtml(md)).not.toContain('data-shortcode');
+    expect(roundTrip(md)).toBe(md);
+
+    const editor = editorFor(md);
+    expect(editor.state.doc.firstChild?.type.name).toBe("blockquote");
     expect(htmlToMarkdown(editor.getHTML())).toBe(md);
     editor.destroy();
   });

@@ -38,11 +38,11 @@ func archiveOf(t *testing.T, entries ...entry) *bytes.Reader {
 			t.Fatal(err)
 		}
 		if item.kind == tar.TypeReg {
-			archive.Write([]byte(item.body))
+			_, _ = archive.Write([]byte(item.body))
 		}
 	}
-	archive.Close()
-	gz.Close()
+	_ = archive.Close()
+	_ = gz.Close()
 	return bytes.NewReader(buffer.Bytes())
 }
 
@@ -51,7 +51,7 @@ func file(name, body string) entry { return entry{name, body, tar.TypeReg} }
 func extracted(t *testing.T, dir string) []string {
 	t.Helper()
 	var names []string
-	filepath.WalkDir(dir, func(path string, item os.DirEntry, err error) error {
+	_ = filepath.WalkDir(dir, func(path string, item os.DirEntry, err error) error {
 		if err == nil && !item.IsDir() {
 			rel, _ := filepath.Rel(dir, path)
 			names = append(names, filepath.ToSlash(rel))

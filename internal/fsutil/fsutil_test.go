@@ -33,7 +33,7 @@ func TestSafeJoinRejectsSymlinkEscape(t *testing.T) {
 
 func TestWriteFileAtomicPreservesPerm(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "f.txt")
-	os.WriteFile(p, []byte("old"), 0o600)
+	_ = os.WriteFile(p, []byte("old"), 0o600)
 	if err := WriteFileAtomic(p, []byte("new"), 0o644); err != nil {
 		t.Fatal(err)
 	}

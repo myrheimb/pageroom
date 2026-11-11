@@ -79,7 +79,7 @@ go test -race ./...             # Go (preview and import tests run when `hugo` i
 cd frontend && npx vitest run   # Markdown round-trip tests
 ```
 
-In the devenv shell, `task test` runs both, `task type` typechecks the frontend, and `task lint` runs the git hooks on every file. `task screenshots` regenerates the images in `docs/screenshots/` from a mock of the app. A map of the code is in [architecture.md](docs/architecture.md).
+In the devenv shell, `task test` runs both, `task type` typechecks the frontend, and `task lint` runs the git hooks on every file, including golangci-lint with errcheck and gocyclo. `task screenshots` regenerates the images in `docs/screenshots/` from a mock of the app. A map of the code is in [architecture.md](docs/architecture.md).
 
 ## Status
 

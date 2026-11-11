@@ -21,7 +21,7 @@ func TestSiteVersion(t *testing.T) {
 	if v := SiteVersion(root, ""); v != DefaultVersion {
 		t.Fatalf("default %s", v)
 	}
-	os.WriteFile(filepath.Join(root, "netlify.toml"), []byte("[build.environment]\n  HUGO_VERSION = \"0.140.1\"\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(root, "netlify.toml"), []byte("[build.environment]\n  HUGO_VERSION = \"0.140.1\"\n"), 0o644)
 	if v := SiteVersion(root, ""); v != "0.140.1" {
 		t.Fatalf("netlify %s", v)
 	}
@@ -53,12 +53,12 @@ func fakeRelease(t *testing.T, corrupt bool) *httptest.Server {
 	gz := gzip.NewWriter(&archive)
 	tw := tar.NewWriter(gz)
 	bin := []byte("#!/bin/sh\necho hugo v0.168.0-extended\n")
-	tw.WriteHeader(&tar.Header{Name: "../evil", Mode: 0o755, Size: 1, Typeflag: tar.TypeReg})
-	tw.Write([]byte("x"))
-	tw.WriteHeader(&tar.Header{Name: binName(), Mode: 0o755, Size: int64(len(bin)), Typeflag: tar.TypeReg})
-	tw.Write(bin)
-	tw.Close()
-	gz.Close()
+	_ = tw.WriteHeader(&tar.Header{Name: "../evil", Mode: 0o755, Size: 1, Typeflag: tar.TypeReg})
+	_, _ = tw.Write([]byte("x"))
+	_ = tw.WriteHeader(&tar.Header{Name: binName(), Mode: 0o755, Size: int64(len(bin)), Typeflag: tar.TypeReg})
+	_, _ = tw.Write(bin)
+	_ = tw.Close()
+	_ = gz.Close()
 	sum := sha256.Sum256(archive.Bytes())
 	hexsum := hex.EncodeToString(sum[:])
 	if corrupt {
@@ -71,9 +71,9 @@ func fakeRelease(t *testing.T, corrupt bool) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v0.168.0/hugo_0.168.0_checksums.txt":
-			fmt.Fprintf(w, "%s  %s\n", hexsum, asset)
+			_, _ = fmt.Fprintf(w, "%s  %s\n", hexsum, asset)
 		case "/v0.168.0/" + asset:
-			w.Write(archive.Bytes())
+			_, _ = w.Write(archive.Bytes())
 		default:
 			http.NotFound(w, r)
 		}

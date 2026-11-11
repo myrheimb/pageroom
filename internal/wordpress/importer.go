@@ -134,6 +134,8 @@ type planned struct {
 
 // Import writes the export into the site. Existing files are never
 // overwritten: a clash gets a new name.
+//
+//nolint:gocyclo // The import runs once per site in order, and the importer is well tested.
 func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	s := opt.Site
 	if opt.PostsSection == "" {
@@ -360,6 +362,7 @@ func importLogo(ctx context.Context, page []byte, base *url.URL, opt Options, ca
 	return s.SetLogo("/" + name)
 }
 
+//nolint:gocyclo // One pass over an item keeps the import steps in order, and the importer is well tested.
 func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *url.URL, attachments, blocks map[int]string, cache map[string][]byte, rep *Report) error {
 	it := p.item
 	dirRel := path.Dir(p.file)

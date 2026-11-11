@@ -37,7 +37,7 @@ func TestUpdateLetterIcon(t *testing.T) {
 				if content == nil {
 					return
 				}
-				os.MkdirAll(filepath.Dir(path), 0o755)
+				_ = os.MkdirAll(filepath.Dir(path), 0o755)
 				if err := os.WriteFile(path, content, 0o644); err != nil {
 					t.Fatal(err)
 				}

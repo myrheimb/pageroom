@@ -29,8 +29,8 @@ func fixture(t *testing.T) *Site {
 	}
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
 	if err != nil {
@@ -77,7 +77,7 @@ func TestTree(t *testing.T) {
 func TestSaveDetectsChangesOnDisk(t *testing.T) {
 	s := fixture(t)
 	p, _ := s.GetPage("content/about.md")
-	os.WriteFile(filepath.Join(s.Root, "content/about.md"), []byte("+++\ntitle = 'Changed by sync'\n+++\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(s.Root, "content/about.md"), []byte("+++\ntitle = 'Changed by sync'\n+++\n"), 0o644)
 	body := "New body"
 	_, err := s.SavePage(SaveRequest{Path: p.Path, BaseHash: p.Hash, Body: &body})
 	var ce *ChangedOnDiskError
@@ -203,7 +203,7 @@ func TestMenusMergeAndSave(t *testing.T) {
 	if err := s.SaveMenu(Menu{Name: "main", Items: items}); err != nil {
 		t.Fatal(err)
 	}
-	s.Reload()
+	_ = s.Reload()
 	menus, _ = s.Menus()
 	got := menus[0].Items
 	if len(got) != 3 || got[0].Name != "Blog" || got[1].Name != "About us" || got[1].Source != "config" || got[2].URL == "" {
@@ -227,7 +227,7 @@ func TestSettings(t *testing.T) {
 	if err := s.SaveSettings(st); err != nil {
 		t.Fatal(err)
 	}
-	s.Reload()
+	_ = s.Reload()
 	if got := s.Settings(); got.Title != "Renamed" || got.Description != "A lovely site" {
 		t.Fatalf("%+v", got)
 	}
@@ -238,7 +238,7 @@ func TestSettings(t *testing.T) {
 	if err := s.SaveSettings(st); err != nil {
 		t.Fatal(err)
 	}
-	s.Reload()
+	_ = s.Reload()
 	if got := s.Settings(); got != st {
 		t.Fatalf("contact form not saved: %+v", got)
 	}
@@ -262,7 +262,7 @@ func TestAddContactForm(t *testing.T) {
 			if err := s.SaveSettings(st); err != nil {
 				t.Fatal(err)
 			}
-			s.Reload()
+			_ = s.Reload()
 		}
 		if err := s.AddContactForm(); err != nil {
 			t.Fatal(err)
@@ -273,7 +273,7 @@ func TestAddContactForm(t *testing.T) {
 			t.Errorf("%q: labels not filled in:\n%s", language, got)
 		}
 
-		os.WriteFile(file, []byte("the developer's own"), 0o644)
+		_ = os.WriteFile(file, []byte("the developer's own"), 0o644)
 		if err := s.AddContactForm(); err != nil {
 			t.Fatal(err)
 		}
@@ -305,8 +305,8 @@ func TestTreePairsTranslations(t *testing.T) {
 	}
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	s, err := Open(root, t.TempDir())
 	if err != nil {
@@ -374,8 +374,8 @@ func languageFixture(t *testing.T) *Site {
 	}
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
 	if err != nil {
@@ -593,8 +593,8 @@ func TestSaveMenuKeepsKeysItDoesNotEdit(t *testing.T) {
 	}
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
 	if err != nil {
@@ -615,7 +615,7 @@ func TestSaveMenuKeepsKeysItDoesNotEdit(t *testing.T) {
 			t.Fatalf("missing %s:\n%s", want, got)
 		}
 	}
-	s.Reload()
+	_ = s.Reload()
 	menus, _ = s.Menus()
 	if n := menus[0].Items; n[0].Name != "Blog" || n[1].Name != "Documentation" || n[2].Name != "New" {
 		t.Fatalf("order: %+v", n)
@@ -655,8 +655,8 @@ func openFiles(t *testing.T, files map[string]string) *Site {
 	root := t.TempDir()
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
 	if err != nil {
@@ -742,7 +742,7 @@ func TestMenusFallBackToSharedConfig(t *testing.T) {
 	if !strings.Contains(string(ja), "資料") || !strings.Contains(string(ja), "icon") {
 		t.Fatalf("ja file:\n%s", ja)
 	}
-	s.Reload()
+	_ = s.Reload()
 	menus, _ = s.Menus()
 	if menuIn(menus, "en", "main").Items[0].Name != "Docs" || menuIn(menus, "ja", "main").Items[0].Name != "資料" {
 		t.Fatalf("after save: %+v", menus)
@@ -870,8 +870,8 @@ func TestSaveLanguagesRefusesANewDefault(t *testing.T) {
 	s := openFiles(t, map[string]string{
 		"hugo.toml": "defaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
 	})
-	languageError(t, s.SaveLanguages("ja", []Language{{"en", "English"}, {"ja", "日本語"}}), "language-default")
-	languageError(t, s.SaveLanguages("en", []Language{{"ja", "日本語"}}), "language-default")
+	_ = languageError(t, s.SaveLanguages("ja", []Language{{"en", "English"}, {"ja", "日本語"}}), "language-default")
+	_ = languageError(t, s.SaveLanguages("en", []Language{{"ja", "日本語"}}), "language-default")
 }
 
 func TestSaveLanguagesWritesToTheLanguagesFile(t *testing.T) {

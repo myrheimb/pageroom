@@ -35,7 +35,7 @@ func TestRoundTripIsByteIdentical(t *testing.T) {
 
 func TestSettingSameValueKeepsBytes(t *testing.T) {
 	d, _ := Parse([]byte(samples["yaml"]))
-	d.Set("title", "Hello", YAML)
+	_ = d.Set("title", "Hello", YAML)
 	out, _ := d.Bytes()
 	if string(out) != samples["yaml"] {
 		t.Fatalf("no-op set rewrote file: %q", out)
@@ -47,7 +47,7 @@ func TestYAMLEditKeepsCommentsAndOrder(t *testing.T) {
 	if err := d.Set("title", "Goodbye", YAML); err != nil {
 		t.Fatal(err)
 	}
-	d.Set("weight", 3, YAML)
+	_ = d.Set("weight", 3, YAML)
 	out, _ := d.Bytes()
 	s := string(out)
 	if !strings.Contains(s, "title: Goodbye # greeting") {
@@ -69,9 +69,9 @@ func TestTOMLEdits(t *testing.T) {
 	if got := d.Keys(); strings.Join(got, ",") != "title,tags,params" {
 		t.Fatalf("keys = %v", got)
 	}
-	d.Set("tags", []string{"x"}, TOML)
-	d.Set("draft", true, TOML)
-	d.Set("params", map[string]any{"hero": "y.jpg"}, TOML)
+	_ = d.Set("tags", []string{"x"}, TOML)
+	_ = d.Set("draft", true, TOML)
+	_ = d.Set("params", map[string]any{"hero": "y.jpg"}, TOML)
 	out, _ := d.Bytes()
 	s := string(out)
 	for _, want := range []string{"# site post", "title = \"Hello\"", "draft = true", "hero = 'y.jpg'"} {
@@ -105,7 +105,7 @@ func TestTOMLDeleteTable(t *testing.T) {
 
 func TestJSONKeepsOrder(t *testing.T) {
 	d, _ := Parse([]byte(samples["json"]))
-	d.Set("beta", "b", JSON)
+	_ = d.Set("beta", "b", JSON)
 	out, _ := d.Bytes()
 	s := string(out)
 	if !(strings.Index(s, "zeta") < strings.Index(s, "alpha") && strings.Index(s, "alpha") < strings.Index(s, "beta")) {
@@ -115,7 +115,7 @@ func TestJSONKeepsOrder(t *testing.T) {
 
 func TestAddFrontMatterToPlainFile(t *testing.T) {
 	d, _ := Parse([]byte(samples["none"]))
-	d.Set("title", "New", YAML)
+	_ = d.Set("title", "New", YAML)
 	out, _ := d.Bytes()
 	if string(out) != "---\ntitle: New\n---\nJust a body\n" {
 		t.Fatalf("got %q", out)
@@ -135,7 +135,7 @@ func TestDates(t *testing.T) {
 	ts := time.Date(2026, 3, 1, 9, 30, 0, 0, time.UTC)
 	for _, f := range []Format{YAML, TOML} {
 		d, _ := Parse(nil)
-		d.Set("date", ts, f)
+		_ = d.Set("date", ts, f)
 		out, _ := d.Bytes()
 		if !strings.Contains(string(out), "2026-03-01T09:30:00Z") {
 			t.Errorf("%s date encoding: %s", f, out)
@@ -161,7 +161,7 @@ func TestParseDataConfig(t *testing.T) {
 	if string(out) != src {
 		t.Fatalf("round trip: %q", out)
 	}
-	d.Set("title", "New", TOML)
+	_ = d.Set("title", "New", TOML)
 	out, _ = d.Bytes()
 	if !strings.Contains(string(out), "# My site") || !strings.Contains(string(out), "title = 'New'") || strings.HasPrefix(string(out), "+++") {
 		t.Fatalf("got %s", out)

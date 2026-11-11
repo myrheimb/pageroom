@@ -11,6 +11,7 @@
   # https://devenv.sh/packages/
   packages = [
     pkgs.go-task
+    pkgs.golangci-lint
     pkgs.hugo
   ]
   ++ lib.optionals pkgs.stdenv.isLinux [
@@ -51,6 +52,14 @@
       name = "go-mod-tidy";
       entry = "${config.languages.go.package}/bin/go mod tidy -diff";
       files = "^(go\\.mod|go\\.sum|.*\\.go)$";
+      pass_filenames = false;
+    };
+    # Only errcheck and gocyclo, set in .golangci.yml.
+    golangci-lint = {
+      enable = true;
+      name = "golangci-lint";
+      entry = "${pkgs.golangci-lint}/bin/golangci-lint run ./...";
+      files = "^(\\.golangci\\.yml|go\\.mod|.*\\.go)$";
       pass_filenames = false;
     };
     nixfmt.enable = true;

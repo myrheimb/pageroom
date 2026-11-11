@@ -30,7 +30,7 @@ func (f *fakeFetcher) Get(_ context.Context, u string) ([]byte, error) {
 		return nil, errors.New("404")
 	}
 	var b bytes.Buffer
-	jpeg.Encode(&b, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
+	_ = jpeg.Encode(&b, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
 	return b.Bytes(), nil
 }
 
@@ -39,7 +39,7 @@ func load(t *testing.T) *Export {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	e, err := Parse(f)
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +159,7 @@ func TestImport(t *testing.T) {
 		t.Error("child page should be content/about/team/index.md")
 	}
 
-	s.Reload()
+	_ = s.Reload()
 	menus, _ := s.Menus()
 	var main *site.Menu
 	for i := range menus {
@@ -493,7 +493,7 @@ func TestImportCopiesGoogleFonts(t *testing.T) {
 
 func TestImportLogo(t *testing.T) {
 	var logo bytes.Buffer
-	jpeg.Encode(&logo, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
+	_ = jpeg.Encode(&logo, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
 	customLogoPage := `<a class="custom-logo-link"><img width="8" class="custom-logo" src="https://example.com/wp-content/uploads/logo-150x150.jpg"></a>`
 	blockLogoPage := `<div class="wp-block-site-logo"><a><img src="/wp-content/uploads/logo.jpg"></a></div>`
 	elsewhere := `<img class="custom-logo" src="https://cdn.other.com/logo.jpg">`

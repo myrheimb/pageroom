@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/myrheimb/pageroom/internal/gitsync"
 	"github.com/myrheimb/pageroom/internal/hugo"
@@ -256,5 +257,59 @@ func TestSiteFilesServesFontsAndImagesOnly(t *testing.T) {
 		if want.contentType != "" && recorder.Header().Get("Content-Type") != want.contentType {
 			t.Errorf("%s: content type %q, want %q", path, recorder.Header().Get("Content-Type"), want.contentType)
 		}
+	}
+}
+
+func watchHostedSite(t *testing.T) (*App, string, chan string) {
+	t.Helper()
+	a, root := newHostedSite(t)
+	events := make(chan string, 4)
+	w, err := a.watchSite(root, func(event string) { events <- event })
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.Close)
+	return a, root, events
+}
+
+func nextEvent(t *testing.T, events chan string) string {
+	t.Helper()
+	select {
+	case event := <-events:
+		return event
+	case <-time.After(10 * time.Second):
+		t.Fatal("watcher sent no event")
+		return ""
+	}
+}
+
+func TestPrefsChangeOnDiskShowsNewCustomFields(t *testing.T) {
+	a, root, events := watchHostedSite(t)
+	if fields := a.site.Info().Prefs.Fields; len(fields) != 0 {
+		t.Fatalf("expected no custom fields, got %v", fields)
+	}
+
+	prefs := "version: 1\nfields:\n  - key: author\n    label: Author\n    type: text\n"
+	if err := os.WriteFile(filepath.Join(root, site.PrefsFile), []byte(prefs), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if event := nextEvent(t, events); event != "site:prefs-changed" {
+		t.Errorf("got event %q, want site:prefs-changed", event)
+	}
+	fields := a.site.Info().Prefs.Fields
+	if len(fields) != 1 || fields[0].Key != "author" {
+		t.Errorf("new field did not reach the site: %v", fields)
+	}
+}
+
+func TestOtherFileChangeSendsFilesChanged(t *testing.T) {
+	_, root, events := watchHostedSite(t)
+	if err := os.WriteFile(filepath.Join(root, "notes.txt"), []byte("hi"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if event := nextEvent(t, events); event != "site:files-changed" {
+		t.Errorf("got event %q, want site:files-changed", event)
 	}
 }

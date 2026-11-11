@@ -8,6 +8,7 @@ import {
 import { t } from "../i18n";
 
 export interface SlashItem {
+  id?: string;
   title: string;
   description: string;
   group: string;
@@ -103,7 +104,7 @@ export function slashItems(h: SlashHooks): SlashItem[] {
     { group: t.slash.advanced, title: t.slash.table, description: t.slash.tableHint, icon: <Table size={16} />, run: block((e) => e.chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()) },
     { group: t.slash.advanced, title: t.slash.code, description: t.slash.codeHint, keywords: ["pre"], icon: <Code size={16} />, run: block((e) => e.chain().toggleCodeBlock().run()) },
     {
-      group: t.slash.advanced, title: t.slash.summaryBreak, description: t.slash.summaryBreakHint, keywords: ["more", "excerpt"], icon: <Scissors size={16} />,
+      id: "summaryBreak", group: t.slash.advanced, title: t.slash.summaryBreak, description: t.slash.summaryBreakHint, keywords: ["more", "excerpt"], icon: <Scissors size={16} />,
       run: block((e) => e.chain().insertContent({ type: "rawHtmlBlock", attrs: { raw: "<!--more-->" } }).run()),
     },
     {
@@ -115,6 +116,15 @@ export function slashItems(h: SlashHooks): SlashItem[] {
       },
     },
   ];
+}
+
+const NO_SUMMARY_BREAK = ["prHero", "prCard"];
+
+export function availableItems(items: SlashItem[], editor: Editor, query: string): SlashItem[] {
+  const { $from } = editor.state.selection;
+  const inside = Array.from({ length: $from.depth }, (_, index) => $from.node(index + 1).type.name);
+  const allowed = inside.some((name) => NO_SUMMARY_BREAK.includes(name)) ? items.filter((item) => item.id !== "summaryBreak") : items;
+  return filterItems(allowed, query);
 }
 
 export function filterItems(items: SlashItem[], q: string): SlashItem[] {
@@ -177,7 +187,7 @@ export const SlashCommand = Extension.create<{ hooks: SlashHooks }>({
         char: "/",
         startOfLine: false,
         allowSpaces: false,
-        items: ({ query }) => filterItems(all, query),
+        items: ({ editor, query }) => availableItems(all, editor, query),
         command: ({ editor, range, props }) => props.run(editor, range),
         render: () => {
           let comp: ReactRenderer<ListRef, SuggestionProps<SlashItem>> | null = null;

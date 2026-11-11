@@ -62,8 +62,9 @@ export function Workspace() {
       try { setTree(await api.getTree()); } catch { /* ignore */ }
       refreshChanges();
     });
+    const offPrefs = on("site:prefs-changed", refresh);
     const offClose = on("app:closing", async () => { await flushAll(); api.confirmClose(); });
-    return () => { clearInterval(t); window.removeEventListener("focus", onFocus); offFiles(); offClose(); };
+    return () => { clearInterval(t); window.removeEventListener("focus", onFocus); offFiles(); offPrefs(); offClose(); };
   }, []);
 
   if (!site) return null;

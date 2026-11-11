@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/myrheimb/pageroom/internal/site"
 	"github.com/myrheimb/pageroom/internal/starter"
 )
 
@@ -48,6 +50,106 @@ func TestPreviewServerAgainstStarterSite(t *testing.T) {
 	}
 	if err := Check(context.Background(), bin, root, work, "", ""); err != nil {
 		t.Fatalf("check: %v", err)
+	}
+}
+
+// A changed template makes Hugo render the pages that already have blocks
+// again, and their styles must still be there.
+func TestBlockStylesSurviveEditingAnotherPage(t *testing.T) {
+	bin, err := exec.LookPath("hugo")
+	if err != nil {
+		t.Skip("hugo not installed")
+	}
+	root := filepath.Join(t.TempDir(), "site")
+	if err := starter.Create(root, "Blocks", DefaultVersion); err != nil {
+		t.Fatal(err)
+	}
+	opened, err := site.Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"pr-align", "pr-button", "pr-card", "pr-cards", "pr-column", "pr-columns", "pr-hero", "pr-video"} {
+		if err := opened.AddShortcode(name); err != nil {
+			t.Fatal(err)
+		}
+	}
+	const blocksPage = "---\ntitle: Blocks\n---\n\n" +
+		"{{< pr-align to=\"center\" >}}\nCentered.\n{{< /pr-align >}}\n\n" +
+		"{{< pr-button link=\"/\" >}}Go{{< /pr-button >}}\n\n" +
+		"{{< pr-cards >}}\n{{< pr-card >}}\nOne.\n{{< /pr-card >}}\n{{< /pr-cards >}}\n\n" +
+		"{{< pr-columns >}}\n{{< pr-column >}}\nA.\n{{< /pr-column >}}\n{{< pr-column >}}\nB.\n{{< /pr-column >}}\n{{< /pr-columns >}}\n\n" +
+		"{{< pr-hero >}}\nHero.\n{{< /pr-hero >}}\n\n" +
+		"{{< pr-video id=\"abc\" >}}\n"
+	blocksPath := filepath.Join(root, "content", "posts", "blocks", "index.md")
+	if err := os.MkdirAll(filepath.Dir(blocksPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(blocksPath, []byte(blocksPage), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv, err := StartServer(context.Background(), bin, root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer srv.Stop()
+
+	fetch := func(path string) string {
+		t.Helper()
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		return string(body)
+	}
+	wantStyles := []string{".pr-align-center {", ".pr-button {", ".pr-cards {", ".pr-columns {", ".pr-hero {", ".pr-video {"}
+	for _, want := range wantStyles {
+		if !strings.Contains(fetch("posts/blocks/"), want) {
+			t.Fatalf("first load misses %q", want)
+		}
+	}
+
+	otherPath := filepath.Join(root, "content", "posts", "welcome", "index.md")
+	other, err := os.ReadFile(otherPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(otherPath, append(other, []byte("\nEdited elsewhere.\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	templatePath := filepath.Join(root, "layouts", "shortcodes", "pr-card.html")
+	template, err := os.ReadFile(templatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(templatePath, append(template, []byte(`<span hidden>template updated</span>`)...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	waitFor := func(path, text string) string {
+		t.Helper()
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+		timeout := time.After(30 * time.Second)
+		for {
+			html := fetch(path)
+			if strings.Contains(html, text) {
+				return html
+			}
+			select {
+			case <-timeout:
+				t.Fatalf("%s never showed %q", path, text)
+			case <-ticker.C:
+			}
+		}
+	}
+	waitFor("posts/welcome/", "Edited elsewhere.")
+	html := waitFor("posts/blocks/", "template updated")
+	for _, want := range wantStyles {
+		if !strings.Contains(html, want) {
+			t.Errorf("after editing another page, missing %q", want)
+		}
 	}
 }
 

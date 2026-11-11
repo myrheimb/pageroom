@@ -48,6 +48,10 @@ jobs:
           npx tsc --noEmit
           npx vitest run
           npx vite build
+      - name: Bindings are up to date
+        run: |
+          go tool wails3 generate bindings -clean=true -ts -i
+          test -z "$(git status --porcelain frontend/bindings)" || (git status --porcelain frontend/bindings && exit 1)
       - name: Install Chromium headless shell (used by the block layout tests)
         working-directory: frontend
         run: npx playwright-core install --with-deps chromium-headless-shell

@@ -1,0 +1,24 @@
+{{- if not (.Page.Store.Get "pr-hero-css") }}{{ .Page.Store.Set "pr-hero-css" true -}}
+<style>
+.pr-hero { box-sizing: border-box; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 2rem; align-items: center; margin: 2rem 0; padding: clamp(1.25rem, 5vw, 3rem); border-radius: 1rem; background: color-mix(in srgb, var(--pr-primary, #2563eb) 10%, transparent); overflow-wrap: anywhere; }
+.pr-hero > * { min-width: 0; }
+.pr-hero-text > :first-child { margin-top: 0; }
+.pr-hero-text > :last-child { margin-bottom: 0; }
+.pr-hero-text .pr-button { margin-top: 1rem; }
+.pr-hero .pr-button { display: inline-block; box-sizing: border-box; max-width: 100%; padding: .65em 1.3em; border-radius: .5em; background: var(--pr-primary, #2563eb); color: #fff; font-weight: 600; line-height: 1.3; text-align: center; text-decoration: none; }
+.pr-hero img { display: block; max-width: 100%; height: auto; border-radius: .75rem; }
+</style>
+{{ end -}}
+<section class="pr-hero">
+  <div class="pr-hero-text">
+    {{ .Page.RenderString (dict "display" "block") .Inner }}
+    {{- with .Get "button" }}
+    <a class="pr-button" href="{{ $.Get "link" | default "#" }}">{{ . }}</a>
+    {{- end }}
+  </div>
+  {{- with .Get "image" }}
+  {{- $src := . }}
+  {{- with or ($.Page.Resources.GetMatch .) (resources.Get .) }}{{ $src = .RelPermalink }}{{ else }}{{ $src = $src | relURL }}{{ end }}
+  <img src="{{ $src }}" alt="{{ $.Get "alt" }}">
+  {{- end }}
+</section>

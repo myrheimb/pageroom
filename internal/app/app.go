@@ -189,6 +189,8 @@ func (a *App) OpenSite(path string) (*SiteState, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A template that can't be updated leaves the site working with the older one.
+	_, _ = s.UpdateShortcodes()
 	var repo *gitsync.Repo
 	if r, err := gitsync.Open(s.Root, a.gitOptions()); err == nil {
 		repo = r
@@ -203,7 +205,7 @@ func (a *App) OpenSite(path string) (*SiteState, error) {
 	a.media = &media.Library{Root: s.Root, ContentDir: s.ContentDir, StaticDir: staticDir, MaxWidth: s.Prefs.Media.MaxWidth, TrashDir: trash}
 	a.style = &appearance.Engine{Root: s.Root, Theme: s.Config.Theme(), HeadHook: s.Prefs.Appearance.HeadHook}
 	a.mu.Unlock()
-	if w, err := newWatcher(s.Root, func() { application.Get().Event.Emit("site:files-changed") }); err == nil {
+	if w, err := a.watchSite(s.Root, func(event string) { application.Get().Event.Emit(event) }); err == nil {
 		a.mu.Lock()
 		a.watcher = w
 		a.mu.Unlock()
@@ -215,6 +217,30 @@ func (a *App) OpenSite(path string) (*SiteState, error) {
 	// The recent-sites list is a convenience. Failing to update it must not block opening the site.
 	_ = a.settings.Touch(settings.RecentSite{Path: s.Root, Title: s.Settings().Title, Remote: remote})
 	return a.GetSite()
+}
+
+// watchSite reports outside edits through emit. A change to the preferences
+// file reloads the settings first and gets its own event.
+func (a *App) watchSite(root string, emit func(event string)) (*watcher, error) {
+	return newWatcher(root, func(prefsChanged bool) {
+		if !prefsChanged {
+			emit("site:files-changed")
+			return
+		}
+		a.reloadSettings()
+		emit("site:prefs-changed")
+	})
+}
+
+// reloadSettings picks up edits made outside Pageroom, such as new custom fields in .pageroom.yaml.
+// A file that can't be read right now keeps the settings the site already has.
+func (a *App) reloadSettings() {
+	a.mu.Lock()
+	s := a.site
+	a.mu.Unlock()
+	if s != nil {
+		_ = s.Reload()
+	}
 }
 
 // secureRemote moves credentials embedded in the remote URL into the OS

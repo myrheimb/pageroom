@@ -1,10 +1,13 @@
 package site_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -211,8 +214,8 @@ func TestBlockTemplatesBuildOnEveryStarterTheme(t *testing.T) {
 			if strings.Contains(html, "<!--pr-button") || strings.Contains(html, "<!--/pr-button") {
 				t.Error("a button marker is left in the page")
 			}
-			if got := strings.Count(html, ".pr-cards {"); got != 1 {
-				t.Errorf("cards CSS written %d times, want 1", got)
+			if !strings.Contains(html, ".pr-cards {") {
+				t.Error("the cards style is missing")
 			}
 			if strings.Index(html, "Before.") > strings.Index(html, `<section class="pr-hero">`) || strings.Index(html, "After.") < strings.Index(html, `<a class="pr-button" href="/contact/">`) {
 				t.Error("blocks are not between the paragraphs")
@@ -293,8 +296,8 @@ Other.
 					t.Errorf("missing %q", want)
 				}
 			}
-			if got := strings.Count(html, ".pr-video {"); got != 1 {
-				t.Errorf("video CSS written %d times, want 1", got)
+			if !strings.Contains(html, ".pr-video {") {
+				t.Error("the video style is missing")
 			}
 			if strings.Contains(html, "raw HTML omitted") {
 				t.Error("Hugo dropped the video as raw HTML")
@@ -494,10 +497,6 @@ func findBrowser() string {
 	return ""
 }
 
-// chrome-headless-shell honours --window-size=360,800 exactly, unlike the full
-// Chromium whose headless window stays at about 500px wide. --single-process
-// is what lets it start inside the Claude Code sandbox, and HUGO_RELATIVEURLS lets
-// the built page load its CSS from file://.
 const phoneProbe = `<script>document.documentElement.dataset.probe = document.documentElement.scrollWidth + "/" + document.documentElement.clientWidth + "/" + window.innerWidth + "/" + Array.from(document.querySelectorAll(".pr-column")).every((column, index, all) => index === 0 || column.offsetTop > all[index - 1].offsetTop)</script>`
 
 const desktopProbe = `<script>const wide = document.querySelector(".pr-columns-2-1").children; const three = document.querySelector(".pr-columns-1-1-1").children; document.documentElement.dataset.probe = (Math.round(wide[0].offsetWidth / wide[1].offsetWidth) === 2) + "/" + (wide[1].getBoundingClientRect().top > wide[0].getBoundingClientRect().top && wide[1].getBoundingClientRect().bottom === wide[0].getBoundingClientRect().bottom) + "/" + (three[0].offsetTop === three[2].offsetTop && three[0].offsetLeft < three[1].offsetLeft && three[1].offsetLeft < three[2].offsetLeft)</script>`
@@ -506,6 +505,9 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 	t.Helper()
 	browser := findBrowser()
 	if browser == "" {
+		if os.Getenv("CI") != "" {
+			t.Fatal("no Chromium or Chrome installed")
+		}
 		t.Skip("no Chromium or Chrome installed")
 	}
 	page := buildBlocksSite(t, theme, "HUGO_RELATIVEURLS=true")
@@ -517,6 +519,10 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 		t.Fatal(err)
 	}
 
+	// chrome-headless-shell honours --window-size=360,800 exactly, unlike the full
+	// Chromium whose headless window stays at about 500px wide. --single-process
+	// is what lets it start inside the Claude Code sandbox, and HUGO_RELATIVEURLS
+	// lets the built page load its CSS from file://.
 	args := []string{"--no-sandbox", "--single-process", "--disable-gpu", "--user-data-dir=" + t.TempDir(), "--window-size=" + windowSize, "--dump-dom", "file://" + page}
 	if filepath.Base(browser) != "chrome-headless-shell" {
 		args = append([]string{"--headless=new"}, args...)
@@ -557,5 +563,89 @@ func TestBlocksDoNotScrollSidewaysOnAPhone(t *testing.T) {
 				t.Errorf("page is %spx wide in a %spx viewport", match[1], match[2])
 			}
 		})
+	}
+}
+
+func openSiteWithTemplate(t *testing.T, name, content string) (*site.Site, string) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "site")
+	if err := starter.Create(dir, "Blocks", "0.166.0"); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "layouts", "shortcodes", name+".html")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if content != "" {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	s, err := site.Open(dir, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, path
+}
+
+func shippedVersion(t *testing.T, file string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", file))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+func TestUpdateShortcodesReplacesShippedVersion(t *testing.T) {
+	older := shippedVersion(t, "pr-hero-e211718.html")
+	s, path := openSiteWithTemplate(t, "pr-hero", older)
+	updated, err := s.UpdateShortcodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, _ := os.ReadFile("shortcodes/pr-hero.html")
+	if got, _ := os.ReadFile(path); string(got) != string(current) {
+		t.Fatalf("older template not replaced")
+	}
+	if len(updated) != 1 || updated[0] != "pr-hero" {
+		t.Fatalf("updated = %v", updated)
+	}
+}
+
+func TestUpdateShortcodesKeepsEditedFile(t *testing.T) {
+	edited := shippedVersion(t, "pr-hero-e211718.html") + "<!-- mine -->"
+	s, path := openSiteWithTemplate(t, "pr-hero", edited)
+	updated, err := s.UpdateShortcodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); string(got) != edited || len(updated) != 0 {
+		t.Fatalf("edited template touched: %q %v", got, updated)
+	}
+}
+
+func TestUpdateShortcodesDoesNotCreateMissingFile(t *testing.T) {
+	s, path := openSiteWithTemplate(t, "pr-hero", "")
+	if _, err := s.UpdateShortcodes(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("missing template was created: %v", err)
+	}
+}
+
+func TestEveryCurrentTemplateIsInTheShippedHashes(t *testing.T) {
+	files, err := filepath.Glob("shortcodes/pr-*.html")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no templates: %v", err)
+	}
+	for _, file := range files {
+		name := strings.TrimSuffix(filepath.Base(file), ".html")
+		data, _ := os.ReadFile(file)
+		sum := sha256.Sum256(data)
+		if !slices.Contains(site.ShippedShortcodeHashes[name], hex.EncodeToString(sum[:])) {
+			t.Errorf("%s: current hash missing from shippedShortcodeHashes", name)
+		}
 	}
 }

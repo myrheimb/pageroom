@@ -32,7 +32,7 @@ const cspPlugin = (): Plugin => ({
 const keepDist = (): Plugin => ({
   name: "pageroom-keep-dist",
   apply: "build",
-  closeBundle: () => writeFileSync(resolve(__dirname, "dist/.gitkeep"), ""),
+  closeBundle: () => writeFileSync(resolve(import.meta.dirname, "dist/.gitkeep"), ""),
 });
 
 export default defineConfig({

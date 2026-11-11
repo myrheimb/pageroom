@@ -160,3 +160,13 @@ export function flatPages(n: TreeNode): TreeNode[] {
   walk(n);
   return out;
 }
+
+/** The page that has a file at `path` in some language, and that language. */
+export function findTranslation(tree: TreeNode, path: string): { node: TreeNode; language: string } | undefined {
+  for (const translation of tree.translations ?? []) if (translation.path === path) return { node: tree, language: translation.language };
+  for (const child of tree.children ?? []) {
+    const found = findTranslation(child, path);
+    if (found) return found;
+  }
+  return undefined;
+}

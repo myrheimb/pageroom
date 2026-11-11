@@ -60,10 +60,12 @@ export interface Prefs {
   media: { maxWidth: number; folder: string };
   appearance: { headHook: string };
 }
-export interface SiteInfo { root: string; title: string; baseURL: string; theme: string; language: string; config: string; prefs: Prefs; sections: Record<string, SectionPrefs> | null }
+export interface SiteInfo { root: string; title: string; baseURL: string; theme: string; language: string; languages: string[]; config: string; prefs: Prefs; sections: Record<string, SectionPrefs> | null }
+export interface Translation { language: string; path: string; url: string }
 export interface TreeNode {
   path: string; kind: "section" | "page"; title: string; draft: boolean; date?: string; weight: number;
   bundle: boolean; url: string; indexFile?: string; children?: TreeNode[]; error?: string;
+  translations?: Translation[];
 }
 export interface Settings { title: string; baseURL: string; language: string; description: string; copyright: string; theme: string; formAddress: string; contactEmail: string }
 export interface SiteIcon { image: string; letter: boolean }
@@ -80,7 +82,7 @@ export interface Page {
   url: string; bundle: boolean; isSection: boolean; parseError?: string;
 }
 export interface SaveRequest { path: string; baseHash: string; set?: Record<string, any>; delete?: string[]; body?: string; force?: boolean }
-export interface NewPage { section: string; title: string; bundle: boolean }
+export interface NewPage { section: string; title: string; bundle: boolean; language: string }
 
 export interface MenuItem { id: string; name: string; pageRef?: string; url?: string; weight: number; parent?: string; source: string }
 export interface Menu { name: string; items: MenuItem[] }
@@ -135,6 +137,7 @@ export const api = {
   getPage: (path: string) => call<Page>(g.GetPage(path)),
   savePage: (req: SaveRequest) => call<Page>(g.SavePage(req)),
   createPage: (np: NewPage) => call<string>(g.CreatePage(np)),
+  addTranslation: (path: string, language: string) => call<string>(g.AddTranslation(path, language)),
   createSection: (parent: string, title: string) => call<string>(g.CreateSection(parent, title)),
   movePage: (path: string, to: string) => call<string>(g.MovePage(path, to)),
   renameSlug: (path: string, slug: string) => call<string>(g.RenameSlug(path, slug)),

@@ -32,6 +32,11 @@ export interface Info {
     "baseURL": string;
     "theme": string;
     "language": string;
+
+    /**
+     * Languages are the content languages, the default first.
+     */
+    "languages": string[] | null;
     "config": string;
     "prefs": Prefs | null;
     "sections": { [_ in string]?: SectionPrefs } | null;

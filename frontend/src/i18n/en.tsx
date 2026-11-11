@@ -313,6 +313,9 @@ export const en = {
   },
 
   pageEditor: {
+    languages: "Languages",
+    addLanguage: (language: string) => `Add ${language}`,
+    couldntAddLanguage: (language: string) => `Couldn't add ${language}`,
     couldntSave: "Couldn't save this page",
     couldntAdd: (name: string) => `Couldn't add ${name}`,
     imageAdded: "Image added",
@@ -369,6 +372,7 @@ export const en = {
   },
 
   pageTree: {
+    openLanguage: (language: string) => `Open the ${language} version`,
     newPageIn: (section: string) => `New page in “${section}”`,
     newSectionIn: (section: string) => `New section in “${section}”`,
     title: "Title",

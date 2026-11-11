@@ -52,20 +52,22 @@ func Open(dir, trashDir string) (*Site, error) {
 }
 
 type Info struct {
-	Root     string                  `json:"root"`
-	Title    string                  `json:"title"`
-	BaseURL  string                  `json:"baseURL"`
-	Theme    string                  `json:"theme"`
-	Language string                  `json:"language"`
-	Config   string                  `json:"config"`
-	Prefs    *Prefs                  `json:"prefs"`
-	Sections map[string]SectionPrefs `json:"sections"`
+	Root     string `json:"root"`
+	Title    string `json:"title"`
+	BaseURL  string `json:"baseURL"`
+	Theme    string `json:"theme"`
+	Language string `json:"language"`
+	// Languages are the content languages, the default first.
+	Languages []string                `json:"languages"`
+	Config    string                  `json:"config"`
+	Prefs     *Prefs                  `json:"prefs"`
+	Sections  map[string]SectionPrefs `json:"sections"`
 }
 
 func (s *Site) Info() Info {
 	return Info{
 		Root: s.Root, Title: s.Config.String("title"), BaseURL: s.Config.String("baseURL"),
-		Theme: s.Config.Theme(), Language: s.languageValue(), Config: s.Config.Path,
+		Theme: s.Config.Theme(), Language: s.languageValue(), Languages: s.contentLanguages(), Config: s.Config.Path,
 		Prefs: s.Prefs, Sections: s.Prefs.Sections,
 	}
 }

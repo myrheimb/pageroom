@@ -72,6 +72,7 @@ const siteState = (): app.SiteState => ({
     baseURL: "https://example.org/",
     theme: "starter",
     language: "en",
+    languages: ["en"],
     config: "hugo.toml",
     prefs: { version: 1, hugo: { version: "" }, sections: null, fields: null, menus: null, media: { maxWidth: 1600, folder: "" }, appearance: { headHook: "" } },
     sections: { posts: { label: "Blog posts", icon: "", hidden: false } },
@@ -152,6 +153,7 @@ export const StopPreview: Handler<"StopPreview"> = nothing;
 
 export const AddContactForm = unused;
 export const AddPageBlock = unused;
+export const AddTranslation = unused;
 export const CancelSignIn = unused;
 export const CheckTheme = unused;
 export const ChooseFolder = unused;

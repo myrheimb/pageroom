@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { PageEditor, CoverPicture, setCoverFields } from "./PageEditor";
+import { PageEditor, CoverPicture, LanguageSwitch, setCoverFields } from "./PageEditor";
 import { t } from "../i18n";
 
 const { api } = vi.hoisted(() => {
@@ -102,5 +102,32 @@ describe("the page editor's cover", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "s", metaKey: true }));
     });
     expect(api.savePage).toHaveBeenCalledWith(expect.objectContaining({ set: { image: "beach.jpg", imageAlt: "A beach" } }));
+  });
+});
+
+describe("the language switch", () => {
+  const translations = [{ language: "en", path: "content/a.md" }, { language: "ja", path: "content/a.ja.md" }];
+  const render = async (props: Partial<Parameters<typeof LanguageSwitch>[0]> = {}) => {
+    const onSwitch = vi.fn();
+    const onAdd = vi.fn();
+    const host = document.createElement("div");
+    await act(async () =>
+      createRoot(host).render(<LanguageSwitch languages={["en", "ja"]} translations={translations} current="en" onSwitch={onSwitch} onAdd={onAdd} {...props} />),
+    );
+    return { host, onSwitch, onAdd };
+  };
+
+  it("switches to another language of the page", async () => {
+    const { host, onSwitch } = await render();
+    await click(host, "ja");
+    expect(onSwitch).toHaveBeenCalledWith("content/a.ja.md");
+  });
+
+  it("offers to add a missing language", async () => {
+    const { host, onAdd, onSwitch } = await render({ translations: translations.slice(0, 1) });
+    expect(host.textContent).toContain("+ ja");
+    await act(async () => host.querySelector<HTMLButtonElement>(`[aria-label="${t.pageEditor.addLanguage("ja")}"]`)!.click());
+    expect(onAdd).toHaveBeenCalledWith("ja");
+    expect(onSwitch).not.toHaveBeenCalled();
   });
 });

@@ -353,6 +353,9 @@ export const ja: Messages = {
   },
 
   pageEditor: {
+    languages: "言語",
+    addLanguage: (language: string) => `${language} を追加`,
+    couldntAddLanguage: (language: string) => `${language} を追加できませんでした`,
     couldntSave: "このページを保存できませんでした",
     couldntAdd: (name: string) => `${name} を追加できませんでした`,
     imageAdded: "画像を追加しました",
@@ -409,6 +412,7 @@ export const ja: Messages = {
   },
 
   pageTree: {
+    openLanguage: (language: string) => `${language} 版を開く`,
     newPageIn: (section: string) => `「${section}」に新しいページ`,
     newSectionIn: (section: string) => `「${section}」に新しいセクション`,
     title: "タイトル",

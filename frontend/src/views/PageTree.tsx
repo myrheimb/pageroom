@@ -2,25 +2,29 @@ import { useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen, GripVertical, MoreHorizontal, Plus, Search, Trash2, Link2, FolderInput, Pencil, FilePlus2, FolderPlus, AlertTriangle } from "lucide-react";
 import { api, type TreeNode } from "../api";
-import { useStore, parentOf } from "../store";
+import { useStore, parentOf, findTranslation } from "../store";
 import { ask, Menu } from "../ui";
 import { t } from "../i18n";
 
 interface Props {
   tree: TreeNode;
   selected?: string;
+  languages: string[];
   changed: Set<string>;
   onOpen: (path: string) => void;
   onChanged: (newSelected?: string) => void;
   labelFor: (section: TreeNode) => string;
 }
 
-export function PageTree({ tree, selected, changed, onOpen, onChanged, labelFor }: Props) {
+export function PageTree({ tree, selected, languages, changed, onOpen, onChanged, labelFor }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Set<string>>(() => new Set(tree.children?.filter((c) => c.kind === "section").map((c) => c.path) ?? []));
   const [dragging, setDragging] = useState<TreeNode | null>(null);
   const error = useStore((s) => s.error);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const editing = (selected && findTranslation(tree, selected)?.language) || "";
+  const multilingual = languages.length > 1;
 
   const visible = useMemo(() => (query.trim() ? filterTree(tree, query.trim().toLowerCase()) : tree), [tree, query]);
   const toggle = (p: string) => setOpen((o) => { const n = new Set(o); n.has(p) ? n.delete(p) : n.add(p); return n; });
@@ -29,7 +33,7 @@ export function PageTree({ tree, selected, changed, onOpen, onChanged, labelFor 
     const title = await ask.prompt(kind === "page" ? t.pageTree.newPageIn(section.title) : t.pageTree.newSectionIn(section.title), kind === "page" ? t.pageTree.title : t.pageTree.sectionName, kind === "page" ? t.pageTree.pagePlaceholder : t.pageTree.sectionPlaceholder);
     if (!title) return;
     try {
-      const path = kind === "page" ? await api.createPage({ section: section.path, title, bundle: true }) : await api.createSection(section.path, title);
+      const path = kind === "page" ? await api.createPage({ section: section.path, title, bundle: true, language: editing }) : await api.createSection(section.path, title);
       setOpen((o) => new Set(o).add(section.path).add(path));
       onChanged(kind === "page" ? path : undefined);
     } catch (e) { error(e); }
@@ -69,11 +73,13 @@ export function PageTree({ tree, selected, changed, onOpen, onChanged, labelFor 
         node={n}
         depth={depth}
         label={n.kind === "section" ? labelFor(n) : n.title}
-        selected={selected === n.path || selected === n.indexFile}
+        selected={selected === n.path || selected === n.indexFile || !!n.translations?.some((x) => x.path === selected)}
+        multilingual={multilingual}
         expanded={open.has(n.path) || !!query}
         changed={changed.has(n.path) || (!!n.indexFile && changed.has(n.indexFile)) || hasChangedChild(n, changed)}
         onToggle={() => toggle(n.path)}
-        onOpen={() => (n.kind === "page" ? onOpen(n.path) : n.indexFile ? onOpen(n.indexFile) : toggle(n.path))}
+        onOpen={onOpen}
+        onActivate={() => (n.kind === "page" ? onOpen(n.path) : n.indexFile ? onOpen(n.indexFile) : toggle(n.path))}
         menu={rowMenu(n, { newIn, onChanged, onOpen, error })}
         dropInto={n.kind === "section" && !!dragging && dragging.path !== n.path}
       />
@@ -104,8 +110,8 @@ export function PageTree({ tree, selected, changed, onOpen, onChanged, labelFor 
       </div>
       <DndContext sensors={sensors} onDragStart={(e) => setDragging(e.active.data.current?.node ?? null)} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
         <div className="tree" role="tree" aria-label={t.pageTree.pages}>
-          <Row node={tree} depth={0} label={t.pageTree.homePage} selected={selected === tree.indexFile} expanded changed={!!tree.indexFile && changed.has(tree.indexFile)} isRoot
-            onToggle={() => {}} onOpen={() => tree.indexFile && onOpen(tree.indexFile)} menu={rowMenu(tree, { newIn, onChanged, onOpen, error })} dropInto={!!dragging} />
+          <Row node={tree} depth={0} label={t.pageTree.homePage} selected={selected === tree.indexFile} multilingual={false} expanded changed={!!tree.indexFile && changed.has(tree.indexFile)} isRoot
+            onToggle={() => {}} onOpen={onOpen} onActivate={() => tree.indexFile && onOpen(tree.indexFile)} menu={rowMenu(tree, { newIn, onChanged, onOpen, error })} dropInto={!!dragging} />
           {rows(visible.children ?? [], 0)}
           {!visible.children?.length && <div className="empty small">{t.pageTree.noMatch(query)}</div>}
         </div>
@@ -117,8 +123,8 @@ export function PageTree({ tree, selected, changed, onOpen, onChanged, labelFor 
 }
 
 function Row(p: {
-  node: TreeNode; depth: number; label: string; selected: boolean; expanded: boolean; changed: boolean; isRoot?: boolean;
-  onToggle: () => void; onOpen: () => void; menu: React.ComponentProps<typeof Menu>["items"]; dropInto: boolean;
+  node: TreeNode; depth: number; label: string; selected: boolean; expanded: boolean; changed: boolean; isRoot?: boolean; multilingual: boolean;
+  onToggle: () => void; onActivate: () => void; onOpen: (path: string) => void; menu: React.ComponentProps<typeof Menu>["items"]; dropInto: boolean;
 }) {
   const { node } = p;
   const drag = useDraggable({ id: "node:" + node.path, data: { node }, disabled: p.isRoot });
@@ -132,7 +138,7 @@ function Row(p: {
       role="treeitem"
       aria-selected={p.selected}
       aria-expanded={isSection ? p.expanded : undefined}
-      onClick={p.onOpen}
+      onClick={p.onActivate}
     >
       {!p.isRoot && <span className="grip" {...drag.listeners} {...drag.attributes} onClick={(e) => e.stopPropagation()}><GripVertical size={14} /></span>}
       {isSection && !p.isRoot ? (
@@ -144,6 +150,13 @@ function Row(p: {
       )}
       <span className="ticon">{p.isRoot ? <FileText size={15} /> : isSection ? (p.expanded ? <FolderOpen size={15} /> : <Folder size={15} />) : node.error ? <AlertTriangle size={15} color="var(--warning)" /> : <FileText size={15} />}</span>
       <span className="tname">{p.label}</span>
+      {p.multilingual && !p.isRoot && (
+        <span className="lang-tags" onClick={(e) => e.stopPropagation()}>
+          {node.translations?.map((translation) => (
+            <button key={translation.language} className="pill" aria-label={t.pageTree.openLanguage(translation.language)} onClick={() => p.onOpen(translation.path)}>{translation.language}</button>
+          ))}
+        </span>
+      )}
       {p.changed && <span className="changed-dot" title={t.pageTree.unpublished} />}
       {node.kind === "page" && node.draft && <span className="pill draft">{t.common.draft}</span>}
       <span className="actions" onClick={(e) => e.stopPropagation()}>

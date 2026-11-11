@@ -60,6 +60,8 @@ export interface Prefs {
   media: { maxWidth: number; folder: string };
   appearance: { headHook: string };
 }
+export interface Language { code: string; name: string }
+export interface LanguageSettings { default: string; fixed: boolean; languages: Language[] }
 export interface SiteInfo { root: string; title: string; baseURL: string; theme: string; language: string; languages: string[]; config: string; prefs: Prefs; sections: Record<string, SectionPrefs> | null }
 export interface Translation { language: string; path: string; url: string }
 export interface TreeNode {
@@ -146,6 +148,8 @@ export const api = {
 
   getMenus: () => call<Menu[]>(g.GetMenus()),
   saveMenu: (m: Menu) => call<void>(g.SaveMenu(m)),
+  getLanguages: () => call<LanguageSettings>(g.Languages()),
+  saveLanguages: (defaultLanguage: string, languages: Language[]) => call<void>(g.SaveLanguages(defaultLanguage, languages)),
   saveSettings: (s: Settings) => call<void>(g.SaveSettings(s)),
   addContactForm: () => call<void>(g.AddContactForm()),
   addPageBlock: (kind: string) => call<void>(g.AddPageBlock(kind)),

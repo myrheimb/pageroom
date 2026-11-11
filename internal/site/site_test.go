@@ -768,3 +768,103 @@ func TestLanguagesFileGivesTheSameTreeAsMainConfig(t *testing.T) {
 		t.Fatalf("about = %+v", about)
 	}
 }
+
+func languageError(t *testing.T, err error, code string) *LanguageError {
+	t.Helper()
+	var refused *LanguageError
+	if !errors.As(err, &refused) || refused.Code != code {
+		t.Fatalf("err = %v, want language error %q", err, code)
+	}
+	return refused
+}
+
+func TestSaveLanguagesAddsASecondLanguage(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":         "# my site\nbaseURL = 'https://example.org/'\ntitle = 'Site' # shown in tabs\n",
+		"content/_index.md": "+++\ntitle = 'Home'\n+++\n",
+	})
+	if got := s.LanguageSettings(); got.Fixed || got.Default != "en" || len(got.Languages) != 1 {
+		t.Fatalf("settings = %+v", got)
+	}
+	err := s.SaveLanguages("en", []Language{{"en", "English"}, {"ja", "日本語"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml"))
+	for _, want := range []string{"# my site", "# shown in tabs", "defaultContentLanguage = 'en'", "[languages.en]", "languageName = 'English'", "[languages.ja]", "languageName = '日本語'", "weight = 2"} {
+		if !strings.Contains(string(raw), want) {
+			t.Errorf("hugo.toml lacks %q:\n%s", want, raw)
+		}
+	}
+	if err := s.Reload(); err != nil {
+		t.Fatal(err)
+	}
+	got := s.LanguageSettings()
+	if !got.Fixed || !reflect.DeepEqual(got.Languages, []Language{{"en", "English"}, {"ja", "日本語"}}) {
+		t.Fatalf("settings = %+v", got)
+	}
+}
+
+func TestSaveLanguagesReorders(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml": "defaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n[languages.fr]\n  weight = 3\n",
+	})
+	err := s.SaveLanguages("en", []Language{{"en", "English"}, {"fr", "Français"}, {"ja", "日本語"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Reload(); err != nil {
+		t.Fatal(err)
+	}
+	var codes []string
+	for _, language := range s.LanguageSettings().Languages {
+		codes = append(codes, language.Code)
+	}
+	if !slices.Equal(codes, []string{"en", "fr", "ja"}) {
+		t.Fatalf("codes = %v", codes)
+	}
+}
+
+func TestSaveLanguagesRefusesALanguagePagesUse(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":           "defaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+		"content/about.md":    "+++\ntitle = 'About'\n+++\n",
+		"content/about.ja.md": "+++\ntitle = '私たちについて'\n+++\n",
+	})
+	before, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml"))
+	refused := languageError(t, s.SaveLanguages("en", []Language{{"en", "English"}}), "language-in-use")
+	if refused.Details["language"] != "ja" || !strings.Contains(refused.Details["pages"], "About") {
+		t.Fatalf("details = %v", refused.Details)
+	}
+	if after, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml")); string(after) != string(before) {
+		t.Fatalf("config changed:\n%s", after)
+	}
+}
+
+func TestSaveLanguagesRefusesANewDefault(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml": "defaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+	})
+	languageError(t, s.SaveLanguages("ja", []Language{{"en", "English"}, {"ja", "日本語"}}), "language-default")
+	languageError(t, s.SaveLanguages("en", []Language{{"ja", "日本語"}}), "language-default")
+}
+
+func TestSaveLanguagesWritesToTheLanguagesFile(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":                      "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n",
+		"config/_default/languages.toml": "# languages\n[en]\n  languageName = 'English'\n  weight = 1\n",
+	})
+	err := s.SaveLanguages("en", []Language{{"en", "English"}, {"ja", "日本語"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/languages.toml"))
+	for _, want := range []string{"# languages", "[ja]", "languageName = '日本語'", "weight = 2"} {
+		if !strings.Contains(string(raw), want) {
+			t.Errorf("languages.toml lacks %q:\n%s", want, raw)
+		}
+	}
+	if main, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml")); strings.Contains(string(main), "languages") {
+		t.Fatalf("main config got languages:\n%s", main)
+	}
+}

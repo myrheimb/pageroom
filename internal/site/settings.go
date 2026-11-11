@@ -138,12 +138,14 @@ func (s *Site) languageValue() string {
 	return s.Config.String("languageCode")
 }
 
-func (s *Site) saveConfig() error {
-	out, err := s.Config.doc.Bytes()
+func (s *Site) saveConfig() error { return s.writeConfig(s.Config) }
+
+func (s *Site) writeConfig(c *Config) error {
+	out, err := c.doc.Bytes()
 	if err != nil {
 		return err
 	}
-	full, err := s.abs(s.Config.Path)
+	full, err := s.abs(c.Path)
 	if err != nil {
 		return err
 	}

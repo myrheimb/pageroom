@@ -144,6 +144,31 @@ func (a *App) SaveSettings(n site.Settings) error {
 	return s.Reload()
 }
 
+func (a *App) Languages() (site.LanguageSettings, error) {
+	s, err := a.requireSite()
+	if err != nil {
+		return site.LanguageSettings{}, err
+	}
+	return s.LanguageSettings(), nil
+}
+
+// SaveLanguages sets the site's languages. The default can only be chosen
+// while the site has none.
+func (a *App) SaveLanguages(defaultLanguage string, languages []site.Language) error {
+	s, err := a.requireSite()
+	if err != nil {
+		return err
+	}
+	if err := s.SaveLanguages(defaultLanguage, languages); err != nil {
+		var refused *site.LanguageError
+		if errors.As(err, &refused) {
+			return &AppError{Code: refused.Code, Message: refused.Message, Details: refused.Details}
+		}
+		return err
+	}
+	return s.Reload()
+}
+
 // AddContactForm makes sure the site can show the contact form the editor
 // is about to insert.
 func (a *App) AddContactForm() error {

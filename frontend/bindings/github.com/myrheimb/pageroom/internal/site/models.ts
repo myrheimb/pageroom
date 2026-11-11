@@ -42,6 +42,21 @@ export interface Info {
     "sections": { [_ in string]?: SectionPrefs } | null;
 }
 
+export interface Language {
+    "code": string;
+    "name": string;
+}
+
+export interface LanguageSettings {
+    "default": string;
+
+    /**
+     * Fixed is true once the site has languages, when the default can't change.
+     */
+    "fixed": boolean;
+    "languages": Language[] | null;
+}
+
 export interface MediaPrefs {
     "maxWidth": number;
 

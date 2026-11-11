@@ -14,6 +14,8 @@ vi.mock("../api", () => ({
     getChanges: () => Promise.resolve([]),
     getSiteIcon: () => Promise.resolve({ image: "", letter: true }),
     getAuthStatus: () => Promise.resolve({}),
+    getLanguages: vi.fn(() => Promise.resolve({ default: "en", fixed: false, languages: [{ code: "en", name: "English" }] })),
+    saveLanguages: vi.fn(() => Promise.resolve()),
   },
 }));
 
@@ -85,5 +87,28 @@ describe("saving a site address", () => {
     const save = input.nextElementSibling as HTMLButtonElement;
     await act(async () => save.click());
     expect(api.saveSettings).toHaveBeenCalledWith({ ...settings, baseURL: "https://mysite.you.workers.dev/" });
+  });
+});
+
+describe("site languages", () => {
+  it("adds a language from the list and saves it", async () => {
+    const site = { settings: {}, git: {}, info: {}, tree: {}, styleHook: {} };
+    useStore.setState({ site: site as never });
+    vi.mocked(api.getSite).mockResolvedValue(site as never);
+    const host = document.createElement("div");
+    document.body.append(host);
+    await act(async () => createRoot(host).render(<SettingsView tab="general" />));
+
+    const select = host.querySelector<HTMLSelectElement>("#st-add-lang")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, "ja");
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const button = (text: string) => [...host.querySelectorAll("button")].find((candidate) => candidate.textContent?.includes(text))!;
+    await act(async () => button(t.settings.addLanguageButton).click());
+    expect(host.textContent).toContain("日本語");
+    await act(async () => button(t.settings.saveLanguages).click());
+
+    expect(api.saveLanguages).toHaveBeenCalledWith("en", [{ code: "en", name: "English" }, { code: "ja", name: "日本語" }]);
   });
 });

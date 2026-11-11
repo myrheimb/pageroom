@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, ExternalLink, Globe, ImagePlus, KeyRound, LogOut, Save, ShieldCheck, User, Rocket, Download } from "lucide-react";
-import { api, type AuthStatus, type Cloudflare, type CloudflareAccount, type DirectUpload, type GitHubPages, type Settings as SiteSettings, type SiteIcon } from "../api";
+import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Globe, ImagePlus, KeyRound, LogOut, Plus, Save, X, ShieldCheck, User, Rocket, Download } from "lucide-react";
+import { api, type AuthStatus, type Cloudflare, type CloudflareAccount, type DirectUpload, type GitHubPages, type Language as SiteLanguage, type LanguageSettings, type Settings as SiteSettings, type SiteIcon } from "../api";
 import { useStore } from "../store";
 import { ask, Banner, Spinner } from "../ui";
 import { SignInDialog } from "../dialogs/SignIn";
 import { WordPressImport } from "../dialogs/WordPress";
-import { languageNames, setLanguage, systemLanguage, t, type Language } from "../i18n";
+import { language as uiLanguage, languageNames, setLanguage, systemLanguage, t, type Language } from "../i18n";
 
 // Hugo needs the scheme and a trailing slash in baseURL.
 export function webAddress(typed: string): string {
@@ -25,7 +25,7 @@ export function SettingsView({ tab }: { tab: "general" | "account" | "publishing
         <button className={tab === "publishing" ? "on" : ""} onClick={() => go({ kind: "settings", tab: "publishing" })}><Rocket size={13} /> {t.settings.publishing}</button>
         <button className={tab === "account" ? "on" : ""} onClick={() => go({ kind: "settings", tab: "account" })}><User size={13} /> {t.settings.you}</button>
       </div>
-      {tab === "general" && <General />}
+      {tab === "general" && <div className="stack" style={{ gap: 16 }}><General /><Languages /></div>}
       {tab === "publishing" && <Publishing />}
       {tab === "account" && <Account />}
     </div>
@@ -73,6 +73,87 @@ function General() {
           setSaving(true);
           try { const saved = { ...s, baseURL: webAddress(s.baseURL) }; await api.saveSettings(saved); setS(saved); await refresh(); refreshChanges(); toast({ kind: "success", title: t.settings.saved, body: t.common.publishToUpdate }); } catch (e) { error(e); } finally { setSaving(false); }
         }}>{saving ? <Spinner /> : <Save size={15} />} {t.settings.saveSettings}</button>
+      </div>
+    </div>
+  );
+}
+
+const languageCodes = ["ar", "bg", "ca", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "lt", "lv", "nl", "no", "pl", "pt", "ro", "ru", "sk", "sl", "sr", "sv", "th", "tr", "uk", "vi", "zh"];
+
+const displayName = (code: string, inLanguage: string) => new Intl.DisplayNames([inLanguage], { type: "language" }).of(code) ?? code;
+
+// languageName in the config is the language's own name, as visitors see it.
+const ownLanguage = (code: string): SiteLanguage => ({ code, name: displayName(code, code) });
+
+function Languages() {
+  const { refresh, refreshChanges, toast, error } = useStore();
+  const [saved, setSaved] = useState<LanguageSettings | null>(null);
+  const [list, setList] = useState<SiteLanguage[]>([]);
+  const [defaultCode, setDefaultCode] = useState("");
+  const [pick, setPick] = useState("");
+  const [saving, setSaving] = useState(false);
+  const load = () => api.getLanguages().then((loaded) => { setSaved(loaded); setList(loaded.languages); setDefaultCode(loaded.default); }, (problem) => error(problem));
+  useEffect(() => { load(); }, []);
+  if (!saved) return null;
+  const dirty = JSON.stringify([defaultCode, list]) !== JSON.stringify([saved.default, saved.languages]);
+  const label = (code: string) => displayName(code, uiLanguage);
+  const options = (taken: string[]) => languageCodes.filter((code) => !taken.includes(code)).map((code) => ({ code, label: label(code) })).sort((a, b) => a.label.localeCompare(b.label, uiLanguage));
+  const move = (index: number, by: number) => {
+    const next = [...list];
+    [next[index], next[index + by]] = [next[index + by], next[index]];
+    setList(next);
+  };
+  const chooseDefault = (code: string) => {
+    setList(list.map((entry) => (entry.code === defaultCode ? ownLanguage(code) : entry)).filter((entry, index, all) => all.findIndex((other) => other.code === entry.code) === index));
+    setDefaultCode(code);
+  };
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.saveLanguages(defaultCode, list);
+      await refresh();
+      await load();
+      refreshChanges();
+      toast({ kind: "success", title: t.settings.languagesSaved, body: t.common.publishToUpdate });
+    } catch (problem) { error(problem, t.settings.couldntSaveLanguages); } finally { setSaving(false); }
+  };
+  return (
+    <div className="card card-pad">
+      <h3>{t.settings.siteLanguages}</h3>
+      <p className="muted small" style={{ marginTop: 2 }}>{t.settings.siteLanguagesHelp}</p>
+      {!saved.fixed && (
+        <div className="field">
+          <label htmlFor="st-default-lang">{t.settings.defaultLanguage}</label>
+          <select id="st-default-lang" className="select" value={defaultCode} onChange={(event) => chooseDefault(event.target.value)}>
+            {[{ code: defaultCode, label: label(defaultCode) }, ...options([defaultCode])].map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
+          </select>
+          <span className="help">{t.settings.defaultLanguageHelp}</span>
+        </div>
+      )}
+      <div className="stack" style={{ gap: 6 }}>
+        {list.map((entry, index) => (
+          <div className="row" key={entry.code} style={{ gap: 8 }}>
+            <span style={{ flex: 1 }}>{entry.name} <span className="mono dim small">{entry.code}</span></span>
+            {entry.code === defaultCode && <span className="pill">{t.settings.defaultLanguageBadge}</span>}
+            <button className="btn sm ghost" aria-label={t.settings.moveLanguageUp(entry.name)} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp size={14} /></button>
+            <button className="btn sm ghost" aria-label={t.settings.moveLanguageDown(entry.name)} disabled={index === list.length - 1} onClick={() => move(index, 1)}><ArrowDown size={14} /></button>
+            <button className="btn sm ghost danger" aria-label={t.settings.removeLanguage(entry.name)} disabled={entry.code === defaultCode} onClick={() => setList(list.filter((other) => other.code !== entry.code))}><X size={14} /></button>
+          </div>
+        ))}
+      </div>
+      <div className="field" style={{ marginTop: 12 }}>
+        <label htmlFor="st-add-lang">{t.settings.addLanguage}</label>
+        <div className="row" style={{ gap: 6 }}>
+          <select id="st-add-lang" className="select" value={pick} onChange={(event) => setPick(event.target.value)}>
+            <option value="">{t.settings.chooseLanguage}</option>
+            {options(list.map((entry) => entry.code)).map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
+          </select>
+          <button className="btn sm" disabled={!pick} onClick={() => { setList([...list, ownLanguage(pick)]); setPick(""); }}><Plus size={14} /> {t.settings.addLanguageButton}</button>
+        </div>
+      </div>
+      <div className="row">
+        <div className="spacer" />
+        <button className="btn primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinner /> : <Save size={15} />} {t.settings.saveLanguages}</button>
       </div>
     </div>
   );

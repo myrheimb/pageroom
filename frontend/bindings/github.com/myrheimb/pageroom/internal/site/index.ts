@@ -6,6 +6,8 @@ export type {
     FieldDef,
     HugoPrefs,
     Info,
+    Language,
+    LanguageSettings,
     MediaPrefs,
     Menu,
     MenuItem,

@@ -1,6 +1,7 @@
 package site
 
 import (
+	"encoding/json"
 	"maps"
 	"regexp"
 	"slices"
@@ -154,13 +155,18 @@ func (s *Site) checkLanguageUnused(code string) error {
 	if len(titles) == 0 {
 		return nil
 	}
-	named := strings.Join(titles[:min(len(titles), maxPagesNamed)], ", ")
+	shown := titles[:min(len(titles), maxPagesNamed)]
+	quoted, err := json.Marshal(shown)
+	if err != nil {
+		return err
+	}
+	named := strings.Join(shown, ", ")
 	if len(titles) > maxPagesNamed {
 		named += ", …"
 	}
 	return &LanguageError{
 		Code:    "language-in-use",
 		Message: "Pages still use " + code + ": " + named,
-		Details: map[string]string{"language": code, "pages": named},
+		Details: map[string]string{"language": code, "pages": named, "titles": string(quoted)},
 	}
 }

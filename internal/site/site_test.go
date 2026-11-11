@@ -858,7 +858,7 @@ func TestSaveLanguagesRefusesALanguagePagesUse(t *testing.T) {
 	})
 	before, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml"))
 	refused := languageError(t, s.SaveLanguages("en", []Language{{"en", "English"}}), "language-in-use")
-	if refused.Details["language"] != "ja" || !strings.Contains(refused.Details["pages"], "About") {
+	if refused.Details["language"] != "ja" || !strings.Contains(refused.Details["pages"], "About") || refused.Details["titles"] != `["About"]` {
 		t.Fatalf("details = %v", refused.Details)
 	}
 	if after, _ := os.ReadFile(filepath.Join(s.Root, "hugo.toml")); string(after) != string(before) {

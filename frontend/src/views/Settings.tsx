@@ -85,6 +85,12 @@ const displayName = (code: string, inLanguage: string) => new Intl.DisplayNames(
 // languageName in the config is the language's own name, as visitors see it.
 const ownLanguage = (code: string): SiteLanguage => ({ code, name: displayName(code, code) });
 
+// The default language is always first, and a language without a languageName shows its own name.
+const arranged = (loaded: LanguageSettings): LanguageSettings => {
+  const named = loaded.languages.map((entry) => (entry.name === entry.code ? ownLanguage(entry.code) : entry));
+  return { ...loaded, languages: [...named.filter((entry) => entry.code === loaded.default), ...named.filter((entry) => entry.code !== loaded.default)] };
+};
+
 function Languages() {
   const { refresh, refreshChanges, toast, error } = useStore();
   const [saved, setSaved] = useState<LanguageSettings | null>(null);
@@ -92,7 +98,7 @@ function Languages() {
   const [defaultCode, setDefaultCode] = useState("");
   const [pick, setPick] = useState("");
   const [saving, setSaving] = useState(false);
-  const load = () => api.getLanguages().then((loaded) => { setSaved(loaded); setList(loaded.languages); setDefaultCode(loaded.default); }, (problem) => error(problem));
+  const load = () => api.getLanguages().then((fetched) => { const loaded = arranged(fetched); setSaved(loaded); setList(loaded.languages); setDefaultCode(loaded.default); }, (problem) => error(problem));
   useEffect(() => { load(); }, []);
   if (!saved) return null;
   const dirty = JSON.stringify([defaultCode, list]) !== JSON.stringify([saved.default, saved.languages]);
@@ -104,7 +110,7 @@ function Languages() {
     setList(next);
   };
   const chooseDefault = (code: string) => {
-    setList(list.map((entry) => (entry.code === defaultCode ? ownLanguage(code) : entry)).filter((entry, index, all) => all.findIndex((other) => other.code === entry.code) === index));
+    setList([ownLanguage(code), ...list.filter((entry) => entry.code !== defaultCode && entry.code !== code)]);
     setDefaultCode(code);
   };
   const save = async () => {
@@ -135,8 +141,12 @@ function Languages() {
           <div className="row" key={entry.code} style={{ gap: 8 }}>
             <span style={{ flex: 1 }}>{entry.name} <span className="mono dim small">{entry.code}</span></span>
             {entry.code === defaultCode && <span className="pill">{t.settings.defaultLanguageBadge}</span>}
-            <button className="btn sm ghost" aria-label={t.settings.moveLanguageUp(entry.name)} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp size={14} /></button>
-            <button className="btn sm ghost" aria-label={t.settings.moveLanguageDown(entry.name)} disabled={index === list.length - 1} onClick={() => move(index, 1)}><ArrowDown size={14} /></button>
+            {entry.code !== defaultCode && (
+              <>
+                <button className="btn sm ghost" aria-label={t.settings.moveLanguageUp(entry.name)} disabled={index <= 1} onClick={() => move(index, -1)}><ArrowUp size={14} /></button>
+                <button className="btn sm ghost" aria-label={t.settings.moveLanguageDown(entry.name)} disabled={index === list.length - 1} onClick={() => move(index, 1)}><ArrowDown size={14} /></button>
+              </>
+            )}
             <button className="btn sm ghost danger" aria-label={t.settings.removeLanguage(entry.name)} disabled={entry.code === defaultCode} onClick={() => setList(list.filter((other) => other.code !== entry.code))}><X size={14} /></button>
           </div>
         ))}

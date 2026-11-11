@@ -111,4 +111,41 @@ describe("site languages", () => {
 
     expect(api.saveLanguages).toHaveBeenCalledWith("en", [{ code: "en", name: "English" }, { code: "ja", name: "日本語" }]);
   });
+
+  const render = async (settings: object) => {
+    vi.mocked(api.getLanguages).mockResolvedValueOnce(settings as never);
+    const site = { settings: {}, git: {}, info: {}, tree: {}, styleHook: {} };
+    useStore.setState({ site: site as never });
+    vi.mocked(api.getSite).mockResolvedValue(site as never);
+    const host = document.createElement("div");
+    document.body.append(host);
+    await act(async () => createRoot(host).render(<SettingsView tab="general" />));
+    return host;
+  };
+  const labelled = (host: HTMLElement, text: string) => host.querySelector<HTMLButtonElement>(`button[aria-label="${text}"]`);
+
+  it("keeps the default first with no move buttons", async () => {
+    const host = await render({ default: "en", fixed: true, languages: [{ code: "ja", name: "日本語" }, { code: "en", name: "English" }, { code: "fr", name: "Français" }] });
+    expect(labelled(host, t.settings.moveLanguageUp("English"))).toBeNull();
+    expect(labelled(host, t.settings.moveLanguageDown("English"))).toBeNull();
+    expect(labelled(host, t.settings.moveLanguageUp("日本語"))!.disabled).toBe(true);
+
+    await act(async () => labelled(host, t.settings.moveLanguageDown("日本語"))!.click());
+    await act(async () => [...host.querySelectorAll("button")].find((candidate) => candidate.textContent?.includes(t.settings.saveLanguages))!.click());
+    expect(api.saveLanguages).toHaveBeenLastCalledWith("en", [{ code: "en", name: "English" }, { code: "fr", name: "Français" }, { code: "ja", name: "日本語" }]);
+  });
+
+  it("saves the own name of a language without one", async () => {
+    const host = await render({ default: "en", fixed: true, languages: [{ code: "en", name: "en" }] });
+    expect(host.textContent).toContain("English");
+    const select = host.querySelector<HTMLSelectElement>("#st-add-lang")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, "ja");
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const button = (text: string) => [...host.querySelectorAll("button")].find((candidate) => candidate.textContent?.includes(text))!;
+    await act(async () => button(t.settings.addLanguageButton).click());
+    await act(async () => button(t.settings.saveLanguages).click());
+    expect(api.saveLanguages).toHaveBeenLastCalledWith("en", [{ code: "en", name: "English" }, { code: "ja", name: "日本語" }]);
+  });
 });

@@ -957,3 +957,18 @@ func TestSaveMenuKeepsParamsOfEntriesSharingANameWithoutIdentifier(t *testing.T)
 		t.Fatalf("an entry lost its params:\n%s", got)
 	}
 }
+
+func TestSaveMenuNewEntryDoesNotInheritKeysOfDeletedEntryWithTheSameName(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":                  "baseURL = 'https://example.org/'\n",
+		"config/_default/menus.toml": "[[main]]\n  name = 'Docs'\n  url = '/a'\n  weight = 10\n  [main.params]\n    icon = 'book'\n",
+	})
+	item := MenuItem{ID: "new-abc123", Name: "Docs", URL: "/b", Source: "config"}
+	if err := s.SaveMenu(Menu{Name: "main", Items: []MenuItem{item}}); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.toml"))
+	if strings.Contains(string(b), "book") || strings.Contains(string(b), "params") {
+		t.Fatalf("the new entry took over the deleted entry's keys:\n%s", b)
+	}
+}

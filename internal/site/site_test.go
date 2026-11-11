@@ -893,3 +893,47 @@ func TestSaveLanguagesWritesToTheLanguagesFile(t *testing.T) {
 		t.Fatalf("main config got languages:\n%s", main)
 	}
 }
+
+func TestSaveMenuRemovesPageMenuDeclarations(t *testing.T) {
+	for name, tc := range map[string]struct{ front, wantKept string }{
+		"string":   {"menus = 'main'", ""},
+		"list":     {"menus = ['main', 'footer']", "footer"},
+		"map":      {"[menus.main]\n  weight = 3\n[menus.footer]\n  weight = 4", "footer"},
+		"singular": {"menu = 'main'", ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := openFiles(t, map[string]string{
+				"hugo.toml":         "baseURL = 'https://example.org/'\n",
+				"content/_index.md": "+++\ntitle = 'Home'\n+++\n",
+				"content/about.md":  "+++\ntitle = 'About'\n" + tc.front + "\n+++\nBody\n",
+			})
+			menus, err := s.Menus()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := s.SaveMenu(menuIn(menus, s.defaultLanguage(), "main")); err != nil {
+				t.Fatal(err)
+			}
+			b, _ := os.ReadFile(filepath.Join(s.Root, "content/about.md"))
+			got := string(b)
+			if strings.Contains(got, "main") || strings.Contains(got, "menu = ") {
+				t.Fatalf("page still declares the menu:\n%s", got)
+			}
+			if tc.wantKept != "" && !strings.Contains(got, tc.wantKept) {
+				t.Fatalf("page lost its other menu:\n%s", got)
+			}
+		})
+	}
+}
+
+func TestSaveMenuFailsWhenPageFrontMatterCannotBeParsed(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":         "baseURL = 'https://example.org/'\n",
+		"content/_index.md": "+++\ntitle = 'Home'\n+++\n",
+		"content/broken.md": "+++\ntitle = \n+++\nBody\n",
+	})
+	item := MenuItem{ID: "page:content/broken.md", Name: "Broken", PageRef: "/broken", Source: "content/broken.md"}
+	if err := s.SaveMenu(Menu{Name: "main", Items: []MenuItem{item}}); err == nil {
+		t.Fatal("expected an error for a page whose front matter cannot be parsed")
+	}
+}

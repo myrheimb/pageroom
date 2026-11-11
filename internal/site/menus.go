@@ -2,7 +2,9 @@ package site
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -370,7 +372,10 @@ func (s *Site) SaveMenu(m Menu) error {
 			}
 		}
 	}
-	current, _ := s.Menus()
+	current, err := s.Menus()
+	if err != nil {
+		return err
+	}
 	for _, cm := range current {
 		if cm.Name != m.Name || cm.Language != m.Language {
 			continue
@@ -412,12 +417,15 @@ func (s *Site) removePageMenu(file, menu string) error {
 		return err
 	}
 	b, err := os.ReadFile(full)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 	doc, err := frontmatter.Parse(b)
 	if err != nil {
-		return nil
+		return fmt.Errorf("%s: %w", file, err)
 	}
 	for _, key := range []string{"menus", "menu"} {
 		v, ok := doc.Get(key)
@@ -439,14 +447,18 @@ func (s *Site) removePageMenu(file, menu string) error {
 			if len(keep) == 0 {
 				doc.Delete(key)
 			} else {
-				doc.Set(key, keep, doc.Format)
+				if err := doc.Set(key, keep, doc.Format); err != nil {
+					return err
+				}
 			}
 		case map[string]any:
 			delete(t, menu)
 			if len(t) == 0 {
 				doc.Delete(key)
 			} else {
-				doc.Set(key, t, doc.Format)
+				if err := doc.Set(key, t, doc.Format); err != nil {
+					return err
+				}
 			}
 		}
 	}

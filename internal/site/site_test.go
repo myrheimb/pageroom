@@ -2,8 +2,10 @@ package site
 
 import (
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -731,5 +733,38 @@ func TestSingleLanguageMenusCarryTheDefaultLanguage(t *testing.T) {
 	menus, _ := s.Menus()
 	if len(menus) != 1 || menus[0].Language != "en" || menus[0].Items[0].Name != "Docs" {
 		t.Fatalf("menus = %+v", menus)
+	}
+}
+
+func TestLanguagesFileGivesTheSameTreeAsMainConfig(t *testing.T) {
+	content := map[string]string{
+		"content/_index.md":         "+++\ntitle = 'Home'\n+++\n",
+		"content/about.md":          "+++\ntitle = 'About'\n+++\n",
+		"content/about.ja.md":       "+++\ntitle = '私たちについて'\n+++\n",
+		"content/only-ja.ja.md":     "+++\ntitle = '日本語だけ'\n+++\n",
+		"content/guide/index.md":    "+++\ntitle = 'Guide'\n+++\n",
+		"content/guide/index.ja.md": "+++\ntitle = 'ガイド'\n+++\n",
+	}
+	inMain := map[string]string{"hugo.toml": "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n"}
+	inFile := map[string]string{
+		"hugo.toml":                      "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n",
+		"config/_default/languages.toml": "[en]\n  weight = 1\n[ja]\n  weight = 2\n",
+	}
+	trees := make([]*Node, 2)
+	for index, extra := range []map[string]string{inMain, inFile} {
+		files := maps.Clone(content)
+		maps.Copy(files, extra)
+		tree, err := openFiles(t, files).Tree()
+		if err != nil {
+			t.Fatal(err)
+		}
+		trees[index] = tree
+	}
+	if !reflect.DeepEqual(trees[0], trees[1]) {
+		t.Fatalf("trees differ:\n%+v\n%+v", trees[0], trees[1])
+	}
+	about := find(trees[1], "content/about.md")
+	if about == nil || len(about.Translations) != 2 || about.Translations[1].URL != "/ja/about/" {
+		t.Fatalf("about = %+v", about)
 	}
 }

@@ -23,6 +23,7 @@ type Site struct {
 	Root       string
 	ContentDir string // relative, usually "content"
 	Config     *Config
+	Languages  *Config // config/_default/languages.<ext>, nil when the site has none
 	Prefs      *Prefs
 	TrashDir   string // where deleted pages go before they are gone for good
 }
@@ -48,7 +49,7 @@ func Open(dir, trashDir string) (*Site, error) {
 	if content == "" {
 		content = "content"
 	}
-	return &Site{Root: abs, ContentDir: path.Clean(content), Config: cfg, Prefs: prefs, TrashDir: trashDir}, nil
+	return &Site{Root: abs, ContentDir: path.Clean(content), Config: cfg, Languages: loadLanguages(abs), Prefs: prefs, TrashDir: trashDir}, nil
 }
 
 type Info struct {

@@ -156,6 +156,7 @@ func (s *Site) Reload() error {
 		return err
 	}
 	s.Config = cfg
+	s.Languages = loadLanguages(s.Root)
 	if p, err := loadPrefs(s.Root); err == nil {
 		s.Prefs = p
 	}
@@ -189,12 +190,20 @@ func (s *Site) defaultInSubdir() bool {
 	return b
 }
 
+// languagesTable is the languages file's top level when the site has one,
+// else the main config's languages table.
+func (s *Site) languagesTable() map[string]any {
+	if s.Languages != nil {
+		return s.Languages.doc.Fields()
+	}
+	return s.Config.Map("languages")
+}
+
 // contentLanguages are the site's language codes, the default first and
 // the rest by weight, then by code.
 func (s *Site) contentLanguages() []string {
 	def := s.defaultLanguage()
-	configured, _ := s.Config.doc.Get("languages")
-	table, _ := configured.(map[string]any)
+	table := s.languagesTable()
 	others := make([]string, 0, len(table))
 	for code := range table {
 		if code != def {

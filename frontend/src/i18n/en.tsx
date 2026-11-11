@@ -489,6 +489,7 @@ export const en = {
     newMenu: "New menu",
     menuName: "Menu name",
     addItem: "Add item",
+    language: "Language",
     saveMenu: "Save menu",
     themeDecides: (menu: string) => `Your theme decides where the “${menu}” shows up. If it doesn't appear, the theme may not support it.`,
     empty: "This menu is empty",

@@ -622,3 +622,114 @@ func TestSaveMenuKeepsKeysItDoesNotEdit(t *testing.T) {
 		t.Fatalf("new entry got extra keys or old ones doubled:\n%s", got)
 	}
 }
+
+func openFiles(t *testing.T, files map[string]string) *Site {
+	t.Helper()
+	root := t.TempDir()
+	for p, c := range files {
+		full := filepath.Join(root, filepath.FromSlash(p))
+		os.MkdirAll(filepath.Dir(full), 0o755)
+		os.WriteFile(full, []byte(c), 0o644)
+	}
+	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func menuIn(menus []Menu, language, name string) Menu {
+	for _, m := range menus {
+		if m.Language == language && m.Name == name {
+			return m
+		}
+	}
+	return Menu{}
+}
+
+func TestMenusPerLanguage(t *testing.T) {
+	enMenus := "[[main]]\n  identifier = 'docs'\n  name = 'Docs'\n  pageRef = '/docs'\n  weight = 10\n  [main.params]\n    icon = 'book'\n"
+	jaMenus := "[[main]]\n  identifier = 'docs'\n  name = 'ドキュメント'\n  pageRef = '/docs'\n  weight = 10\n  [main.params]\n    icon = 'book'\n"
+	s := openFiles(t, map[string]string{
+		"hugo.toml":                     "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+		"content/_index.md":             "+++\ntitle = 'Home'\n+++\n",
+		"config/_default/menus.en.toml": enMenus,
+		"config/_default/menus.ja.toml": jaMenus,
+	})
+	menus, err := s.Menus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := menuIn(menus, "en", "main").Items; len(got) != 1 || got[0].Name != "Docs" {
+		t.Fatalf("en: %+v", menus)
+	}
+	if got := menuIn(menus, "ja", "main").Items; len(got) != 1 || got[0].Name != "ドキュメント" {
+		t.Fatalf("ja: %+v", menus)
+	}
+
+	items := menuIn(menus, "ja", "main").Items
+	items[0].Name = "資料"
+	if err := s.SaveMenu(Menu{Name: "main", Language: "ja", Items: items}); err != nil {
+		t.Fatal(err)
+	}
+	en, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.en.toml"))
+	if string(en) != enMenus {
+		t.Fatalf("en file changed:\n%s", en)
+	}
+	ja, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.ja.toml"))
+	if !strings.Contains(string(ja), "資料") || !strings.Contains(string(ja), "icon") {
+		t.Fatalf("ja file:\n%s", ja)
+	}
+
+	items = menuIn(menus, "en", "main").Items
+	items[0].Name = "Documentation"
+	if err := s.SaveMenu(Menu{Name: "main", Language: "en", Items: items}); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.ja.toml"))
+	if string(after) != string(ja) {
+		t.Fatalf("ja file changed by an en save:\n%s", after)
+	}
+}
+
+func TestMenusFallBackToSharedConfig(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":                  "baseURL = 'https://example.org/'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+		"content/_index.md":          "+++\ntitle = 'Home'\n+++\n",
+		"config/_default/menus.toml": "[[main]]\n  identifier = 'docs'\n  name = 'Docs'\n  pageRef = '/docs'\n  weight = 10\n  [main.params]\n    icon = 'book'\n",
+	})
+	menus, _ := s.Menus()
+	items := menuIn(menus, "ja", "main").Items
+	if len(items) != 1 || items[0].Name != "Docs" {
+		t.Fatalf("ja should fall back to menus.toml: %+v", menus)
+	}
+	items[0].Name = "資料"
+	if err := s.SaveMenu(Menu{Name: "main", Language: "ja", Items: items}); err != nil {
+		t.Fatal(err)
+	}
+	shared, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.toml"))
+	if !strings.Contains(string(shared), "Docs") || strings.Contains(string(shared), "資料") {
+		t.Fatalf("shared file changed:\n%s", shared)
+	}
+	ja, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.ja.toml"))
+	if !strings.Contains(string(ja), "資料") || !strings.Contains(string(ja), "icon") {
+		t.Fatalf("ja file:\n%s", ja)
+	}
+	s.Reload()
+	menus, _ = s.Menus()
+	if menuIn(menus, "en", "main").Items[0].Name != "Docs" || menuIn(menus, "ja", "main").Items[0].Name != "資料" {
+		t.Fatalf("after save: %+v", menus)
+	}
+}
+
+func TestSingleLanguageMenusCarryTheDefaultLanguage(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":                  "baseURL = 'https://example.org/'\n",
+		"content/_index.md":          "+++\ntitle = 'Home'\n+++\n",
+		"config/_default/menus.toml": "[[main]]\n  name = 'Docs'\n  pageRef = '/docs'\n",
+	})
+	menus, _ := s.Menus()
+	if len(menus) != 1 || menus[0].Language != "en" || menus[0].Items[0].Name != "Docs" {
+		t.Fatalf("menus = %+v", menus)
+	}
+}

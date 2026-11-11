@@ -85,7 +85,7 @@ export interface SaveRequest { path: string; baseHash: string; set?: Record<stri
 export interface NewPage { section: string; title: string; bundle: boolean; language: string }
 
 export interface MenuItem { id: string; name: string; pageRef?: string; url?: string; weight: number; parent?: string; source: string }
-export interface Menu { name: string; items: MenuItem[] }
+export interface Menu { name: string; language: string; items: MenuItem[] }
 
 export interface MediaItem { path: string; name: string; ref: string; page?: string; width: number; height: number; size: number; modified: string; format: string }
 export interface ImportResult extends MediaItem { stripped: boolean; resized: boolean; note?: string }

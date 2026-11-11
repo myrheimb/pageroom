@@ -529,6 +529,7 @@ export const ja: Messages = {
     newMenu: "新しいメニュー",
     menuName: "メニュー名",
     addItem: "項目を追加",
+    language: "言語",
     saveMenu: "メニューを保存",
     themeDecides: (menu: string) => `「${menu}」がどこに表示されるかはテーマが決めます。表示されない場合、テーマが対応していない可能性があります。`,
     empty: "このメニューは空です",

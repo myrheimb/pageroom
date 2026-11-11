@@ -53,6 +53,7 @@ export interface MediaPrefs {
 
 export interface Menu {
     "name": string;
+    "language": string;
     "items": MenuItem[] | null;
 }
 

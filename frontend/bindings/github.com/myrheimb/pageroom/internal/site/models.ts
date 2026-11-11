@@ -32,9 +32,29 @@ export interface Info {
     "baseURL": string;
     "theme": string;
     "language": string;
+
+    /**
+     * Languages are the content languages, the default first.
+     */
+    "languages": string[] | null;
     "config": string;
     "prefs": Prefs | null;
     "sections": { [_ in string]?: SectionPrefs } | null;
+}
+
+export interface Language {
+    "code": string;
+    "name": string;
+}
+
+export interface LanguageSettings {
+    "default": string;
+
+    /**
+     * Fixed is true once the site has languages, when the default can't change.
+     */
+    "fixed": boolean;
+    "languages": Language[] | null;
 }
 
 export interface MediaPrefs {
@@ -48,6 +68,7 @@ export interface MediaPrefs {
 
 export interface Menu {
     "name": string;
+    "language": string;
     "items": MenuItem[] | null;
 }
 
@@ -88,6 +109,11 @@ export interface NewPage {
      * own folder, so images live next to the page
      */
     "bundle": boolean;
+
+    /**
+     * Language is the page's content language, empty for the site's default.
+     */
+    "language": string;
 }
 
 export interface Node {
@@ -111,6 +137,11 @@ export interface Node {
      * section's _index.md if present
      */
     "indexFile"?: string;
+
+    /**
+     * Translations lists the page in every language it has, the main one first.
+     */
+    "translations"?: Translation[] | null;
     "children"?: (Node | null)[] | null;
 
     /**
@@ -178,4 +209,10 @@ export interface Settings {
      */
     "formAddress": string;
     "contactEmail": string;
+}
+
+export interface Translation {
+    "language": string;
+    "path": string;
+    "url": string;
 }

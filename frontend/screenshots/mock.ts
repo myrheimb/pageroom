@@ -72,6 +72,7 @@ const siteState = (): app.SiteState => ({
     baseURL: "https://example.org/",
     theme: "starter",
     language: "en",
+    languages: ["en"],
     config: "hugo.toml",
     prefs: { version: 1, hugo: { version: "" }, sections: null, fields: null, menus: null, media: { maxWidth: 1600, folder: "" }, appearance: { headHook: "" } },
     sections: { posts: { label: "Blog posts", icon: "", hidden: false } },
@@ -152,6 +153,7 @@ export const StopPreview: Handler<"StopPreview"> = nothing;
 
 export const AddContactForm = unused;
 export const AddPageBlock = unused;
+export const AddTranslation = unused;
 export const CancelSignIn = unused;
 export const CheckTheme = unused;
 export const ChooseFolder = unused;
@@ -178,6 +180,7 @@ export const History = unused;
 export const ImportMedia = unused;
 export const ImportMediaData = unused;
 export const ImportWordPress = unused;
+export const Languages = unused;
 export const ListMedia = unused;
 export const ListThemes = unused;
 export const MediaUsage = unused;
@@ -195,6 +198,7 @@ export const RevisionContent = unused;
 export const SaveAccessToken = unused;
 export const SaveIdentity = unused;
 export const SaveLanguage = unused;
+export const SaveLanguages = unused;
 export const SaveMenu = unused;
 export const SaveSettings = unused;
 export const SetUpCloudflare = unused;

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -24,12 +25,14 @@ type MenuItem struct {
 }
 
 type Menu struct {
-	Name  string     `json:"name"`
-	Items []MenuItem `json:"items"`
+	Name     string     `json:"name"`
+	Language string     `json:"language"`
+	Items    []MenuItem `json:"items"`
 }
 
 // menuStore is where menu config is written: a split config file
-// (config/_default/menus.toml) or a key in the main config file.
+// (config/_default/menus.<lang>.toml or menus.toml) or a key in the main
+// config file.
 type menuStore struct {
 	rel  string
 	doc  *frontmatter.Document
@@ -37,18 +40,29 @@ type menuStore struct {
 	keys map[string]any
 }
 
-func (s *Site) menuStore() (*menuStore, error) {
-	for _, ext := range []string{".toml", ".yaml", ".yml", ".json"} {
-		rel := "config/_default/menus" + ext
-		b, err := os.ReadFile(filepath.Join(s.Root, filepath.FromSlash(rel)))
-		if err != nil {
-			continue
+func (s *Site) menuStore(language string) (*menuStore, error) {
+	names := []string{"menus"}
+	multilingual := len(s.contentLanguages()) > 1
+	if multilingual {
+		names = []string{"menus." + language, "menus"}
+	}
+	for _, name := range names {
+		for _, ext := range []string{".toml", ".yaml", ".yml", ".json"} {
+			rel := "config/_default/" + name + ext
+			b, err := os.ReadFile(filepath.Join(s.Root, filepath.FromSlash(rel)))
+			if err != nil {
+				continue
+			}
+			doc, err := frontmatter.ParseData(b, frontmatter.FormatFromExt(ext))
+			if err != nil {
+				return nil, err
+			}
+			st := &menuStore{rel: rel, doc: doc, keys: doc.Fields()}
+			if name == "menus" && multilingual {
+				return st.forLanguage(language)
+			}
+			return st, nil
 		}
-		doc, err := frontmatter.ParseData(b, frontmatter.FormatFromExt(ext))
-		if err != nil {
-			return nil, err
-		}
-		return &menuStore{rel: rel, doc: doc, keys: doc.Fields()}, nil
 	}
 	key := "menus"
 	if _, ok := s.Config.doc.Get("menu"); ok {
@@ -58,19 +72,55 @@ func (s *Site) menuStore() (*menuStore, error) {
 	if m == nil {
 		m = map[string]any{}
 	}
-	return &menuStore{rel: s.Config.Path, doc: s.Config.doc, key: key, keys: m}, nil
+	st := &menuStore{rel: s.Config.Path, doc: s.Config.doc, key: key, keys: m}
+	if multilingual {
+		return st.forLanguage(language)
+	}
+	return st, nil
 }
 
-// Menus returns every menu, merging config entries and page front matter.
+// forLanguage reads from this store but writes to the language's own file,
+// which starts as a copy of the menus the language used until now.
+func (st *menuStore) forLanguage(language string) (*menuStore, error) {
+	doc, err := frontmatter.ParseData(nil, frontmatter.TOML)
+	if err != nil {
+		return nil, err
+	}
+	for name, entries := range st.keys {
+		if err := doc.Set(name, entries, frontmatter.TOML); err != nil {
+			return nil, err
+		}
+	}
+	return &menuStore{rel: "config/_default/menus." + language + ".toml", doc: doc, keys: st.keys}, nil
+}
+
+// Menus returns every menu of every language, merging config entries and
+// page front matter.
 func (s *Site) Menus() ([]Menu, error) {
-	st, err := s.menuStore()
+	tree, err := s.Tree()
+	if err != nil {
+		return nil, err
+	}
+	var out []Menu
+	for _, language := range s.contentLanguages() {
+		menus, err := s.languageMenus(language, tree)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, menus...)
+	}
+	return out, nil
+}
+
+func (s *Site) languageMenus(language string, tree *Node) ([]Menu, error) {
+	st, err := s.menuStore(language)
 	if err != nil {
 		return nil, err
 	}
 	byName := map[string]*Menu{}
 	get := func(name string) *Menu {
 		if byName[name] == nil {
-			byName[name] = &Menu{Name: name}
+			byName[name] = &Menu{Name: name, Language: language}
 		}
 		return byName[name]
 	}
@@ -101,18 +151,21 @@ func (s *Site) Menus() ([]Menu, error) {
 	}
 
 	// Pages can put themselves in menus via front matter.
-	tree, err := s.Tree()
-	if err != nil {
-		return nil, err
-	}
 	var visit func(n *Node)
 	visit = func(n *Node) {
-		file := n.Path
-		if n.Kind == "section" {
-			file = n.IndexMD
+		for _, tr := range n.Translations {
+			if tr.Language == language {
+				s.pageMenus(tr.Path, n.Title, get)
+			}
 		}
-		if file != "" {
-			s.pageMenus(file, n.Title, get)
+		if len(n.Translations) == 0 && language == s.defaultLanguage() {
+			file := n.Path
+			if n.Kind == "section" {
+				file = n.IndexMD
+			}
+			if file != "" {
+				s.pageMenus(file, n.Title, get)
+			}
 		}
 		for _, c := range n.Children {
 			visit(c)
@@ -138,6 +191,9 @@ func (s *Site) pageMenus(file, title string, get func(string) *Menu) {
 	p, err := s.GetPage(file)
 	if err != nil || p.ParseError != "" {
 		return
+	}
+	if own, _ := p.Fields["title"].(string); own != "" {
+		title = own
 	}
 	ref := s.pageRef(file)
 	for _, key := range []string{"menus", "menu"} {
@@ -173,7 +229,7 @@ func (s *Site) pageMenus(file, title string, get func(string) *Menu) {
 func (s *Site) pageRef(rel string) string {
 	r := strings.TrimPrefix(strings.TrimPrefix(rel, s.ContentDir), "/")
 	dir, base := path.Split(r)
-	stem := strings.TrimSuffix(base, path.Ext(base))
+	stem, _ := s.splitLanguage(base)
 	if stem == "index" || stem == "_index" {
 		return "/" + strings.Trim(dir, "/")
 	}
@@ -186,17 +242,86 @@ func (s *Site) SaveMenu(m Menu) error {
 	if strings.TrimSpace(m.Name) == "" {
 		return fmt.Errorf("menu needs a name")
 	}
-	st, err := s.menuStore()
+	if m.Language == "" {
+		m.Language = s.defaultLanguage()
+	}
+	if !slices.Contains(s.contentLanguages(), m.Language) {
+		return fmt.Errorf("unknown language %q", m.Language)
+	}
+	st, err := s.menuStore(m.Language)
 	if err != nil {
 		return err
 	}
-	// Items that came from page front matter get a stable identifier so
-	// dropdown children can point at them.
+	// Entries match the ones they were loaded from by the id Menus() gave
+	// them, which for an entry without an identifier is built from its name
+	// and position in the file.
+	existing := map[string]map[string]any{}
+	idOfOldRef := map[string]string{}
+	nameOf := func(entry map[string]any) string {
+		name, _ := entry["name"].(string)
+		return name
+	}
+	oldList, _ := st.keys[m.Name].([]any)
+	for i, raw := range oldList {
+		entry, _ := raw.(map[string]any)
+		if entry == nil {
+			continue
+		}
+		id, _ := entry["identifier"].(string)
+		if id == "" {
+			name, _ := entry["name"].(string)
+			id = fmt.Sprintf("%s-%d", fsutil.Slugify(name), i)
+		}
+		existing[id] = entry
+		if ident, _ := entry["identifier"].(string); ident != "" {
+			idOfOldRef[ident] = id
+		} else if _, taken := idOfOldRef[nameOf(entry)]; !taken {
+			idOfOldRef[nameOf(entry)] = id
+		}
+	}
+
+	// Hugo falls back to the name when an entry has no identifier, so only
+	// entries that had one, or that a child can't reach by name, get one.
+	nameCount := map[string]int{}
+	for _, it := range m.Items {
+		nameCount[it.Name]++
+	}
+	hasIdentifier := map[string]bool{}
+	for _, it := range m.Items {
+		if kept, ok := existing[it.ID]; ok {
+			id, _ := kept["identifier"].(string)
+			hasIdentifier[it.ID] = id != ""
+		} else if it.Source != "" && it.Source != "config" && !strings.HasPrefix(it.ID, "page:") {
+			hasIdentifier[it.ID] = true
+		}
+	}
+	byID := map[string]MenuItem{}
+	for _, it := range m.Items {
+		byID[it.ID] = it
+	}
+	// A child loaded from the file names its parent the way the file does,
+	// by identifier or name, so find the item that entry became.
+	parentOf := func(ref string) (MenuItem, bool) {
+		if parent, ok := byID[ref]; ok {
+			return parent, true
+		}
+		parent, ok := byID[idOfOldRef[ref]]
+		return parent, ok
+	}
+	for _, it := range m.Items {
+		if parent, ok := parentOf(it.Parent); ok && nameCount[parent.Name] > 1 {
+			hasIdentifier[parent.ID] = true
+		}
+	}
+
 	ids := map[string]string{}
 	used := map[string]bool{}
 	for _, it := range m.Items {
+		if !hasIdentifier[it.ID] {
+			continue
+		}
 		id := it.ID
-		if id == "" || strings.HasPrefix(id, "page:") {
+		if strings.HasPrefix(id, "page:") || strings.HasPrefix(id, "new-") || existing[id] != nil && existing[id]["identifier"] == nil {
 			id = fsutil.Slugify(it.Name)
 		}
 		for base, n := id, 2; used[id]; n++ {
@@ -207,17 +332,31 @@ func (s *Site) SaveMenu(m Menu) error {
 	}
 	list := make([]any, 0, len(m.Items))
 	for i, it := range m.Items {
-		e := map[string]any{"name": it.Name, "weight": (i + 1) * 10, "identifier": ids[it.ID]}
+		e := map[string]any{}
+		if kept, ok := existing[it.ID]; ok {
+			e = kept
+		}
+		e["name"], e["weight"] = it.Name, (i+1)*10
+		if id, ok := ids[it.ID]; ok {
+			e["identifier"] = id
+		}
+		delete(e, "pageRef")
+		delete(e, "url")
+		delete(e, "parent")
 		if it.PageRef != "" {
 			e["pageRef"] = it.PageRef
 		} else if it.URL != "" {
 			e["url"] = it.URL
 		}
 		if it.Parent != "" {
-			if p, ok := ids[it.Parent]; ok {
-				e["parent"] = p
-			} else {
+			parent, known := parentOf(it.Parent)
+			switch {
+			case !known:
 				e["parent"] = it.Parent
+			case ids[parent.ID] != "":
+				e["parent"] = ids[parent.ID]
+			default:
+				e["parent"] = parent.Name
 			}
 		}
 		list = append(list, e)
@@ -233,7 +372,7 @@ func (s *Site) SaveMenu(m Menu) error {
 	}
 	current, _ := s.Menus()
 	for _, cm := range current {
-		if cm.Name != m.Name {
+		if cm.Name != m.Name || cm.Language != m.Language {
 			continue
 		}
 		for _, it := range cm.Items {

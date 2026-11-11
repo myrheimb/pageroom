@@ -313,6 +313,9 @@ export const en = {
   },
 
   pageEditor: {
+    languages: "Languages",
+    addLanguage: (language: string) => `Add ${language}`,
+    couldntAddLanguage: (language: string) => `Couldn't add ${language}`,
     couldntSave: "Couldn't save this page",
     couldntAdd: (name: string) => `Couldn't add ${name}`,
     imageAdded: "Image added",
@@ -369,6 +372,7 @@ export const en = {
   },
 
   pageTree: {
+    openLanguage: (language: string) => `Open the ${language} version`,
     newPageIn: (section: string) => `New page in “${section}”`,
     newSectionIn: (section: string) => `New section in “${section}”`,
     title: "Title",
@@ -485,6 +489,7 @@ export const en = {
     newMenu: "New menu",
     menuName: "Menu name",
     addItem: "Add item",
+    language: "Language",
     saveMenu: "Save menu",
     themeDecides: (menu: string) => `Your theme decides where the “${menu}” shows up. If it doesn't appear, the theme may not support it.`,
     empty: "This menu is empty",
@@ -528,6 +533,20 @@ export const en = {
     formAddressHelp: "Where contact forms send messages. A form service like Formspree or Basin gives you this address and emails each message to you.",
     contactEmail: "Contact email",
     contactEmailHelp: "Contact forms show this address until you add a form address.",
+    siteLanguages: "Site languages",
+    siteLanguagesHelp: "The languages your pages can be written in. The first one is the default, and other languages get their own address, such as /ja/about/.",
+    defaultLanguage: "Default language",
+    defaultLanguageHelp: "Choose it once. Pages without a language belong to it, so it can't be changed after you save.",
+    defaultLanguageBadge: "Default",
+    addLanguage: "Add a language",
+    chooseLanguage: "Choose a language…",
+    addLanguageButton: "Add",
+    moveLanguageUp: (name: string) => `Move ${name} up`,
+    moveLanguageDown: (name: string) => `Move ${name} down`,
+    removeLanguage: (name: string) => `Remove ${name}`,
+    saveLanguages: "Save languages",
+    languagesSaved: "Languages saved",
+    couldntSaveLanguages: "Couldn't save the languages",
     saved: "Settings saved",
     saveSettings: "Save settings",
 

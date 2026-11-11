@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, CloudOff, Eye, EyeOff, FolderTree, History, ImagePlus, Loader2, Monitor, MoreHorizontal, PanelRight, Trash2, ExternalLink, RotateCw } from "lucide-react";
 import { api, on, resolveImageRef, siteFileURL, translate, type AppError, type MediaItem, type Page, type TreeNode } from "../api";
-import { useStore, flatPages } from "../store";
+import { useStore, flatPages, findTranslation } from "../store";
 import { ask, Banner, Dialog, Menu, Spinner, Tip, timeAgo } from "../ui";
 import { BlockEditor, type BlockEditorHandle } from "../editor/BlockEditor";
 import { PageSettings } from "./PageSettings";
@@ -167,6 +167,13 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
     } catch (e) { error(e); return null; }
   };
 
+  const languages = site?.info.languages ?? [];
+  const current = tree ? findTranslation(tree, path) : undefined;
+  const addLanguage = async (language: string) => {
+    await save();
+    try { onPathChange(await api.addTranslation(path, language)); } catch (e) { error(e, t.pageEditor.couldntAddLanguage(language)); }
+  };
+
   const isDraft = !!fields.draft;
   const url = page?.url ?? "/";
 
@@ -178,6 +185,15 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
       <div className="editor-toolbar">
         <Tip label={pageListHidden ? t.pageEditor.showPageList : t.pageEditor.hidePageList}><button className="btn ghost icon sm" onClick={() => set({ pageListHidden: !pageListHidden })} aria-label={t.pageEditor.togglePageList}><FolderTree size={16} /></button></Tip>
         <SaveIndicator state={state} savedAt={savedAt} onRetry={() => save()} />
+        {languages.length > 1 && current && (
+          <LanguageSwitch
+            languages={languages}
+            translations={current.node.translations ?? []}
+            current={current.language}
+            onSwitch={onPathChange}
+            onAdd={addLanguage}
+          />
+        )}
         <div className="spacer" />
         <Tip label={isDraft ? t.pageEditor.draftTip : t.pageEditor.visibleTip}>
           <button className={"btn sm" + (isDraft ? "" : " ghost")} onClick={() => setField("draft", isDraft ? undefined : true)}>
@@ -285,6 +301,27 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
           <Banner kind="info"><span className="small">{t.pageEditor.conflictNote}</span></Banner>
         </Dialog>
       )}
+    </div>
+  );
+}
+
+export function LanguageSwitch({ languages, translations, current, onSwitch, onAdd }: {
+  languages: string[];
+  translations: { language: string; path: string }[];
+  current: string;
+  onSwitch: (path: string) => void;
+  onAdd: (language: string) => void;
+}) {
+  return (
+    <div className="seg" role="group" aria-label={t.pageEditor.languages}>
+      {languages.map((language) => {
+        const translation = translations.find((x) => x.language === language);
+        return translation ? (
+          <button key={language} className={language === current ? "on" : ""} onClick={() => language !== current && onSwitch(translation.path)}>{language}</button>
+        ) : (
+          <button key={language} aria-label={t.pageEditor.addLanguage(language)} onClick={() => onAdd(language)}>+ {language}</button>
+        );
+      })}
     </div>
   );
 }

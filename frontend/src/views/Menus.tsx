@@ -10,7 +10,8 @@ import { t } from "../i18n";
 export function MenusView() {
   const { site, error, toast, refreshChanges } = useStore();
   const [menus, setMenus] = useState<Menu[] | null>(null);
-  const [current, setCurrent] = useState("main");
+  const [current, setCurrent] = useState("");
+  const [language, setLanguage] = useState("");
   const [items, setItems] = useState<MenuItem[]>([]);
   const [dirty, setDirty] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -21,18 +22,25 @@ export function MenusView() {
     try {
       const m = await api.getMenus();
       setMenus(m);
-      const cur = m.find((x) => x.name === current) ?? m[0];
+      const lang = language || site?.info.languages?.[0] || m[0]?.language || "";
+      const inLanguage = m.filter((x) => x.language === lang);
+      const cur = inLanguage.find((x) => x.name === current) ?? inLanguage[0];
+      setLanguage(lang);
       if (cur) { setCurrent(cur.name); setItems(withIds(cur.items ?? [])); }
       setDirty(false);
     } catch (e) { error(e); }
   };
   useEffect(() => { load(); }, []);
 
-  const pick = (name: string) => {
-    const m = menus?.find((x) => x.name === name);
+  const pick = (name: string, lang = language) => {
+    const m = menus?.find((x) => x.language === lang && x.name === name);
     setCurrent(name);
     setItems(withIds(m?.items ?? []));
     setDirty(false);
+  };
+  const pickLanguage = (lang: string) => {
+    setLanguage(lang);
+    pick(menus?.find((x) => x.language === lang)?.name ?? "main", lang);
   };
   const change = (next: MenuItem[]) => { setItems(next); setDirty(true); };
 
@@ -55,7 +63,7 @@ export function MenusView() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.saveMenu({ name: current, items });
+      await api.saveMenu({ name: current, language, items });
       toast({ kind: "success", title: t.menus.saved, body: t.common.publishToUpdate });
       await load();
       refreshChanges();
@@ -66,25 +74,32 @@ export function MenusView() {
   const sectionsList = useMemo(() => (site?.tree.children ?? []).filter((c) => c.kind === "section"), [site]);
 
   if (!menus) return <div className="page-pad"><Spinner /></div>;
+  const languages = site?.info.languages ?? [];
+  const shown = menus.filter((m) => m.language === language);
   return (
     <div className="page-pad" style={{ maxWidth: 820 }}>
       <h1 className="page-title">{t.menus.title}</h1>
       <p className="page-sub">{t.menus.subtitle}</p>
 
+      {languages.length > 1 && (
+        <div className="seg" role="group" aria-label={t.menus.language} style={{ marginBottom: 12 }}>
+          {languages.map((code) => <button key={code} className={code === language ? "on" : ""} onClick={() => pickLanguage(code)}>{code}</button>)}
+        </div>
+      )}
       <div className="row" style={{ marginBottom: 16 }}>
         <div className="seg">
-          {menus.map((m) => <button key={m.name} className={m.name === current ? "on" : ""} onClick={() => pick(m.name)}>{label(m.name)}</button>)}
+          {shown.map((m) => <button key={m.name} className={m.name === current ? "on" : ""} onClick={() => pick(m.name)}>{label(m.name)}</button>)}
         </div>
         <button className="btn sm ghost" onClick={async () => {
           const n = await ask.prompt(t.menus.newMenu, t.menus.menuName, "footer");
-          if (n) { const id = n.toLowerCase().replace(/[^a-z0-9]+/g, "-"); setMenus([...menus, { name: id, items: [] }]); setCurrent(id); setItems([]); setDirty(true); }
+          if (n) { const id = n.toLowerCase().replace(/[^a-z0-9]+/g, "-"); setMenus([...menus, { name: id, language, items: [] }]); setCurrent(id); setItems([]); setDirty(true); }
         }}><Plus size={13} /> {t.menus.newMenu}</button>
         <div className="spacer" />
         <button className="btn" onClick={() => setAdding(true)}><Plus size={15} /> {t.menus.addItem}</button>
         <button className="btn primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinner /> : <Save size={15} />} {t.menus.saveMenu}</button>
       </div>
 
-      {current !== "main" && <Banner kind="info"><span className="small">{t.menus.themeDecides(label(current))}</span></Banner>}
+      {current !== shown[0]?.name && <Banner kind="info"><span className="small">{t.menus.themeDecides(label(current))}</span></Banner>}
 
       {items.length === 0 ? (
         <div className="card empty"><h3>{t.menus.empty}</h3><p>{t.menus.emptyHint}</p><button className="btn primary" onClick={() => setAdding(true)}><Plus size={15} /> {t.menus.addItem}</button></div>

@@ -74,3 +74,18 @@ func (c *Config) Theme() string {
 	}
 	return ""
 }
+
+// loadLanguages reads config/_default/languages.<ext>, whose top level is
+// the languages table. A file that can't be read counts as absent.
+func loadLanguages(root string) *Config {
+	for _, ext := range []string{".toml", ".yaml", ".yml", ".json"} {
+		rel := "config/_default/languages" + ext
+		if !fsutil.Exists(filepath.Join(root, filepath.FromSlash(rel))) {
+			continue
+		}
+		if cfg, err := loadConfig(root, rel); err == nil {
+			return cfg
+		}
+	}
+	return nil
+}

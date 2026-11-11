@@ -51,6 +51,15 @@ func (a *App) CreatePage(np site.NewPage) (string, error) {
 	return s.CreatePage(np)
 }
 
+// AddTranslation creates the page in another language and returns its path.
+func (a *App) AddTranslation(path, language string) (string, error) {
+	s, err := a.requireSite()
+	if err != nil {
+		return "", err
+	}
+	return s.AddTranslation(path, language)
+}
+
 func (a *App) CreateSection(parent, title string) (string, error) {
 	s, err := a.requireSite()
 	if err != nil {
@@ -130,6 +139,31 @@ func (a *App) SaveSettings(n site.Settings) error {
 		}
 	}
 	if err := s.SaveSettings(n); err != nil {
+		return err
+	}
+	return s.Reload()
+}
+
+func (a *App) Languages() (site.LanguageSettings, error) {
+	s, err := a.requireSite()
+	if err != nil {
+		return site.LanguageSettings{}, err
+	}
+	return s.LanguageSettings(), nil
+}
+
+// SaveLanguages sets the site's languages. The default can only be chosen
+// while the site has none.
+func (a *App) SaveLanguages(defaultLanguage string, languages []site.Language) error {
+	s, err := a.requireSite()
+	if err != nil {
+		return err
+	}
+	if err := s.SaveLanguages(defaultLanguage, languages); err != nil {
+		var refused *site.LanguageError
+		if errors.As(err, &refused) {
+			return &AppError{Code: refused.Code, Message: refused.Message, Details: refused.Details}
+		}
 		return err
 	}
 	return s.Reload()

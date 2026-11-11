@@ -58,6 +58,13 @@ export function AddPageBlock(kind: string): $CancellablePromise<void> {
     return $Call.ByID(3822331560, kind);
 }
 
+/**
+ * AddTranslation creates the page in another language and returns its path.
+ */
+export function AddTranslation(path: string, language: string): $CancellablePromise<string> {
+    return $Call.ByID(2978355911, path, language);
+}
+
 export function CancelSignIn(): $CancellablePromise<void> {
     return $Call.ByID(1406891873);
 }
@@ -260,6 +267,10 @@ export function ImportWordPress(path: string, downloadImages: boolean): $Cancell
     return $Call.ByID(2911523083, path, downloadImages);
 }
 
+export function Languages(): $CancellablePromise<site$0.LanguageSettings> {
+    return $Call.ByID(1688902880);
+}
+
 export function ListMedia(): $CancellablePromise<media$0.Item[] | null> {
     return $Call.ByID(3306390935);
 }
@@ -377,6 +388,14 @@ export function SaveIdentity(name: string, email: string): $CancellablePromise<v
  */
 export function SaveLanguage(language: string): $CancellablePromise<void> {
     return $Call.ByID(416530538, language);
+}
+
+/**
+ * SaveLanguages sets the site's languages. The default can only be chosen
+ * while the site has none.
+ */
+export function SaveLanguages(defaultLanguage: string, languages: site$0.Language[] | null): $CancellablePromise<void> {
+    return $Call.ByID(777480027, defaultLanguage, languages);
 }
 
 export function SaveMenu(m: site$0.Menu): $CancellablePromise<void> {

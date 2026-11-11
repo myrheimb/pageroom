@@ -33,7 +33,7 @@ export function Dashboard() {
     const title = await ask.prompt(t.dashboard.newPost, t.dashboard.newPostLabel, t.dashboard.newPostPlaceholder);
     if (!title) return;
     try {
-      const path = await api.createPage({ section: blog?.path ?? site.tree.path, title, bundle: true });
+      const path = await api.createPage({ section: blog?.path ?? site.tree.path, title, bundle: true, language: "" });
       await useStore.getState().refresh();
       go({ kind: "pages", path });
     } catch (e) { error(e); }
@@ -66,7 +66,7 @@ export function Dashboard() {
           const title = await ask.prompt(t.dashboard.newPage, t.dashboard.newPageLabel, t.dashboard.newPagePlaceholder);
           if (!title) return;
           try {
-            const path = await api.createPage({ section: site.tree.path, title, bundle: true });
+            const path = await api.createPage({ section: site.tree.path, title, bundle: true, language: "" });
             await useStore.getState().refresh();
             go({ kind: "pages", path });
           } catch (e) { error(e); }

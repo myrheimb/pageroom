@@ -6,6 +6,8 @@ export type {
     FieldDef,
     HugoPrefs,
     Info,
+    Language,
+    LanguageSettings,
     MediaPrefs,
     Menu,
     MenuItem,
@@ -15,5 +17,6 @@ export type {
     Prefs,
     SaveRequest,
     SectionPrefs,
-    Settings
+    Settings,
+    Translation
 } from "./models.js";

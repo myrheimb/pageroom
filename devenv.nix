@@ -43,7 +43,7 @@
     japanese-terms = {
       enable = true;
       name = "japanese-terms";
-      entry = ''${pkgs.bash}/bin/bash -c '! grep -nF -e 非公開 -e ウェブサイト -e チームメイトさん "$@"' --'';
+      entry = ''${pkgs.bash}/bin/bash -c '! grep -nF -e 既定 -e 非公開 -e ウェブサイト -e チームメイトさん "$@"' --'';
       files = "^(frontend/src/i18n/ja\\.tsx|internal/site/contactform\\.go)$";
     };
     go-mod-tidy = {

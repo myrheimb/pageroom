@@ -1,8 +1,11 @@
 package site
 
 import (
+	"cmp"
 	"os"
+	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/myrheimb/pageroom/internal/fsutil"
@@ -135,12 +138,14 @@ func (s *Site) languageValue() string {
 	return s.Config.String("languageCode")
 }
 
-func (s *Site) saveConfig() error {
-	out, err := s.Config.doc.Bytes()
+func (s *Site) saveConfig() error { return s.writeConfig(s.Config) }
+
+func (s *Site) writeConfig(c *Config) error {
+	out, err := c.doc.Bytes()
 	if err != nil {
 		return err
 	}
-	full, err := s.abs(s.Config.Path)
+	full, err := s.abs(c.Path)
 	if err != nil {
 		return err
 	}
@@ -153,6 +158,7 @@ func (s *Site) Reload() error {
 		return err
 	}
 	s.Config = cfg
+	s.Languages = loadLanguages(s.Root)
 	if p, err := loadPrefs(s.Root); err == nil {
 		s.Prefs = p
 	}
@@ -171,4 +177,62 @@ func (s *Site) Themes() []string {
 		}
 	}
 	return out
+}
+
+func (s *Site) defaultLanguage() string {
+	if v := s.Config.String("defaultContentLanguage"); v != "" {
+		return v
+	}
+	return "en"
+}
+
+func (s *Site) defaultInSubdir() bool {
+	v, _ := s.Config.doc.Get("defaultContentLanguageInSubdir")
+	b, _ := v.(bool)
+	return b
+}
+
+// languagesTable is the languages file's top level when the site has one,
+// else the main config's languages table.
+func (s *Site) languagesTable() map[string]any {
+	if s.Languages != nil {
+		return s.Languages.doc.Fields()
+	}
+	return s.Config.Map("languages")
+}
+
+// contentLanguages are the site's language codes, the default first and
+// the rest by weight, then by code.
+func (s *Site) contentLanguages() []string {
+	def := s.defaultLanguage()
+	table := s.languagesTable()
+	others := make([]string, 0, len(table))
+	for code := range table {
+		if code != def {
+			others = append(others, code)
+		}
+	}
+	weightOf := func(code string) int {
+		entry, _ := table[code].(map[string]any)
+		if w := toInt(entry["weight"]); w > 0 {
+			return w
+		}
+		return int(^uint(0) >> 1)
+	}
+	slices.SortFunc(others, func(a, b string) int {
+		return cmp.Or(cmp.Compare(weightOf(a), weightOf(b)), cmp.Compare(a, b))
+	})
+	return append([]string{def}, others...)
+}
+
+// splitLanguage takes the language code out of a content file name, as in
+// "about.ja.md", and falls back to the default language.
+func (s *Site) splitLanguage(name string) (stem, lang string) {
+	stem = strings.TrimSuffix(name, path.Ext(name))
+	if dot := strings.LastIndex(stem, "."); dot >= 0 {
+		if code := stem[dot+1:]; slices.Contains(s.contentLanguages(), code) {
+			return stem[:dot], code
+		}
+	}
+	return stem, s.defaultLanguage()
 }

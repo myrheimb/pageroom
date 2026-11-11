@@ -30,7 +30,7 @@ export function PagesView({ initial }: { initial?: string }) {
 
   return (
     <div className={"pages-layout" + (pageListHidden && selected ? " no-tree" : "")}>
-      {!(pageListHidden && selected) && <PageTree tree={site.tree} selected={selected} changed={changed} onOpen={open} onChanged={afterChange} labelFor={labelFor} />}
+      {!(pageListHidden && selected) && <PageTree tree={site.tree} selected={selected} languages={site.info.languages ?? []} changed={changed} onOpen={open} onChanged={afterChange} labelFor={labelFor} />}
       <div style={{ minWidth: 0, minHeight: 0 }}>
         {selected ? (
           <PageEditor key={selected} path={selected} onPathChange={(p) => afterChange(p)} onDeleted={() => { setSelected(undefined); refresh(); }} />

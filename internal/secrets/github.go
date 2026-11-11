@@ -58,7 +58,7 @@ func (g *GitHubAuth) post(ctx context.Context, path string, form url.Values, out
 	if err != nil {
 		return fmt.Errorf("could not reach GitHub: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 500 {
 		return fmt.Errorf("GitHub is having trouble (HTTP %d); try again shortly", resp.StatusCode)
 	}

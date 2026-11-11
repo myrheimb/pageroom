@@ -30,7 +30,7 @@ func setup(t *testing.T) (remote string, clone func(name string) *Repo) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	seed.SetRemote(remote)
+	_ = seed.SetRemote(remote)
 	write(t, seed, "content/post.md", post)
 	if out, err := seed.Publish(context.Background(), "seed"); err != nil || out.State != "published" {
 		t.Fatalf("seed publish: %+v %v", out, err)
@@ -51,7 +51,7 @@ func author(n string) func() (string, string) {
 func write(t *testing.T, r *Repo, p, s string) {
 	t.Helper()
 	full := filepath.Join(r.Dir(), p)
-	os.MkdirAll(filepath.Dir(full), 0o755)
+	_ = os.MkdirAll(filepath.Dir(full), 0o755)
 	if err := os.WriteFile(full, []byte(s), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +170,7 @@ func TestSyncBringsInChangesAndKeepsLocalEdits(t *testing.T) {
 	_, clone := setup(t)
 	anna, ben := clone("Anna"), clone("Ben")
 	write(t, anna, "content/new.md", "new page\n")
-	os.Remove(filepath.Join(anna.Dir(), "content/post.md"))
+	_ = os.Remove(filepath.Join(anna.Dir(), "content/post.md"))
 	publish(t, anna, "published")
 
 	write(t, ben, "content/draft.md", "Ben's draft\n")
@@ -193,7 +193,7 @@ func TestSyncBringsInChangesAndKeepsLocalEdits(t *testing.T) {
 func TestDeleteVersusEditIsAConflict(t *testing.T) {
 	_, clone := setup(t)
 	anna, ben := clone("Anna"), clone("Ben")
-	os.Remove(filepath.Join(anna.Dir(), "content/post.md"))
+	_ = os.Remove(filepath.Join(anna.Dir(), "content/post.md"))
 	publish(t, anna, "published")
 	write(t, ben, "content/post.md", post+"\nMore.\n")
 	out := publish(t, ben, "conflicts")
@@ -257,7 +257,7 @@ func TestDiscardAndHistory(t *testing.T) {
 func TestFirstPublishToEmptyRemote(t *testing.T) {
 	root := t.TempDir()
 	remote := filepath.Join(root, "remote.git")
-	git.PlainInitWithOptions(remote, &git.PlainInitOptions{Bare: true, InitOptions: git.InitOptions{DefaultBranch: plumbing.NewBranchReferenceName("main")}})
+	_, _ = git.PlainInitWithOptions(remote, &git.PlainInitOptions{Bare: true, InitOptions: git.InitOptions{DefaultBranch: plumbing.NewBranchReferenceName("main")}})
 	r, _ := Init(filepath.Join(root, "site"), Options{Author: author("New")})
 	write(t, r, "content/a.md", "hello\n")
 	if err := r.CommitAll("Create site"); err != nil {
@@ -266,7 +266,7 @@ func TestFirstPublishToEmptyRemote(t *testing.T) {
 	if ch, _ := r.Changes(); len(ch) != 0 {
 		t.Fatalf("new site should start clean: %v", ch)
 	}
-	r.SetRemote(remote)
+	_ = r.SetRemote(remote)
 	publish(t, r, "published")
 	other, err := Clone(context.Background(), remote, filepath.Join(root, "other"), Options{})
 	if err != nil {

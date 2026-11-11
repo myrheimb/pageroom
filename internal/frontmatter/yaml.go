@@ -94,7 +94,9 @@ func (e *yamlEditor) Encode() ([]byte, error) {
 	if err := enc.Encode(e.root); err != nil {
 		return nil, err
 	}
-	enc.Close()
+	if err := enc.Close(); err != nil {
+		return nil, err
+	}
 	return buf.Bytes(), nil
 }
 

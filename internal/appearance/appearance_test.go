@@ -12,8 +12,8 @@ func site(t *testing.T, files map[string]string) string {
 	root := t.TempDir()
 	for p, c := range files {
 		full := filepath.Join(root, filepath.FromSlash(p))
-		os.MkdirAll(filepath.Dir(full), 0o755)
-		os.WriteFile(full, []byte(c), 0o644)
+		_ = os.MkdirAll(filepath.Dir(full), 0o755)
+		_ = os.WriteFile(full, []byte(c), 0o644)
 	}
 	return root
 }
@@ -73,7 +73,7 @@ func TestPartialHookRoundTrip(t *testing.T) {
 	if !strings.Contains(string(override), "theme extension point") || !strings.Contains(string(override), "pageroom.css") {
 		t.Fatalf("override: %s", override)
 	}
-	e.Save(in) // idempotent
+	_, _ = e.Save(in) // idempotent
 	override2, _ := os.ReadFile(filepath.Join(root, "layouts/partials/extend_head.html"))
 	if strings.Count(string(override2), "pageroom.css") != 1 {
 		t.Fatal("snippet added twice")
@@ -98,7 +98,7 @@ func TestCustomCSSHookPreservesDeveloperCSS(t *testing.T) {
 		t.Fatal(err)
 	}
 	in.Tokens.Background = "#000000"
-	e.Save(in)
+	_, _ = e.Save(in)
 	b, _ := os.ReadFile(filepath.Join(root, "assets/css/custom.css"))
 	s := string(b)
 	if !strings.Contains(s, ".dev { color: red; }") || strings.Count(s, beginMarker) != 1 || !strings.Contains(s, "#000000") {

@@ -21,8 +21,8 @@ func acquireLock(gitDir string) (*processLock, error) {
 	for attempt := 0; attempt < 2; attempt++ {
 		f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 		if err == nil {
-			fmt.Fprintf(f, "%d %d", os.Getpid(), time.Now().Unix())
-			f.Close()
+			_, _ = fmt.Fprintf(f, "%d %d", os.Getpid(), time.Now().Unix())
+			_ = f.Close()
 			return &processLock{path: p}, nil
 		}
 		if !errors.Is(err, os.ErrExist) {

@@ -44,8 +44,8 @@ func TestChoose(t *testing.T) {
 		t.Fatalf("%+v", c)
 	}
 	// Once Pageroom has its own copy, that's used, with the note info kept.
-	os.MkdirAll(filepath.Join(m.CacheDir, "0.170.0"), 0o755)
-	os.WriteFile(m.CachedPath("0.170.0"), []byte("bin"), 0o755)
+	_ = os.MkdirAll(filepath.Join(m.CacheDir, "0.170.0"), 0o755)
+	_ = os.WriteFile(m.CachedPath("0.170.0"), []byte("bin"), 0o755)
 	if c := m.Choose("0.170.0", mine); c.Source != "pageroom" || c.Installed == nil {
 		t.Fatalf("%+v", c)
 	}
@@ -79,22 +79,22 @@ func fakePkg(t *testing.T, bin []byte) []byte {
 	entry("TRAILER!!!", 0, nil)
 	var payload bytes.Buffer
 	gz := gzip.NewWriter(&payload)
-	gz.Write(cpio.Bytes())
-	gz.Close()
+	_, _ = gz.Write(cpio.Bytes())
+	_ = gz.Close()
 
 	toc := fmt.Sprintf(`<?xml version="1.0"?><xar><toc><file id="1"><data><length>%d</length><offset>20</offset><size>%d</size><encoding style="application/octet-stream"/></data><type>file</type><name>Payload</name></file></toc></xar>`, payload.Len(), payload.Len())
 	var ztoc bytes.Buffer
 	zw := zlib.NewWriter(&ztoc)
-	zw.Write([]byte(toc))
-	zw.Close()
+	_, _ = zw.Write([]byte(toc))
+	_ = zw.Close()
 
 	var out bytes.Buffer
 	out.WriteString("xar!")
-	binary.Write(&out, binary.BigEndian, uint16(28))
-	binary.Write(&out, binary.BigEndian, uint16(1))
-	binary.Write(&out, binary.BigEndian, uint64(ztoc.Len()))
-	binary.Write(&out, binary.BigEndian, uint64(len(toc)))
-	binary.Write(&out, binary.BigEndian, uint32(1))
+	_ = binary.Write(&out, binary.BigEndian, uint16(28))
+	_ = binary.Write(&out, binary.BigEndian, uint16(1))
+	_ = binary.Write(&out, binary.BigEndian, uint64(ztoc.Len()))
+	_ = binary.Write(&out, binary.BigEndian, uint64(len(toc)))
+	_ = binary.Write(&out, binary.BigEndian, uint32(1))
 	out.Write(ztoc.Bytes())
 	out.Write(make([]byte, 20)) // checksum area at heap offset 0
 	out.Write(payload.Bytes())

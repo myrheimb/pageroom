@@ -2,7 +2,9 @@ package site
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -138,7 +140,7 @@ func (s *Site) languageMenus(language string, tree *Node) ([]Menu, error) {
 			it.Parent, _ = m["parent"].(string)
 			it.ID, _ = m["identifier"].(string)
 			if it.ID == "" {
-				it.ID = fmt.Sprintf("%s-%d", fsutil.Slugify(it.Name), i)
+				it.ID = positionalMenuID(it.Name, i)
 			}
 			get(name).Items = append(get(name).Items, it)
 		}
@@ -252,49 +254,7 @@ func (s *Site) SaveMenu(m Menu) error {
 	if err != nil {
 		return err
 	}
-	// Entries match the ones they were loaded from by the id Menus() gave
-	// them, which for an entry without an identifier is built from its name
-	// and position in the file.
-	existing := map[string]map[string]any{}
-	idOfOldRef := map[string]string{}
-	nameOf := func(entry map[string]any) string {
-		name, _ := entry["name"].(string)
-		return name
-	}
-	oldList, _ := st.keys[m.Name].([]any)
-	for i, raw := range oldList {
-		entry, _ := raw.(map[string]any)
-		if entry == nil {
-			continue
-		}
-		id, _ := entry["identifier"].(string)
-		if id == "" {
-			name, _ := entry["name"].(string)
-			id = fmt.Sprintf("%s-%d", fsutil.Slugify(name), i)
-		}
-		existing[id] = entry
-		if ident, _ := entry["identifier"].(string); ident != "" {
-			idOfOldRef[ident] = id
-		} else if _, taken := idOfOldRef[nameOf(entry)]; !taken {
-			idOfOldRef[nameOf(entry)] = id
-		}
-	}
-
-	// Hugo falls back to the name when an entry has no identifier, so only
-	// entries that had one, or that a child can't reach by name, get one.
-	nameCount := map[string]int{}
-	for _, it := range m.Items {
-		nameCount[it.Name]++
-	}
-	hasIdentifier := map[string]bool{}
-	for _, it := range m.Items {
-		if kept, ok := existing[it.ID]; ok {
-			id, _ := kept["identifier"].(string)
-			hasIdentifier[it.ID] = id != ""
-		} else if it.Source != "" && it.Source != "config" && !strings.HasPrefix(it.ID, "page:") {
-			hasIdentifier[it.ID] = true
-		}
-	}
+	existing, idOfOldRef := oldMenuEntries(st.keys[m.Name])
 	byID := map[string]MenuItem{}
 	for _, it := range m.Items {
 		byID[it.ID] = it
@@ -308,82 +268,15 @@ func (s *Site) SaveMenu(m Menu) error {
 		parent, ok := byID[idOfOldRef[ref]]
 		return parent, ok
 	}
-	for _, it := range m.Items {
-		if parent, ok := parentOf(it.Parent); ok && nameCount[parent.Name] > 1 {
-			hasIdentifier[parent.ID] = true
-		}
-	}
-
-	ids := map[string]string{}
-	used := map[string]bool{}
-	for _, it := range m.Items {
-		if !hasIdentifier[it.ID] {
-			continue
-		}
-		id := it.ID
-		if strings.HasPrefix(id, "page:") || strings.HasPrefix(id, "new-") || existing[id] != nil && existing[id]["identifier"] == nil {
-			id = fsutil.Slugify(it.Name)
-		}
-		for base, n := id, 2; used[id]; n++ {
-			id = fmt.Sprintf("%s-%d", base, n)
-		}
-		used[id] = true
-		ids[it.ID] = id
-	}
+	ids := menuIdentifiers(m.Items, existing, parentOf)
 	list := make([]any, 0, len(m.Items))
 	for i, it := range m.Items {
-		e := map[string]any{}
-		if kept, ok := existing[it.ID]; ok {
-			e = kept
-		}
-		e["name"], e["weight"] = it.Name, (i+1)*10
-		if id, ok := ids[it.ID]; ok {
-			e["identifier"] = id
-		}
-		delete(e, "pageRef")
-		delete(e, "url")
-		delete(e, "parent")
-		if it.PageRef != "" {
-			e["pageRef"] = it.PageRef
-		} else if it.URL != "" {
-			e["url"] = it.URL
-		}
-		if it.Parent != "" {
-			parent, known := parentOf(it.Parent)
-			switch {
-			case !known:
-				e["parent"] = it.Parent
-			case ids[parent.ID] != "":
-				e["parent"] = ids[parent.ID]
-			default:
-				e["parent"] = parent.Name
-			}
-		}
-		list = append(list, e)
+		list = append(list, menuEntry(it, i, existing[it.ID], ids, parentOf))
 	}
 
-	// Pages that declared themselves in this menu: remove that declaration.
-	for _, it := range m.Items {
-		if it.Source != "" && it.Source != "config" {
-			if err := s.removePageMenu(it.Source, m.Name); err != nil {
-				return err
-			}
-		}
+	if err := s.removePageDeclarations(m); err != nil {
+		return err
 	}
-	current, _ := s.Menus()
-	for _, cm := range current {
-		if cm.Name != m.Name || cm.Language != m.Language {
-			continue
-		}
-		for _, it := range cm.Items {
-			if it.Source != "config" {
-				if err := s.removePageMenu(it.Source, m.Name); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
 	if st.key == "" {
 		if err := st.doc.Set(m.Name, list, st.doc.Format); err != nil {
 			return err
@@ -406,18 +299,154 @@ func (s *Site) SaveMenu(m Menu) error {
 	return fsutil.WriteFileAtomic(full, out, 0o644)
 }
 
+// oldMenuEntries indexes the entries a menu had in the file by the id
+// Menus() gave them, which for an entry without an identifier is built from
+// its name and position. idOfOldRef maps how a child names its parent, by
+// identifier or name, to that id.
+func oldMenuEntries(raw any) (existing map[string]map[string]any, idOfOldRef map[string]string) {
+	existing = map[string]map[string]any{}
+	idOfOldRef = map[string]string{}
+	list, _ := raw.([]any)
+	for i, item := range list {
+		entry, _ := item.(map[string]any)
+		if entry == nil {
+			continue
+		}
+		name, _ := entry["name"].(string)
+		identifier, _ := entry["identifier"].(string)
+		id := identifier
+		if id == "" {
+			id = positionalMenuID(name, i)
+		}
+		existing[id] = entry
+		if identifier != "" {
+			idOfOldRef[identifier] = id
+		} else if _, taken := idOfOldRef[name]; !taken {
+			idOfOldRef[name] = id
+		}
+	}
+	return existing, idOfOldRef
+}
+
+// menuIdentifiers picks the identifier each item is written with, keyed by
+// item id. Hugo falls back to the name when an entry has no identifier, so
+// only entries that had one, or that a child can't reach by name, get one.
+func menuIdentifiers(items []MenuItem, existing map[string]map[string]any, parentOf func(string) (MenuItem, bool)) map[string]string {
+	nameCount := map[string]int{}
+	for _, it := range items {
+		nameCount[it.Name]++
+	}
+	hasIdentifier := map[string]bool{}
+	for _, it := range items {
+		if kept, ok := existing[it.ID]; ok {
+			id, _ := kept["identifier"].(string)
+			hasIdentifier[it.ID] = id != ""
+		} else if it.Source != "" && it.Source != "config" && !strings.HasPrefix(it.ID, "page:") {
+			hasIdentifier[it.ID] = true
+		}
+	}
+	for _, it := range items {
+		if parent, ok := parentOf(it.Parent); ok && nameCount[parent.Name] > 1 {
+			hasIdentifier[parent.ID] = true
+		}
+	}
+
+	ids := map[string]string{}
+	used := map[string]bool{}
+	for _, it := range items {
+		if !hasIdentifier[it.ID] {
+			continue
+		}
+		id := it.ID
+		if strings.HasPrefix(id, "page:") || strings.HasPrefix(id, "new-") || existing[id] != nil && existing[id]["identifier"] == nil {
+			id = fsutil.Slugify(it.Name)
+		}
+		for base, n := id, 2; used[id]; n++ {
+			id = fmt.Sprintf("%s-%d", base, n)
+		}
+		used[id] = true
+		ids[it.ID] = id
+	}
+	return ids
+}
+
+// menuEntry builds the config entry for the item at index, starting from the
+// entry it was loaded from so keys the editor doesn't show survive.
+func menuEntry(it MenuItem, index int, kept map[string]any, ids map[string]string, parentOf func(string) (MenuItem, bool)) map[string]any {
+	e := map[string]any{}
+	if kept != nil {
+		e = kept
+	}
+	e["name"], e["weight"] = it.Name, (index+1)*10
+	if id, ok := ids[it.ID]; ok {
+		e["identifier"] = id
+	}
+	delete(e, "pageRef")
+	delete(e, "url")
+	delete(e, "parent")
+	if it.PageRef != "" {
+		e["pageRef"] = it.PageRef
+	} else if it.URL != "" {
+		e["url"] = it.URL
+	}
+	if it.Parent != "" {
+		parent, known := parentOf(it.Parent)
+		switch {
+		case !known:
+			e["parent"] = it.Parent
+		case ids[parent.ID] != "":
+			e["parent"] = ids[parent.ID]
+		default:
+			e["parent"] = parent.Name
+		}
+	}
+	return e
+}
+
+// removePageDeclarations takes the menu out of the front matter of every page
+// that declared itself in it.
+func (s *Site) removePageDeclarations(m Menu) error {
+	for _, it := range m.Items {
+		if it.Source != "" && it.Source != "config" {
+			if err := s.removePageMenu(it.Source, m.Name); err != nil {
+				return err
+			}
+		}
+	}
+	current, err := s.Menus()
+	if err != nil {
+		return err
+	}
+	for _, cm := range current {
+		if cm.Name != m.Name || cm.Language != m.Language {
+			continue
+		}
+		for _, it := range cm.Items {
+			if it.Source != "config" {
+				if err := s.removePageMenu(it.Source, m.Name); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Site) removePageMenu(file, menu string) error {
 	full, err := s.abs(file)
 	if err != nil {
 		return err
 	}
 	b, err := os.ReadFile(full)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 	doc, err := frontmatter.Parse(b)
 	if err != nil {
-		return nil
+		return fmt.Errorf("%s: %w", file, err)
 	}
 	for _, key := range []string{"menus", "menu"} {
 		v, ok := doc.Get(key)
@@ -439,14 +468,18 @@ func (s *Site) removePageMenu(file, menu string) error {
 			if len(keep) == 0 {
 				doc.Delete(key)
 			} else {
-				doc.Set(key, keep, doc.Format)
+				if err := doc.Set(key, keep, doc.Format); err != nil {
+					return err
+				}
 			}
 		case map[string]any:
 			delete(t, menu)
 			if len(t) == 0 {
 				doc.Delete(key)
 			} else {
-				doc.Set(key, t, doc.Format)
+				if err := doc.Set(key, t, doc.Format); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -455,4 +488,10 @@ func (s *Site) removePageMenu(file, menu string) error {
 		return err
 	}
 	return fsutil.WriteFileAtomic(full, out, 0o644)
+}
+
+// positionalMenuID names an entry that has no identifier by its name and
+// its place in the menu, such as docs-0.
+func positionalMenuID(name string, index int) string {
+	return fmt.Sprintf("%s-%d", fsutil.Slugify(name), index)
 }

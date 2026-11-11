@@ -39,7 +39,7 @@ func TestPreviewServerAgainstStarterSite(t *testing.T) {
 		t.Fatal(err)
 	}
 	body, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != 200 || !strings.Contains(string(body), "Hello, world") {
 		t.Fatalf("status %d body %.200s", resp.StatusCode, body)
 	}
@@ -99,7 +99,7 @@ func TestBlockStylesSurviveEditingAnotherPage(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		body, _ := io.ReadAll(resp.Body)
 
 		return string(body)
@@ -188,8 +188,8 @@ func TestCheckSaysWhyAThemeFails(t *testing.T) {
 	work := t.TempDir()
 
 	broken := filepath.Join(root, "themes", "broken", "layouts", "index.html")
-	os.MkdirAll(filepath.Dir(broken), 0o755)
-	os.WriteFile(broken, []byte(`{{ errorf "this theme is broken" }}`), 0o644)
+	_ = os.MkdirAll(filepath.Dir(broken), 0o755)
+	_ = os.WriteFile(broken, []byte(`{{ errorf "this theme is broken" }}`), 0o644)
 	if err := Check(context.Background(), bin, root, work, "broken", ""); err == nil || !strings.Contains(err.Error(), "this theme is broken") {
 		t.Fatalf("check of a broken theme: %v", err)
 	}
@@ -204,10 +204,10 @@ func TestBuildReplacesTheLastBuildForProduction(t *testing.T) {
 	if err := starter.Create(root, "Build Test", DefaultVersion); err != nil {
 		t.Fatal(err)
 	}
-	os.MkdirAll(filepath.Join(root, "layouts"), 0o755)
-	os.WriteFile(filepath.Join(root, "layouts", "home.html"), []byte(`{{ hugo.Environment }}`), 0o644)
+	_ = os.MkdirAll(filepath.Join(root, "layouts"), 0o755)
+	_ = os.WriteFile(filepath.Join(root, "layouts", "home.html"), []byte(`{{ hugo.Environment }}`), 0o644)
 	dest := t.TempDir()
-	os.WriteFile(filepath.Join(dest, "deleted-page.html"), []byte("old"), 0o644)
+	_ = os.WriteFile(filepath.Join(dest, "deleted-page.html"), []byte("old"), 0o644)
 
 	if err := Build(context.Background(), bin, root, t.TempDir(), dest); err != nil {
 		t.Fatal(err)
@@ -222,7 +222,7 @@ func TestBuildReplacesTheLastBuildForProduction(t *testing.T) {
 
 func TestCheckRefusesBadThemeNames(t *testing.T) {
 	root := t.TempDir()
-	os.MkdirAll(filepath.Join(root, "themes", "good"), 0o755)
+	_ = os.MkdirAll(filepath.Join(root, "themes", "good"), 0o755)
 
 	for _, name := range []string{"--config=/etc/passwd", "../outside", "a/b", ".hidden", "missing"} {
 		if err := Check(context.Background(), "hugo-not-run", root, t.TempDir(), name, ""); err == nil || !strings.Contains(err.Error(), "theme") {

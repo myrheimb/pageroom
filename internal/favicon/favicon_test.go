@@ -131,7 +131,7 @@ func TestFromImage(t *testing.T) {
 		}
 	}
 	var encoded bytes.Buffer
-	png.Encode(&encoded, wide)
+	_ = png.Encode(&encoded, wide)
 
 	icons, err := FromImage(encoded.Bytes())
 	if err != nil {
@@ -149,7 +149,7 @@ func TestFromImage(t *testing.T) {
 	}
 
 	encoded.Reset()
-	png.Encode(&encoded, image.NewRGBA(image.Rect(0, 0, 64, 64)))
+	_ = png.Encode(&encoded, image.NewRGBA(image.Rect(0, 0, 64, 64)))
 	icons, err = FromImage(encoded.Bytes())
 	if err != nil {
 		t.Fatal(err)

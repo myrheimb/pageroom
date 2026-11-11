@@ -19,6 +19,8 @@ import (
 // integrate merges the remote commit into the working folder. On conflicts
 // nothing is written. overrides holds resolved content per path (a nil
 // value deletes).
+//
+//nolint:gocyclo // The three-way merge reads top to bottom, and splitting it would hide the order.
 func (r *Repo) integrate(remote plumbing.Hash, overrides map[string]*[]byte) ([]string, []Conflict, error) {
 	head, err := r.headCommit()
 	if err != nil {

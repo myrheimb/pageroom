@@ -19,20 +19,20 @@ func testJPEG(t *testing.T, w, h int, orientation uint16, gps bool) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	img.Set(0, 0, color.RGBA{255, 0, 0, 255})
 	var raw bytes.Buffer
-	jpeg.Encode(&raw, img, nil)
+	_ = jpeg.Encode(&raw, img, nil)
 	b := raw.Bytes()
 
 	// Build an EXIF APP1 with an orientation tag (and fake GPS text).
 	var tiff bytes.Buffer
 	tiff.WriteString("II*\x00")
-	binary.Write(&tiff, binary.LittleEndian, uint32(8))
-	binary.Write(&tiff, binary.LittleEndian, uint16(1))
-	binary.Write(&tiff, binary.LittleEndian, uint16(0x0112))
-	binary.Write(&tiff, binary.LittleEndian, uint16(3))
-	binary.Write(&tiff, binary.LittleEndian, uint32(1))
-	binary.Write(&tiff, binary.LittleEndian, orientation)
+	_ = binary.Write(&tiff, binary.LittleEndian, uint32(8))
+	_ = binary.Write(&tiff, binary.LittleEndian, uint16(1))
+	_ = binary.Write(&tiff, binary.LittleEndian, uint16(0x0112))
+	_ = binary.Write(&tiff, binary.LittleEndian, uint16(3))
+	_ = binary.Write(&tiff, binary.LittleEndian, uint32(1))
+	_ = binary.Write(&tiff, binary.LittleEndian, orientation)
 	tiff.Write([]byte{0, 0})
-	binary.Write(&tiff, binary.LittleEndian, uint32(0))
+	_ = binary.Write(&tiff, binary.LittleEndian, uint32(0))
 	if gps {
 		tiff.WriteString("GPS 59.9139N 10.7522E")
 	}
@@ -88,7 +88,7 @@ func TestResize(t *testing.T) {
 
 func TestPNGTextChunksRemoved(t *testing.T) {
 	var buf bytes.Buffer
-	png.Encode(&buf, image.NewRGBA(image.Rect(0, 0, 4, 4)))
+	_ = png.Encode(&buf, image.NewRGBA(image.Rect(0, 0, 4, 4)))
 	b := buf.Bytes()
 	ihdrEnd := 8 + 12 + 13
 	withText := append(append(append([]byte{}, b[:ihdrEnd]...), pngChunk("tEXt", []byte("Author\x00Secret Person"))...), b[ihdrEnd:]...)
@@ -124,8 +124,8 @@ func TestRejectsNonImages(t *testing.T) {
 
 func TestLibraryImportPlacesAndNeverOverwrites(t *testing.T) {
 	root := t.TempDir()
-	os.MkdirAll(filepath.Join(root, "content/posts/trip"), 0o755)
-	os.WriteFile(filepath.Join(root, "content/posts/trip/index.md"), []byte("![](Beach Day.jpg)"), 0o644)
+	_ = os.MkdirAll(filepath.Join(root, "content/posts/trip"), 0o755)
+	_ = os.WriteFile(filepath.Join(root, "content/posts/trip/index.md"), []byte("![](Beach Day.jpg)"), 0o644)
 	l := &Library{Root: root, ContentDir: "content", StaticDir: "static/images", TrashDir: t.TempDir()}
 	img := testJPEG(t, 10, 10, 1, false)
 
@@ -162,9 +162,9 @@ func TestLibraryImportPlacesAndNeverOverwrites(t *testing.T) {
 // pngChunk builds a PNG chunk.
 func pngChunk(typ string, data []byte) []byte {
 	var c bytes.Buffer
-	binary.Write(&c, binary.BigEndian, uint32(len(data)))
+	_ = binary.Write(&c, binary.BigEndian, uint32(len(data)))
 	c.WriteString(typ)
 	c.Write(data)
-	binary.Write(&c, binary.BigEndian, crc32.ChecksumIEEE(append([]byte(typ), data...)))
+	_ = binary.Write(&c, binary.BigEndian, crc32.ChecksumIEEE(append([]byte(typ), data...)))
 	return c.Bytes()
 }

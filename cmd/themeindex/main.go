@@ -147,7 +147,7 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("%s: %s", url, response.Status)
@@ -193,7 +193,7 @@ func check(ctx context.Context, hugoBin, version, module string) (themes.Theme, 
 	if err != nil {
 		return themes.Theme{}, err
 	}
-	defer os.RemoveAll(scratch)
+	defer func() { _ = os.RemoveAll(scratch) }()
 
 	subdir, err := findSubdir(archive, rest, filepath.Join(scratch, "repo"))
 	if err != nil {
@@ -352,7 +352,7 @@ func nameDuplicates(list []themes.Theme) {
 func printChanges(out string, list []themes.Theme, checked int) {
 	var previous themes.Index
 	if data, err := os.ReadFile(out); err == nil {
-		json.Unmarshal(data, &previous)
+		_ = json.Unmarshal(data, &previous)
 	}
 	before := map[string]bool{}
 	for _, theme := range previous.Themes {

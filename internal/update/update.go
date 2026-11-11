@@ -47,7 +47,7 @@ func Check(ctx context.Context, client *http.Client, url, current string) *Relea
 	if err != nil {
 		return nil
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		return nil
 	}

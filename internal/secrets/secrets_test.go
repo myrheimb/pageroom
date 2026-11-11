@@ -84,17 +84,17 @@ func TestScanFile(t *testing.T) {
 func TestDeviceFlow(t *testing.T) {
 	var polls int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		_ = r.ParseForm()
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/login/device/code":
-			fmt.Fprint(w, `{"device_code":"dc","user_code":"ABCD-1234","verification_uri":"https://github.com/login/device","expires_in":900,"interval":0}`)
+			_, _ = fmt.Fprint(w, `{"device_code":"dc","user_code":"ABCD-1234","verification_uri":"https://github.com/login/device","expires_in":900,"interval":0}`)
 		case "/login/oauth/access_token":
 			if atomic.AddInt32(&polls, 1) < 2 {
-				fmt.Fprint(w, `{"error":"authorization_pending"}`)
+				_, _ = fmt.Fprint(w, `{"error":"authorization_pending"}`)
 				return
 			}
-			fmt.Fprint(w, `{"access_token":"ghu_token","refresh_token":"ghr_refresh","expires_in":28800}`)
+			_, _ = fmt.Fprint(w, `{"access_token":"ghu_token","refresh_token":"ghr_refresh","expires_in":28800}`)
 		}
 	}))
 	defer srv.Close()

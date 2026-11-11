@@ -155,7 +155,7 @@ func (m *Manager) get(ctx context.Context, url string, limit int64, progress boo
 	if err != nil {
 		return nil, fmt.Errorf("couldn't download Hugo (are you online?): %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("couldn't download Hugo: %s returned HTTP %d", url, resp.StatusCode)
 	}
@@ -248,7 +248,7 @@ func extract(archive []byte, name string) ([]byte, error) {
 				if err != nil {
 					return nil, err
 				}
-				defer rc.Close()
+				defer func() { _ = rc.Close() }()
 				return io.ReadAll(io.LimitReader(rc, 500<<20))
 			}
 		}

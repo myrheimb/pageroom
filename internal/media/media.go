@@ -343,7 +343,7 @@ func (l *Library) List() ([]Item, error) {
 				if cfg, _, err := image.DecodeConfig(f); err == nil {
 					it.Width, it.Height = cfg.Width, cfg.Height
 				}
-				f.Close()
+				_ = f.Close()
 			}
 			out = append(out, it)
 			return nil

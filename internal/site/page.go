@@ -218,9 +218,18 @@ func (s *Site) CreatePage(np NewPage) (string, error) {
 	}
 	doc, _ := frontmatter.Parse(nil)
 	f := s.DefaultFormat()
-	doc.Set("title", title, f)
-	doc.Set("date", time.Now().Truncate(time.Second), f)
-	doc.Set("draft", true, f)
+	for _, field := range []struct {
+		key   string
+		value any
+	}{
+		{"title", title},
+		{"date", time.Now().Truncate(time.Second)},
+		{"draft", true},
+	} {
+		if err := doc.Set(field.key, field.value, f); err != nil {
+			return "", err
+		}
+	}
 	out, err := doc.Bytes()
 	if err != nil {
 		return "", err
@@ -248,7 +257,9 @@ func (s *Site) CreateSection(parent, title string) (string, error) {
 	}
 	secDir := fsutil.UniquePath(filepath.Join(dir, fsutil.Slugify(title)))
 	doc, _ := frontmatter.Parse(nil)
-	doc.Set("title", title, s.DefaultFormat())
+	if err := doc.Set("title", title, s.DefaultFormat()); err != nil {
+		return "", err
+	}
 	out, _ := doc.Bytes()
 	if err := fsutil.CreateExclusive(filepath.Join(secDir, "_index.md"), bytes.NewReader(out)); err != nil {
 		return "", err
@@ -541,13 +552,21 @@ func (s *Site) AddTranslation(rel, lang string) (string, error) {
 	doc, _ := frontmatter.Parse(nil)
 	format := s.DefaultFormat()
 	title, _ := source.Fields["title"].(string)
-	doc.Set("title", title, format)
+	if err := doc.Set("title", title, format); err != nil {
+		return "", err
+	}
 	if key, ok := source.Fields["translationKey"].(string); ok && key != "" {
-		doc.Set("translationKey", key, format)
+		if err := doc.Set("translationKey", key, format); err != nil {
+			return "", err
+		}
 	}
 	if !source.IsSection {
-		doc.Set("date", time.Now().Truncate(time.Second), format)
-		doc.Set("draft", true, format)
+		if err := doc.Set("date", time.Now().Truncate(time.Second), format); err != nil {
+			return "", err
+		}
+		if err := doc.Set("draft", true, format); err != nil {
+			return "", err
+		}
 	}
 	out, err := doc.Bytes()
 	if err != nil {
@@ -630,7 +649,7 @@ func copyTree(src, dest string) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		return fsutil.CreateExclusive(target, f)
 	})
 }
@@ -646,7 +665,9 @@ func (s *Site) Reorder(paths []string) error {
 			if idx == "" {
 				// a folder without settings gets an _index.md to hold its position
 				doc, _ := frontmatter.Parse(nil)
-				doc.Set("title", humanize(path.Base(rel)), s.DefaultFormat())
+				if err := doc.Set("title", humanize(path.Base(rel)), s.DefaultFormat()); err != nil {
+					return err
+				}
 				out, _ := doc.Bytes()
 				idx = rel + "/_index.md"
 				full, err := s.abs(idx)

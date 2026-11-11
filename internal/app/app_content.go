@@ -51,6 +51,15 @@ func (a *App) CreatePage(np site.NewPage) (string, error) {
 	return s.CreatePage(np)
 }
 
+// AddTranslation creates the page in another language and returns its path.
+func (a *App) AddTranslation(path, language string) (string, error) {
+	s, err := a.requireSite()
+	if err != nil {
+		return "", err
+	}
+	return s.AddTranslation(path, language)
+}
+
 func (a *App) CreateSection(parent, title string) (string, error) {
 	s, err := a.requireSite()
 	if err != nil {

@@ -58,6 +58,13 @@ export function AddPageBlock(kind: string): $CancellablePromise<void> {
     return $Call.ByID(3822331560, kind);
 }
 
+/**
+ * AddTranslation creates the page in another language and returns its path.
+ */
+export function AddTranslation(path: string, language: string): $CancellablePromise<string> {
+    return $Call.ByID(2978355911, path, language);
+}
+
 export function CancelSignIn(): $CancellablePromise<void> {
     return $Call.ByID(1406891873);
 }

@@ -88,6 +88,11 @@ export interface NewPage {
      * own folder, so images live next to the page
      */
     "bundle": boolean;
+
+    /**
+     * Language is the page's content language, empty for the site's default.
+     */
+    "language": string;
 }
 
 export interface Node {

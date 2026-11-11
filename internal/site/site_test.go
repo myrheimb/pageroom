@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/myrheimb/pageroom/internal/fsutil"
 )
 
 func fixture(t *testing.T) *Site {
@@ -349,5 +351,232 @@ func TestTreePairsTranslations(t *testing.T) {
 	}
 	if len(tree.Children) != 6 {
 		t.Errorf("want 6 top-level nodes, got %d", len(tree.Children))
+	}
+}
+
+func languageFixture(t *testing.T) *Site {
+	t.Helper()
+	root := t.TempDir()
+	files := map[string]string{
+		"hugo.toml":                 "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+		"content/_index.md":         "+++\ntitle = 'Home'\n+++\n",
+		"content/about.md":          "+++\ntitle = 'About'\n+++\n",
+		"content/about.ja.md":       "+++\ntitle = '私たち'\nurl = '/ja/watashi/'\n+++\n",
+		"content/solo.md":           "+++\ntitle = 'Solo'\n+++\n",
+		"content/guide/index.md":    "+++\ntitle = 'Guide'\n+++\n",
+		"content/guide/index.ja.md": "+++\ntitle = 'ガイド'\n+++\n",
+		"content/guide/pic.jpg":     "jpg",
+		"content/news/_index.md":    "+++\ntitle = 'News'\n+++\n",
+		"content/contact.md":        "+++\ntitle = 'Contact'\ntranslationKey = 'contact'\n+++\n",
+		"content/otoiawase.ja.md":   "+++\ntitle = 'お問い合わせ'\ntranslationKey = 'contact'\n+++\n",
+	}
+	for p, c := range files {
+		full := filepath.Join(root, filepath.FromSlash(p))
+		os.MkdirAll(filepath.Dir(full), 0o755)
+		os.WriteFile(full, []byte(c), 0o644)
+	}
+	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func TestMoveActsOnEveryTranslation(t *testing.T) {
+	s := languageFixture(t)
+	got, err := s.MovePage("content/about.md", "content/news")
+	if err != nil || got != "content/news/about.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	if !fsutil.Exists(filepath.Join(s.Root, "content/news/about.ja.md")) || fsutil.Exists(filepath.Join(s.Root, "content/about.ja.md")) || fsutil.Exists(filepath.Join(s.Root, "content/about.md")) {
+		t.Fatal("both files should have moved")
+	}
+	en, _ := s.GetPage("content/news/about.md")
+	if a, _ := en.Fields["aliases"].([]any); len(a) != 1 || a[0] != "/about/" {
+		t.Fatalf("en aliases = %v", en.Fields["aliases"])
+	}
+
+	if _, err := s.MovePage("content/solo.md", "content/news"); err != nil || !fsutil.Exists(filepath.Join(s.Root, "content/news/solo.md")) {
+		t.Fatalf("one-language page: %v", err)
+	}
+
+	got, err = s.MovePage("content/guide/index.ja.md", "content/news")
+	if err != nil || got != "content/news/guide/index.ja.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	for _, p := range []string{"content/news/guide/index.md", "content/news/guide/index.ja.md", "content/news/guide/pic.jpg"} {
+		if !fsutil.Exists(filepath.Join(s.Root, p)) {
+			t.Errorf("%s missing", p)
+		}
+	}
+	ja, _ := s.GetPage("content/news/guide/index.ja.md")
+	if a, _ := ja.Fields["aliases"].([]any); len(a) != 1 || a[0] != "/ja/guide/" {
+		t.Fatalf("bundle ja aliases = %v", ja.Fields["aliases"])
+	}
+}
+
+func TestDeleteActsOnEveryTranslation(t *testing.T) {
+	s := languageFixture(t)
+	if _, err := s.DeletePage("content/about.md"); err != nil {
+		t.Fatal(err)
+	}
+	if fsutil.Exists(filepath.Join(s.Root, "content/about.md")) || fsutil.Exists(filepath.Join(s.Root, "content/about.ja.md")) {
+		t.Fatal("a translation was left behind")
+	}
+	trashed, _ := filepath.Glob(filepath.Join(s.TrashDir, "*", "content", "about*.md"))
+	if len(trashed) != 2 {
+		t.Fatalf("trash holds %v", trashed)
+	}
+
+	if _, err := s.DeletePage("content/solo.md"); err != nil || fsutil.Exists(filepath.Join(s.Root, "content/solo.md")) {
+		t.Fatal(err)
+	}
+	if _, err := s.DeletePage("content/guide/index.md"); err != nil || fsutil.Exists(filepath.Join(s.Root, "content/guide")) {
+		t.Fatal("bundle with both languages should go as one")
+	}
+}
+
+func TestReorderWritesEveryTranslation(t *testing.T) {
+	s := languageFixture(t)
+	if err := s.Reorder([]string{"content/solo.md", "content/about.md"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"content/about.md", "content/about.ja.md"} {
+		page, _ := s.GetPage(p)
+		if toInt(page.Fields["weight"]) != 20 {
+			t.Errorf("%s weight %v", p, page.Fields["weight"])
+		}
+	}
+	solo, _ := s.GetPage("content/solo.md")
+	if toInt(solo.Fields["weight"]) != 10 {
+		t.Errorf("solo weight %v", solo.Fields["weight"])
+	}
+}
+
+func TestRenameKeepsLanguageCodeAndAliasesUrl(t *testing.T) {
+	s := languageFixture(t)
+	got, err := s.RenameSlug("content/about.md", "Our team")
+	if err != nil || got != "content/our-team.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	if fsutil.Exists(filepath.Join(s.Root, "content/about.md")) || fsutil.Exists(filepath.Join(s.Root, "content/about.ja.md")) || !fsutil.Exists(filepath.Join(s.Root, "content/our-team.ja.md")) {
+		t.Fatal("both files should carry the new name")
+	}
+	ja, _ := s.GetPage("content/our-team.ja.md")
+	if _, hasURL := ja.Fields["url"]; hasURL {
+		t.Error("url should be dropped")
+	}
+	if ja.URL != "/ja/our-team/" {
+		t.Errorf("url %s", ja.URL)
+	}
+	if a, _ := ja.Fields["aliases"].([]any); len(a) != 1 || a[0] != "/ja/watashi/" {
+		t.Fatalf("aliases = %v", ja.Fields["aliases"])
+	}
+
+	got, err = s.RenameSlug("content/otoiawase.ja.md", "Reach us")
+	if err != nil || got != "content/reach-us.ja.md" || !fsutil.Exists(filepath.Join(s.Root, "content/reach-us.md")) {
+		t.Fatalf("translationKey pair: %s %v", got, err)
+	}
+
+	got, err = s.RenameSlug("content/guide/index.ja.md", "Handbook")
+	if err != nil || got != "content/handbook/index.ja.md" || !fsutil.Exists(filepath.Join(s.Root, "content/handbook/index.md")) {
+		t.Fatalf("bundle: %s %v", got, err)
+	}
+
+	if got, err = s.RenameSlug("content/solo.md", "Solo"); err != nil || got != "content/solo.md" {
+		t.Fatalf("same name: %s %v", got, err)
+	}
+	if got, err = s.RenameSlug("content/solo.md", "Alone"); err != nil || got != "content/alone.md" {
+		t.Fatalf("one language: %s %v", got, err)
+	}
+}
+
+func TestCreatePageInLanguage(t *testing.T) {
+	s := languageFixture(t)
+	got, err := s.CreatePage(NewPage{Section: "content", Title: "Fresh", Language: "ja"})
+	if err != nil || got != "content/fresh.ja.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	again, _ := s.CreatePage(NewPage{Section: "content", Title: "Fresh", Language: "ja"})
+	if again != "content/fresh-2.ja.md" {
+		t.Fatalf("second: %s", again)
+	}
+	bundle, _ := s.CreatePage(NewPage{Section: "content", Title: "Pack", Bundle: true, Language: "ja"})
+	if bundle != "content/pack/index.ja.md" {
+		t.Fatalf("bundle: %s", bundle)
+	}
+	plain, _ := s.CreatePage(NewPage{Section: "content", Title: "Plain", Language: "en"})
+	if plain != "content/plain.md" {
+		t.Fatalf("default language: %s", plain)
+	}
+	if _, err := s.CreatePage(NewPage{Section: "content", Title: "X", Language: "fr"}); err == nil {
+		t.Fatal("created a page in a language the site lacks")
+	}
+}
+
+func TestAddTranslationCreatesPairedFile(t *testing.T) {
+	s := languageFixture(t)
+	got, err := s.AddTranslation("content/solo.md", "ja")
+	if err != nil || got != "content/solo.ja.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	tree, _ := s.Tree()
+	node := find(tree, "content/solo.md")
+	if node == nil || len(node.Translations) != 2 || find(tree, "content/solo.ja.md") != nil {
+		t.Fatalf("tree should group the pair: %+v", node)
+	}
+	if page, _ := s.GetPage(got); page.Fields["title"] != "Solo" || page.Fields["draft"] != true {
+		t.Fatalf("fields %v", page.Fields)
+	}
+	if _, err := s.AddTranslation("content/solo.md", "ja"); err == nil {
+		t.Fatal("added a language the page has")
+	}
+	if _, err := s.AddTranslation("content/solo.md", "fr"); err == nil {
+		t.Fatal("added an unknown language")
+	}
+
+	got, err = s.AddTranslation("content/guide/index.md", "ja")
+	if err == nil {
+		t.Fatalf("guide already has ja, got %s", got)
+	}
+	sec, err := s.AddTranslation("content/news", "ja")
+	if err != nil || sec != "content/news/_index.ja.md" {
+		t.Fatalf("section: %s %v", sec, err)
+	}
+}
+
+func TestRenameClashKeepsPairTogether(t *testing.T) {
+	s := languageFixture(t)
+	taken := filepath.Join(s.Root, "content/our-team.ja.md")
+	if err := os.WriteFile(taken, []byte("keep me"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.RenameSlug("content/about.md", "Our team")
+	if err != nil || got != "content/our-team-2.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+
+	content, _ := os.ReadFile(taken)
+	if string(content) != "keep me" || !fsutil.Exists(filepath.Join(s.Root, "content/our-team-2.ja.md")) {
+		t.Fatal("the taken file was overwritten or the pair split")
+	}
+}
+
+func TestMoveClashKeepsPairTogether(t *testing.T) {
+	s := languageFixture(t)
+	if err := os.MkdirAll(filepath.Join(s.Root, "content/news"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(s.Root, "content/news/about.md"), []byte("+++\ntitle = 'Other'\n+++\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.MovePage("content/about.md", "content/news")
+	if err != nil || got != "content/news/about-2.md" {
+		t.Fatalf("%s %v", got, err)
+	}
+	if !fsutil.Exists(filepath.Join(s.Root, "content/news/about-2.ja.md")) || fsutil.Exists(filepath.Join(s.Root, "content/news/about.ja.md")) {
+		t.Fatal("the pair should share one stem")
 	}
 }

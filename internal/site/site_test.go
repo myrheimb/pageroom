@@ -625,6 +625,31 @@ func TestSaveMenuKeepsKeysItDoesNotEdit(t *testing.T) {
 	}
 }
 
+func TestSaveMenuKeepsKeysOfEntriesWithoutIdentifier(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml":         "baseURL = 'https://example.org/'\n",
+		"content/_index.md": "+++\ntitle = 'Home'\n+++\n",
+		"config/_default/menus.toml": "[[main]]\n  name = 'Docs'\n  pageRef = '/docs'\n  weight = 10\n  [main.params]\n    icon = 'book'\n\n" +
+			"[[main]]\n  name = 'Guide'\n  parent = 'Docs'\n  pageRef = '/docs/guide'\n  weight = 20\n  [main.params]\n    icon = 'map'\n\n" +
+			"[[main]]\n  name = 'Blog'\n  pageRef = '/blog'\n  weight = 30\n  [main.params]\n    icon = 'pen'\n",
+	})
+	menus, _ := s.Menus()
+	items := menus[0].Items
+	items[0].Name = "Documentation"
+	items = []MenuItem{items[2], items[0], items[1]}
+	if err := s.SaveMenu(Menu{Name: "main", Items: items}); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.toml"))
+	got := string(b)
+	if strings.Count(got, "params") != 3 || strings.Contains(got, "identifier") {
+		t.Fatalf("params lost or identifier added:\n%s", got)
+	}
+	if !strings.Contains(got, "parent = 'Documentation'") {
+		t.Fatalf("child no longer points at its renamed parent:\n%s", got)
+	}
+}
+
 func openFiles(t *testing.T, files map[string]string) *Site {
 	t.Helper()
 	root := t.TempDir()

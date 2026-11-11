@@ -252,13 +252,76 @@ func (s *Site) SaveMenu(m Menu) error {
 	if err != nil {
 		return err
 	}
-	// Items that came from page front matter get a stable identifier so
-	// dropdown children can point at them.
+	// Entries match the ones they were loaded from by the id Menus() gave
+	// them, which for an entry without an identifier is built from its name
+	// and position in the file.
+	existing := map[string]map[string]any{}
+	idOfOldRef := map[string]string{}
+	nameOf := func(entry map[string]any) string {
+		name, _ := entry["name"].(string)
+		return name
+	}
+	oldList, _ := st.keys[m.Name].([]any)
+	for i, raw := range oldList {
+		entry, _ := raw.(map[string]any)
+		if entry == nil {
+			continue
+		}
+		id, _ := entry["identifier"].(string)
+		if id == "" {
+			name, _ := entry["name"].(string)
+			id = fmt.Sprintf("%s-%d", fsutil.Slugify(name), i)
+		}
+		existing[id] = entry
+		if ident, _ := entry["identifier"].(string); ident != "" {
+			idOfOldRef[ident] = id
+		} else if _, taken := idOfOldRef[nameOf(entry)]; !taken {
+			idOfOldRef[nameOf(entry)] = id
+		}
+	}
+
+	// Hugo falls back to the name when an entry has no identifier, so only
+	// entries that had one, or that a child can't reach by name, get one.
+	nameCount := map[string]int{}
+	for _, it := range m.Items {
+		nameCount[it.Name]++
+	}
+	hasIdentifier := map[string]bool{}
+	for _, it := range m.Items {
+		if kept, ok := existing[it.ID]; ok {
+			id, _ := kept["identifier"].(string)
+			hasIdentifier[it.ID] = id != ""
+		} else if it.Source != "" && it.Source != "config" && !strings.HasPrefix(it.ID, "page:") {
+			hasIdentifier[it.ID] = true
+		}
+	}
+	byID := map[string]MenuItem{}
+	for _, it := range m.Items {
+		byID[it.ID] = it
+	}
+	// A child loaded from the file names its parent the way the file does,
+	// by identifier or name, so find the item that entry became.
+	parentOf := func(ref string) (MenuItem, bool) {
+		if parent, ok := byID[ref]; ok {
+			return parent, true
+		}
+		parent, ok := byID[idOfOldRef[ref]]
+		return parent, ok
+	}
+	for _, it := range m.Items {
+		if parent, ok := parentOf(it.Parent); ok && nameCount[parent.Name] > 1 {
+			hasIdentifier[parent.ID] = true
+		}
+	}
+
 	ids := map[string]string{}
 	used := map[string]bool{}
 	for _, it := range m.Items {
+		if !hasIdentifier[it.ID] {
+			continue
+		}
 		id := it.ID
-		if id == "" || strings.HasPrefix(id, "page:") {
+		if strings.HasPrefix(id, "page:") || strings.HasPrefix(id, "new-") || existing[id] != nil && existing[id]["identifier"] == nil {
 			id = fsutil.Slugify(it.Name)
 		}
 		for base, n := id, 2; used[id]; n++ {
@@ -267,22 +330,16 @@ func (s *Site) SaveMenu(m Menu) error {
 		used[id] = true
 		ids[it.ID] = id
 	}
-	existing := map[string]map[string]any{}
-	oldList, _ := st.keys[m.Name].([]any)
-	for _, raw := range oldList {
-		if entry, _ := raw.(map[string]any); entry != nil {
-			if id, _ := entry["identifier"].(string); id != "" {
-				existing[id] = entry
-			}
-		}
-	}
 	list := make([]any, 0, len(m.Items))
 	for i, it := range m.Items {
 		e := map[string]any{}
-		if kept, ok := existing[ids[it.ID]]; ok {
+		if kept, ok := existing[it.ID]; ok {
 			e = kept
 		}
-		e["name"], e["weight"], e["identifier"] = it.Name, (i+1)*10, ids[it.ID]
+		e["name"], e["weight"] = it.Name, (i+1)*10
+		if id, ok := ids[it.ID]; ok {
+			e["identifier"] = id
+		}
 		delete(e, "pageRef")
 		delete(e, "url")
 		delete(e, "parent")
@@ -292,10 +349,14 @@ func (s *Site) SaveMenu(m Menu) error {
 			e["url"] = it.URL
 		}
 		if it.Parent != "" {
-			if p, ok := ids[it.Parent]; ok {
-				e["parent"] = p
-			} else {
+			parent, known := parentOf(it.Parent)
+			switch {
+			case !known:
 				e["parent"] = it.Parent
+			case ids[parent.ID] != "":
+				e["parent"] = ids[parent.ID]
+			default:
+				e["parent"] = parent.Name
 			}
 		}
 		list = append(list, e)

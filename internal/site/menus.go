@@ -205,9 +205,25 @@ func (s *Site) SaveMenu(m Menu) error {
 		used[id] = true
 		ids[it.ID] = id
 	}
+	existing := map[string]map[string]any{}
+	oldList, _ := st.keys[m.Name].([]any)
+	for _, raw := range oldList {
+		if entry, _ := raw.(map[string]any); entry != nil {
+			if id, _ := entry["identifier"].(string); id != "" {
+				existing[id] = entry
+			}
+		}
+	}
 	list := make([]any, 0, len(m.Items))
 	for i, it := range m.Items {
-		e := map[string]any{"name": it.Name, "weight": (i + 1) * 10, "identifier": ids[it.ID]}
+		e := map[string]any{}
+		if kept, ok := existing[ids[it.ID]]; ok {
+			e = kept
+		}
+		e["name"], e["weight"], e["identifier"] = it.Name, (i+1)*10, ids[it.ID]
+		delete(e, "pageRef")
+		delete(e, "url")
+		delete(e, "parent")
 		if it.PageRef != "" {
 			e["pageRef"] = it.PageRef
 		} else if it.URL != "" {

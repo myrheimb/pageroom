@@ -10,7 +10,7 @@ import { t } from "../i18n";
 export function MenusView() {
   const { site, error, toast, refreshChanges } = useStore();
   const [menus, setMenus] = useState<Menu[] | null>(null);
-  const [current, setCurrent] = useState("main");
+  const [current, setCurrent] = useState("");
   const [items, setItems] = useState<MenuItem[]>([]);
   const [dirty, setDirty] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -84,7 +84,7 @@ export function MenusView() {
         <button className="btn primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinner /> : <Save size={15} />} {t.menus.saveMenu}</button>
       </div>
 
-      {current !== "main" && <Banner kind="info"><span className="small">{t.menus.themeDecides(label(current))}</span></Banner>}
+      {current !== menus[0]?.name && <Banner kind="info"><span className="small">{t.menus.themeDecides(label(current))}</span></Banner>}
 
       {items.length === 0 ? (
         <div className="card empty"><h3>{t.menus.empty}</h3><p>{t.menus.emptyHint}</p><button className="btn primary" onClick={() => setAdding(true)}><Plus size={15} /> {t.menus.addItem}</button></div>

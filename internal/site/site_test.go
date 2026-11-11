@@ -580,3 +580,45 @@ func TestMoveClashKeepsPairTogether(t *testing.T) {
 		t.Fatal("the pair should share one stem")
 	}
 }
+
+func TestSaveMenuKeepsKeysItDoesNotEdit(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]string{
+		"hugo.toml":         "baseURL = 'https://example.org/'\n",
+		"content/_index.md": "+++\ntitle = 'Home'\n+++\n",
+		"config/_default/menus.toml": "[[main]]\n  identifier = 'docs'\n  name = 'Docs'\n  pageRef = '/docs'\n  weight = 10\n  unknownKey = 'keep'\n  [main.params]\n    icon = 'book'\n\n" +
+			"[[main]]\n  identifier = 'blog'\n  name = 'Blog'\n  pageRef = '/blog'\n  weight = 20\n  [main.params]\n    icon = 'pen'\n",
+	}
+	for p, c := range files {
+		full := filepath.Join(root, filepath.FromSlash(p))
+		os.MkdirAll(filepath.Dir(full), 0o755)
+		os.WriteFile(full, []byte(c), 0o644)
+	}
+	s, err := Open(root, filepath.Join(t.TempDir(), "trash"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	menus, _ := s.Menus()
+	items := menus[0].Items
+	items = []MenuItem{items[1], items[0]}
+	items[1].Name = "Documentation"
+	items = append(items, MenuItem{Name: "New", URL: "https://example.org"})
+	if err := s.SaveMenu(Menu{Name: "main", Items: items}); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(filepath.Join(root, "config/_default/menus.toml"))
+	got := string(b)
+	for _, want := range []string{"Documentation", "unknownKey", "'keep'", "icon", "'book'", "'pen'"} {
+		if !strings.Contains(got, want) && !strings.Contains(got, strings.ReplaceAll(want, "'", `"`)) {
+			t.Fatalf("missing %s:\n%s", want, got)
+		}
+	}
+	s.Reload()
+	menus, _ = s.Menus()
+	if n := menus[0].Items; n[0].Name != "Blog" || n[1].Name != "Documentation" || n[2].Name != "New" {
+		t.Fatalf("order: %+v", n)
+	}
+	if strings.Count(got, "params") != 2 || strings.Count(got, "unknownKey") != 1 {
+		t.Fatalf("new entry got extra keys or old ones doubled:\n%s", got)
+	}
+}

@@ -937,3 +937,23 @@ func TestSaveMenuFailsWhenPageFrontMatterCannotBeParsed(t *testing.T) {
 		t.Fatal("expected an error for a page whose front matter cannot be parsed")
 	}
 }
+
+func TestSaveMenuKeepsParamsOfEntriesSharingANameWithoutIdentifier(t *testing.T) {
+	s := openFiles(t, map[string]string{
+		"hugo.toml": "baseURL = 'https://example.org/'\n",
+		"config/_default/menus.toml": "[[main]]\n  name = 'Docs'\n  url = '/a'\n  weight = 10\n  [main.params]\n    icon = 'book'\n\n" +
+			"[[main]]\n  name = 'Docs'\n  url = '/b'\n  weight = 20\n  [main.params]\n    icon = 'pen'\n",
+	})
+	menus, err := s.Menus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SaveMenu(menuIn(menus, s.defaultLanguage(), "main")); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(filepath.Join(s.Root, "config/_default/menus.toml"))
+	got := string(b)
+	if !strings.Contains(got, "book") || !strings.Contains(got, "pen") {
+		t.Fatalf("an entry lost its params:\n%s", got)
+	}
+}

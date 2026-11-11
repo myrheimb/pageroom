@@ -140,7 +140,7 @@ func (s *Site) languageMenus(language string, tree *Node) ([]Menu, error) {
 			it.Parent, _ = m["parent"].(string)
 			it.ID, _ = m["identifier"].(string)
 			if it.ID == "" {
-				it.ID = fmt.Sprintf("%s-%d", fsutil.Slugify(it.Name), i)
+				it.ID = positionalMenuID(it.Name, i)
 			}
 			get(name).Items = append(get(name).Items, it)
 		}
@@ -272,7 +272,7 @@ func (s *Site) SaveMenu(m Menu) error {
 		id, _ := entry["identifier"].(string)
 		if id == "" {
 			name, _ := entry["name"].(string)
-			id = fmt.Sprintf("%s-%d", fsutil.Slugify(name), i)
+			id = positionalMenuID(name, i)
 		}
 		existing[id] = entry
 		if ident, _ := entry["identifier"].(string); ident != "" {
@@ -467,4 +467,10 @@ func (s *Site) removePageMenu(file, menu string) error {
 		return err
 	}
 	return fsutil.WriteFileAtomic(full, out, 0o644)
+}
+
+// positionalMenuID names an entry that has no identifier by its name and
+// its place in the menu, such as docs-0.
+func positionalMenuID(name string, index int) string {
+	return fmt.Sprintf("%s-%d", fsutil.Slugify(name), index)
 }

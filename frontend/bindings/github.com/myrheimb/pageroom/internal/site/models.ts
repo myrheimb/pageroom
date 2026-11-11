@@ -111,6 +111,11 @@ export interface Node {
      * section's _index.md if present
      */
     "indexFile"?: string;
+
+    /**
+     * Translations lists the page in every language it has, the main one first.
+     */
+    "translations"?: Translation[] | null;
     "children"?: (Node | null)[] | null;
 
     /**
@@ -178,4 +183,10 @@ export interface Settings {
      */
     "formAddress": string;
     "contactEmail": string;
+}
+
+export interface Translation {
+    "language": string;
+    "path": string;
+    "url": string;
 }

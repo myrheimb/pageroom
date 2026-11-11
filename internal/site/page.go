@@ -450,10 +450,14 @@ func (s *Site) sectionIndex(dir string) string {
 	if err != nil {
 		return ""
 	}
-	if idx := findIndex(full, "_index"); idx != "" {
-		return s.rel(idx)
+	var variants []*variant
+	for _, file := range s.indexFiles(full, "_index") {
+		variants = append(variants, s.variant(file))
 	}
-	return ""
+	if len(variants) == 0 {
+		return ""
+	}
+	return s.merge(variants).Path
 }
 
 // WriteRaw replaces a page file entirely (used to restore an older version),

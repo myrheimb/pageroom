@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -275,5 +276,78 @@ func TestAddContactForm(t *testing.T) {
 		if got, _ := os.ReadFile(file); string(got) != "the developer's own" {
 			t.Error("replaced a contact form the site already had")
 		}
+	}
+}
+
+func TestTreePairsTranslations(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]string{
+		"hugo.toml":                  "baseURL = 'https://example.org/'\ndefaultContentLanguage = 'en'\n[languages.en]\n  weight = 1\n[languages.ja]\n  weight = 2\n",
+		"content/_index.md":          "+++\ntitle = 'Home'\n+++\n",
+		"content/_index.ja.md":       "+++\ntitle = 'ホーム'\n+++\n",
+		"content/about.md":           "+++\ntitle = 'About'\nweight = 1\n+++\n",
+		"content/about.ja.md":        "+++\ntitle = '私たちについて'\nweight = 5\n+++\n",
+		"content/only-ja.ja.md":      "+++\ntitle = '日本語だけ'\n+++\n",
+		"content/only-en.md":         "+++\ntitle = 'English only'\n+++\n",
+		"content/contact.md":         "+++\ntitle = 'Contact'\ntranslationKey = 'contact'\n+++\n",
+		"content/otoiawase.ja.md":    "+++\ntitle = 'お問い合わせ'\ntranslationKey = 'contact'\n+++\n",
+		"content/guide/index.md":     "+++\ntitle = 'Guide'\n+++\n",
+		"content/guide/index.ja.md":  "+++\ntitle = 'ガイド'\n+++\n",
+		"content/posts/_index.md":    "+++\ntitle = 'Blog'\n+++\n",
+		"content/posts/_index.ja.md": "+++\ntitle = 'ブログ'\n+++\n",
+		"content/posts/hello.md":     "+++\ntitle = 'Hello'\nurl = '/greeting/'\n+++\n",
+		"content/posts/hello.ja.md":  "+++\ntitle = 'こんにちは'\nurl = '/ja/aisatsu/'\n+++\n",
+		"content/posts/v1.2.md":      "+++\ntitle = 'Version'\n+++\n",
+	}
+	for p, c := range files {
+		full := filepath.Join(root, filepath.FromSlash(p))
+		os.MkdirAll(filepath.Dir(full), 0o755)
+		os.WriteFile(full, []byte(c), 0o644)
+	}
+	s, err := Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tree, err := s.Tree()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := map[string][]Translation{
+		"content/about.md":       {{"en", "content/about.md", "/about/"}, {"ja", "content/about.ja.md", "/ja/about/"}},
+		"content/only-ja.ja.md":  {{"ja", "content/only-ja.ja.md", "/ja/only-ja/"}},
+		"content/only-en.md":     {{"en", "content/only-en.md", "/only-en/"}},
+		"content/contact.md":     {{"en", "content/contact.md", "/contact/"}, {"ja", "content/otoiawase.ja.md", "/ja/otoiawase/"}},
+		"content/guide/index.md": {{"en", "content/guide/index.md", "/guide/"}, {"ja", "content/guide/index.ja.md", "/ja/guide/"}},
+		"content/posts/hello.md": {{"en", "content/posts/hello.md", "/greeting/"}, {"ja", "content/posts/hello.ja.md", "/ja/aisatsu/"}},
+		"content/posts/v1.2.md":  {{"en", "content/posts/v1.2.md", "/posts/v1.2/"}},
+	}
+	for p, translations := range want {
+		node := find(tree, p)
+		if node == nil {
+			t.Errorf("%s missing from the tree", p)
+			continue
+		}
+		if !slices.Equal(node.Translations, translations) {
+			t.Errorf("%s translations: %+v", p, node.Translations)
+		}
+	}
+	for _, gone := range []string{"content/about.ja.md", "content/otoiawase.ja.md", "content/guide/index.ja.md", "content/posts/hello.ja.md"} {
+		if find(tree, gone) != nil {
+			t.Errorf("%s should be folded into its pair", gone)
+		}
+	}
+	if about := find(tree, "content/about.md"); about.Title != "About" || about.Weight != 1 {
+		t.Errorf("about takes the default language: %+v", about)
+	}
+	if ja := find(tree, "content/only-ja.ja.md"); ja.Title != "日本語だけ" {
+		t.Errorf("second-language-only page: %+v", ja)
+	}
+	posts := find(tree, "content/posts")
+	if posts.IndexMD != "content/posts/_index.md" || posts.Title != "Blog" || len(posts.Translations) != 2 || posts.Translations[1].URL != "/ja/posts/" {
+		t.Errorf("section: %+v", posts)
+	}
+	if len(tree.Children) != 6 {
+		t.Errorf("want 6 top-level nodes, got %d", len(tree.Children))
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 var samples = map[string]string{
@@ -163,5 +165,19 @@ func TestParseDataConfig(t *testing.T) {
 	out, _ = d.Bytes()
 	if !strings.Contains(string(out), "# My site") || !strings.Contains(string(out), "title = 'New'") || strings.HasPrefix(string(out), "+++") {
 		t.Fatalf("got %s", out)
+	}
+}
+
+func TestYAMLEncodeReturnsEncoderError(t *testing.T) {
+	editor, err := newYAMLEditor(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	editor.m.Content = append(editor.m.Content,
+		&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "title"},
+		&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "a\xffb", Style: yaml.LiteralStyle},
+	)
+	if _, err := editor.Encode(); err == nil {
+		t.Fatal("Encode accepted a value that is not valid UTF-8")
 	}
 }

@@ -82,7 +82,7 @@ func newWatcher(root string, onChange func(prefsChanged bool)) (*watcher, error)
 func (w *watcher) Close() {
 	w.once.Do(func() {
 		close(w.stop)
-		w.w.Close()
+		_ = w.w.Close()
 	})
 }
 

@@ -31,7 +31,7 @@ func readExport(path string) (*wordpress.Export, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	e, err := wordpress.Parse(f)
 	if err != nil {
 		return nil, &AppError{Code: "invalid", Message: err.Error()}

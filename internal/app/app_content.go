@@ -335,7 +335,7 @@ func (a *App) TryTheme(name string) (string, error) {
 	config := filepath.Join(s.Root, s.Config.Path)
 	before, err := os.ReadFile(config)
 	if err != nil {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 		return "", err
 	}
 	problems, err := a.CheckTheme(name)
@@ -343,7 +343,7 @@ func (a *App) TryTheme(name string) (string, error) {
 		err = a.SwitchTheme(name)
 	}
 	if err != nil || problems != "" {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 		return problems, err
 	}
 

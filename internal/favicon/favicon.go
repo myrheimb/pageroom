@@ -251,11 +251,11 @@ func encode(images []image.Image, note string) ([]byte, error) {
 	}
 
 	var icon bytes.Buffer
-	binary.Write(&icon, binary.LittleEndian, [3]uint16{0, 1, uint16(len(entries))})
+	_ = binary.Write(&icon, binary.LittleEndian, [3]uint16{0, 1, uint16(len(entries))})
 	offset := 6 + 16*len(entries)
 	for index, entry := range entries {
 		side := uint8(images[index].Bounds().Dx())
-		binary.Write(&icon, binary.LittleEndian, struct {
+		_ = binary.Write(&icon, binary.LittleEndian, struct {
 			Width, Height, Colors, Reserved uint8
 			Planes, BitsPerPixel            uint16
 			Size, Offset                    uint32

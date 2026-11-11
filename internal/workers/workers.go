@@ -83,7 +83,7 @@ func (c *Client) call(ctx context.Context, method, endpoint, token, contentType 
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	var reply envelope
 	decodeErr := json.NewDecoder(io.LimitReader(res.Body, 10<<20)).Decode(&reply)

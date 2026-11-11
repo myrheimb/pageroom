@@ -69,7 +69,7 @@ func (r *Repo) blob(h plumbing.Hash) ([]byte, bool) {
 	if err != nil {
 		return nil, false
 	}
-	defer rd.Close()
+	defer func() { _ = rd.Close() }()
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(rd); err != nil {
 		return nil, false

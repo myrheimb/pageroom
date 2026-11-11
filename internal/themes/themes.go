@@ -75,7 +75,7 @@ func Install(ctx context.Context, client *http.Client, theme Theme, dir string) 
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("the download failed: %s", response.Status)
@@ -89,7 +89,7 @@ func Install(ctx context.Context, client *http.Client, theme Theme, dir string) 
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(scratch)
+	defer func() { _ = os.RemoveAll(scratch) }()
 
 	unpacked := filepath.Join(scratch, "theme")
 	sum, _, err := Extract(io.LimitReader(response.Body, MaxDownload), theme.Subdir, unpacked)
@@ -116,7 +116,7 @@ func Extract(r io.Reader, subdir, dir string) (sum string, updated time.Time, er
 	if err != nil {
 		return "", time.Time{}, err
 	}
-	defer gz.Close()
+	defer func() { _ = gz.Close() }()
 
 	prefix := ""
 	if subdir != "" {

@@ -151,7 +151,7 @@ func (s *Server) waitReady(port int, timeout time.Duration) error {
 		}
 		c, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 300*time.Millisecond)
 		if err == nil {
-			c.Close()
+			_ = c.Close()
 			return nil
 		}
 		time.Sleep(200 * time.Millisecond)
@@ -185,7 +185,7 @@ func freePort() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 

@@ -76,17 +76,17 @@ func newConverter() *converter.Converter {
 	// Hugo ends a page's summary at <!--more-->, like WordPress does.
 	markdown.Register.RendererFor("#comment", converter.TagTypeBlock, func(_ converter.Context, writer converter.Writer, node *nethtml.Node) converter.RenderStatus {
 		if strings.HasPrefix(strings.TrimSpace(node.Data), "more") {
-			writer.WriteString("\n\n<!--more-->\n\n")
+			_, _ = writer.WriteString("\n\n<!--more-->\n\n")
 		}
 		return converter.RenderSuccess
 	}, converter.PriorityEarly)
 	markdown.Register.RendererFor("iframe", converter.TagTypeBlock, func(_ converter.Context, writer converter.Writer, node *nethtml.Node) converter.RenderStatus {
-		writer.WriteString("\n\n" + embedShortcode(attr(node, "src"), attr(node, "title")) + "\n\n")
+		_, _ = writer.WriteString("\n\n" + embedShortcode(attr(node, "src"), attr(node, "title")) + "\n\n")
 		return converter.RenderSuccess
 	}, converter.PriorityEarly)
 	markdown.Register.RendererFor("script", converter.TagTypeBlock, func(_ converter.Context, writer converter.Writer, node *nethtml.Node) converter.RenderStatus {
 		if gist := gistURL.FindStringSubmatch(attr(node, "src")); gist != nil {
-			writer.WriteString("\n\n" + gistShortcode(gist[1]) + "\n\n")
+			_, _ = writer.WriteString("\n\n" + gistShortcode(gist[1]) + "\n\n")
 		}
 		return converter.RenderSuccess
 	}, converter.PriorityEarly)
@@ -99,7 +99,7 @@ func newConverter() *converter.Converter {
 				}
 			}
 			if src != "" && !strings.Contains(src, `"`) {
-				fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", tag, src)
+				_, _ = fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", tag, src)
 			}
 			return converter.RenderSuccess
 		}, converter.PriorityEarly)
@@ -211,7 +211,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		var b strings.Builder
 		for _, id := range strings.Split(ids[1], ",") {
 			var n int
-			fmt.Sscan(strings.TrimSpace(id), &n)
+			_, _ = fmt.Sscan(strings.TrimSpace(id), &n)
 			if u, ok := attachments[n]; ok {
 				fmt.Fprintf(&b, `<p><img src="%s" alt=""></p>`, html.EscapeString(u))
 			}

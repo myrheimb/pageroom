@@ -202,7 +202,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		return shortcode
 	})
 	s = gistSC.ReplaceAllStringFunc(s, func(shortcode string) string { return gistScript(gistSC.FindStringSubmatch(shortcode)) })
-	s = embedWrapper.ReplaceAllString(s, "\n\n$1\n\n")
+	s = embedWrapper.ReplaceAllString(s, "<p>$1</p>")
 	s = embedSC.ReplaceAllString(s, "\n\n$1\n\n")
 	s = captionSC.ReplaceAllStringFunc(s, func(m string) string {
 		inner := captionSC.FindStringSubmatch(m)[1]
@@ -318,9 +318,25 @@ func addFootnotes(md, stored string) string {
 	return strings.TrimRight(md, "\n") + "\n\n" + strings.Join(defs, "\n") + "\n"
 }
 
+// pageLink is where an imported post or page lives on the new site.
+type pageLink struct{ url, title string }
+
+// oldPathKey is how pages are found by their old address: decoded, so that
+// Japanese slugs match whether they were written as percent-escapes or not,
+// and without the trailing slash.
+func oldPathKey(oldPath string) string {
+	if decoded, err := url.PathUnescape(oldPath); err == nil {
+		oldPath = decoded
+	}
+	return strings.TrimSuffix(oldPath, "/")
+}
+
+var linkTextEscaper = strings.NewReplacer(`[`, `\[`, `]`, `\]`)
+
 // toMarkdown converts prepared HTML and rewrites URLs: downloaded files get
-// local names, and links to the old site become site-relative.
-func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *url.URL) (string, []string, error) {
+// local names, and links to the old site become site-relative, pointing to
+// the new address of the posts and pages that were imported.
+func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *url.URL, pages map[string]pageLink) (string, []string, error) {
 	md, err := conv.ConvertString(prepared)
 	if err != nil {
 		return "", nil, err
@@ -363,11 +379,19 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 			if strings.HasPrefix(parts[2], "/wp-content/") {
 				return m
 			}
+			oldPath, rest := parts[2], ""
+			if cut := strings.IndexAny(oldPath, "?#"); cut >= 0 {
+				oldPath, rest = oldPath[:cut], oldPath[cut:]
+			}
+			if target, ok := pages[oldPathKey(oldPath)]; ok && !strings.HasPrefix(rest, "?") {
+				return parts[1] + target.url + rest
+			}
 			return parts[1] + parts[2]
 		})
 	}
-	// Video links alone on a line were auto-embedded by WordPress.
-	md = bareURLLine.ReplaceAllStringFunc(md, func(line string) string {
+	// Links alone on a line were auto-embedded by WordPress. Videos still are,
+	// and the rest become links.
+	md = replaceOutsideCode(md, bareURLLine, func(line string) string {
 		u := strings.TrimSpace(line)
 		if m := youtubeURL.FindStringSubmatch(u); m != nil {
 			return `{{< pr-video id="` + m[1] + `" >}}`
@@ -378,7 +402,12 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		if gist := gistURL.FindStringSubmatch(u); gist != nil {
 			return gistShortcode(gist[1])
 		}
-		return line
+		if parsed, err := url.Parse(u); err == nil && oldBase != nil && sameHost(parsed, oldBase) {
+			if target, ok := pages[oldPathKey(parsed.Path)]; ok && parsed.RawQuery == "" && parsed.Fragment == "" {
+				return "[" + linkTextEscaper.Replace(firstNonEmpty(target.title, target.url)) + "](" + target.url + ")"
+			}
+		}
+		return "[" + u + "](" + u + ")"
 	})
 	md = cf7SC.ReplaceAllString(md, site.ContactFormShortcode)
 	// Leftover plugin shortcodes won't work in Hugo: report them.
@@ -392,6 +421,50 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		}
 	}
 	return strings.TrimSpace(md) + "\n", warnings, nil
+}
+
+var (
+	codeFence  = regexp.MustCompile("^ {0,3}(```|~~~)")
+	listMarker = regexp.MustCompile(`^\s*(?:[-*+]|\d+[.)])\s`)
+)
+
+// replaceOutsideCode applies re to every line of md except those in fenced or
+// indented code blocks, which stay as written.
+func replaceOutsideCode(md string, re *regexp.Regexp, replace func(string) string) string {
+	lines := strings.Split(md, "\n")
+	fence := ""
+	previousBlank, inList, inIndentedCode := true, false, false
+	for i, line := range lines {
+		if fence != "" {
+			if m := codeFence.FindStringSubmatch(line); m != nil && m[1] == fence {
+				fence = ""
+			}
+			continue
+		}
+		if m := codeFence.FindStringSubmatch(line); m != nil {
+			fence = m[1]
+			continue
+		}
+		blank := strings.TrimSpace(line) == ""
+		indented := strings.HasPrefix(line, "    ") || strings.HasPrefix(line, "\t")
+		switch {
+		case blank:
+		case indented:
+			inIndentedCode = !inList && (previousBlank || inIndentedCode)
+		default:
+			inList = listMarker.MatchString(line)
+			inIndentedCode = false
+		}
+		previousBlank = blank
+		if !inIndentedCode || blank {
+			lines[i] = re.ReplaceAllStringFunc(line, replace)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func sameHost(a, b *url.URL) bool {
+	return strings.TrimPrefix(a.Hostname(), "www.") == strings.TrimPrefix(b.Hostname(), "www.")
 }
 
 // cf7Form finds the Contact Form 7 form a shortcode's attributes name:

@@ -87,7 +87,7 @@ main { padding: 2.5rem 0 4rem; }
 .button:hover { background: color-mix(in oklch, var(--pr-accent) 85%, var(--pr-heading)); }
 .section-title { margin-top: 3rem; font-size: 1.4rem; }
 .cards { list-style: none; padding: 0; display: grid; gap: 1rem; }
-.card a { display: block; padding: 1.25rem; border: 1px solid var(--pr-line); border-radius: 12px; color: inherit; text-decoration: none; transition: border-color .15s, background-color .15s; }
+.card a { display: block; padding: 1.25rem; border: 1px solid var(--pr-line); border-radius: 12px; color: inherit; text-decoration: none; transition: border-color .15s, background-color .15s; overflow-wrap: anywhere; }
 .card a:hover { border-color: var(--pr-accent); background: var(--pr-surface); }
 .card img { border-radius: 8px; margin-bottom: .75rem; }
 .card h2, .card h3 { margin: 0 0 .25rem; font-size: 1.25rem; }

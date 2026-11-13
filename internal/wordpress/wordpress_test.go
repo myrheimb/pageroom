@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,7 +55,7 @@ func load(t *testing.T) *Export {
 
 func TestSummarize(t *testing.T) {
 	s := load(t).Summarize()
-	if s.Title != "Hannah's Bakery" || s.Posts != 3 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
+	if s.Title != "Hannah's Bakery" || s.Posts != 5 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
 		!slices.Equal(s.Skipped, []SkippedKind{{Type: "product", Count: 1}}) {
 		t.Fatalf("%+v", s)
 	}
@@ -75,11 +76,11 @@ func TestImport(t *testing.T) {
 		t.Fatal(err)
 	}
 	ff := &fakeFetcher{}
-	rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, Fetch: ff})
+	rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, NewSite: true, Fetch: ff})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rep.Posts != 3 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
+	if rep.Posts != 5 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
 		t.Fatalf("report %+v", rep)
 	}
 	if rep.Icon == nil || len(rep.FailedImages) != 0 {
@@ -202,7 +203,7 @@ func TestImport(t *testing.T) {
 		t.Error("downloaded the Site Icon with downloads off")
 	}
 	again, _ := os.ReadFile(filepath.Join(root, "content/posts/our-new-sourdough-2/index.md"))
-	if !strings.Contains(string(again), "](https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg)") || !strings.Contains(string(again), "[story](/about/)") {
+	if !strings.Contains(string(again), "](https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg)") || !strings.Contains(string(again), "[story](/about-2/)") {
 		t.Errorf("undownloaded image or page link wrong:\n%s", again)
 	}
 	if _, err := os.Stat(filepath.Join(root, "content/posts/our-new-sourdough-2/index.md")); err != nil {
@@ -391,6 +392,65 @@ func TestImportPicksTheThemeFromTheHomePage(t *testing.T) {
 	}
 	if rep.Theme != "pageroom-studio" {
 		t.Fatalf("got theme %q, want pageroom-studio", rep.Theme)
+	}
+}
+
+func newBakerySite(t *testing.T) (*site.Site, string) {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "site")
+	if err := starter.CreateEmpty(root, "Bakery", "0.168.0"); err != nil {
+		t.Fatal(err)
+	}
+	s, err := site.Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, root
+}
+
+func TestImportWritesTheHomePage(t *testing.T) {
+	staticFront := map[string]string{"https://hannahsbakery.example": `<html><body class="page-template page-id-20 logged-out"></body></html>`}
+	postsFront := map[string]string{"https://hannahsbakery.example": `<html><body class="home blog"></body></html>`}
+	tests := []struct {
+		name         string
+		files        map[string]string
+		newSite      bool
+		wantHome     string
+		wantMissing  string
+		wantMenuPage string
+	}{
+		{"static front page", staticFront, true, "Open daily from 7.", "content/about/_index.md", "/"},
+		{"posts front page", postsFront, true, "Fresh bread daily", "", "/about"},
+		{"no fetch", nil, true, "Fresh bread daily", "", "/about"},
+		{"existing site", staticFront, false, "Welcome to your new website", "", "/about"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, root := newBakerySite(t)
+
+			_, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: test.files != nil, NewSite: test.newSite, Fetch: homepageFetcher{test.files}})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			home, err := os.ReadFile(filepath.Join(root, "content", "_index.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(home), test.wantHome) || (test.newSite && strings.Contains(string(home), "Welcome to your new website")) {
+				t.Errorf("home page:\n%s", home)
+			}
+			if test.wantMissing != "" {
+				if _, err := os.Stat(filepath.Join(root, test.wantMissing)); err == nil {
+					t.Errorf("%s was written, the page is the home page", test.wantMissing)
+				}
+			}
+			_ = s.Reload()
+			menus, _ := s.Menus()
+			if len(menus) == 0 || menus[0].Items[0].PageRef != test.wantMenuPage {
+				t.Errorf("menu %+v, want first entry %q", menus, test.wantMenuPage)
+			}
+		})
 	}
 }
 
@@ -593,7 +653,7 @@ func stylesOf(page []byte, stylesheets ...[]byte) *appearance.Tokens {
 }
 
 // checkGolden compares every imported Markdown file under content/ with
-// testdata/golden, leaving out the two index files the starter site has. The flattened path names the golden file.
+// testdata/golden, leaving out the posts index the starter site has. The flattened path names the golden file.
 func checkGolden(t *testing.T, root string) {
 	t.Helper()
 	content := filepath.Join(root, "content")
@@ -606,7 +666,7 @@ func checkGolden(t *testing.T, root string) {
 		if err != nil {
 			return err
 		}
-		if rel == "_index.md" || rel == filepath.Join("posts", "_index.md") {
+		if rel == filepath.Join("posts", "_index.md") {
 			return nil
 		}
 		name := strings.ReplaceAll(filepath.ToSlash(rel), "/", "__")
@@ -668,5 +728,114 @@ func TestPickTheme(t *testing.T) {
 				t.Fatalf("got %s, want %s", got, test.want)
 			}
 		})
+	}
+}
+
+const (
+	madeUpHeaderPage  = `<html><head><style id="skin-inline-css">.header{background-image:url(https://example.com/wp-content/uploads/beach.jpg)}</style></head><body><header id="header" class="header cf"><div class="tagline">Life</div><h1 class="logo"><a href="/"><span>Dog &amp; Max</span></a></h1></header></body></html>`
+	madeUpThemePage   = `<html><head><style>#masthead{color:red}.site-header{background:#fff url('/wp-content/uploads/beach.jpg') no-repeat}</style></head><body><header class="site-header"><h1>Beach house</h1></header></body></html>`
+	logoOnlyPage      = `<html><head><style>.header{color:red}</style></head><body><header class="header"><h1><img class="custom-logo" src="https://example.com/logo.png"></h1></header></body></html>`
+	otherHostPhotoCss = `<html><head><style>.header{background-image:url(https://cdn.other.com/beach.jpg)}</style></head><body></body></html>`
+)
+
+func TestHeaderPhoto(t *testing.T) {
+	base, _ := url.Parse("https://example.com/")
+	tests := []struct {
+		name    string
+		page    string
+		wantURL string
+	}{
+		{"Dog life Max markup", madeUpHeaderPage, "https://example.com/wp-content/uploads/beach.jpg"},
+		{"theme with a header background", madeUpThemePage, "https://example.com/wp-content/uploads/beach.jpg"},
+		{"no photo", `<html><body><header><h1>Plain</h1></header></body></html>`, ""},
+		{"only a logo", logoOnlyPage, ""},
+		{"photo on another host", otherHostPhotoCss, ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := HeaderPhoto([]byte(test.page), base); got != test.wantURL {
+				t.Fatalf("got %q, want %q", got, test.wantURL)
+			}
+		})
+	}
+}
+
+func TestHeaderPhotoOfSavedHomePage(t *testing.T) {
+	page, err := os.ReadFile(filepath.Join("testdata", "home-doglifemax.html"))
+	if err != nil {
+		t.Skip("the saved Dog life Max home page is not in testdata")
+	}
+	base, _ := url.Parse("https://doglifemax.com/")
+
+	got := HeaderPhoto(page, base)
+
+	if got != "https://doglifemax.com/wp-content/uploads/2026/10/DSC00312-2.jpg" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestImportCarriesTheHeaderPhotoToTheHomePage(t *testing.T) {
+	var photo bytes.Buffer
+	_ = jpeg.Encode(&photo, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
+	photoURL := "https://hannahsbakery.example/wp-content/uploads/beach.jpg"
+	headerPage := func(body string) string {
+		return `<html><head><style>.header{background-image:url(` + photoURL + `)}</style></head><body class="` + body + `"><header class="header"><h1>Hannah's</h1></header></body></html>`
+	}
+	tests := []struct {
+		name      string
+		page      string
+		newSite   bool
+		want      bool
+		downloads bool
+		broken    bool
+	}{
+		{"tagline home page", headerPage("home blog"), true, true, true, false},
+		{"static front page", headerPage("page-id-20"), true, true, true, false},
+		{"existing site", headerPage("home blog"), false, false, true, false},
+		{"no photo", `<html><body class="home blog"></body></html>`, true, false, true, false},
+		{"photo fails to download", headerPage("home blog"), true, false, true, true},
+		{"image downloads off", headerPage("home blog"), true, false, false, false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, root := newBakerySite(t)
+			files := map[string]string{"https://hannahsbakery.example": test.page, photoURL: photo.String()}
+			if test.broken {
+				delete(files, photoURL)
+			}
+			fetcher := homepageFetcher{files}
+
+			rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: test.downloads, NewSite: test.newSite, Fetch: fetcher})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			home, err := os.ReadFile(filepath.Join(root, "content", "_index.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, statErr := os.Stat(filepath.Join(root, "content", "beach.jpg"))
+			if got := statErr == nil; got != test.want {
+				t.Errorf("photo downloaded %v, want %v", got, test.want)
+			}
+			if got := strings.Contains(string(home), "beach.jpg"); got != test.want {
+				t.Errorf("front matter has the photo %v, want %v:\n%s", got, test.want, home)
+			}
+			if strings.Contains(string(home), "imageAlt") {
+				t.Errorf("front matter has an imageAlt:\n%s", home)
+			}
+			if got := rep.Theme == "pageroom-studio"; got != test.want {
+				t.Errorf("theme %q, studio is %v, want %v", rep.Theme, got, test.want)
+			}
+		})
+	}
+}
+
+func TestReplaceOutsideCodeKeepsIndentedCode(t *testing.T) {
+	md := "Text\n\n    https://example.com/a\n\n- item\n\n    https://example.com/b\n\nhttps://example.com/c\n"
+	got := replaceOutsideCode(md, bareURLLine, func(string) string { return "X" })
+	want := "Text\n\n    https://example.com/a\n\n- item\n\nX\n\nX\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }

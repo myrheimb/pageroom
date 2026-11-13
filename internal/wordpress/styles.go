@@ -133,6 +133,40 @@ func LogoURL(page []byte, base *url.URL) string {
 	return link.String()
 }
 
+// headerSelectors are the ones classic themes use for the site header, where
+// a photo set as its background is the old site's header photo.
+var headerSelectors = []string{".custom-header", ".header", ".site-header", "#header", "#masthead", "header"}
+
+// HeaderPhoto finds the photo behind a homepage's header: the last header
+// rule with a background image in the page's own styles. It returns "" if
+// there is no photo or it's not on the site's own host. The photo has no alt
+// text, since the header already shows the site name.
+func HeaderPhoto(page []byte, base *url.URL) (photoURL string) {
+	for _, block := range styleBlock.FindAllSubmatch(page, -1) {
+		for _, rule := range parseRules(cssComment.ReplaceAllString(string(block[2]), "")) {
+			if !slices.ContainsFunc(rule.selectors, func(selector string) bool { return slices.Contains(headerSelectors, selector) }) {
+				continue
+			}
+			for _, declaration := range rule.declarations {
+				if declaration.name != "background-image" && declaration.name != "background" {
+					continue
+				}
+				source := fontSourceUrl.FindStringSubmatch(declaration.value)
+				if source == nil {
+					continue
+				}
+				link, err := base.Parse(html.UnescapeString(source[1]))
+				if err != nil || link.Host != base.Host || (link.Scheme != "http" && link.Scheme != "https") {
+					continue
+				}
+				link.Fragment = ""
+				photoURL = link.String()
+			}
+		}
+	}
+	return photoURL
+}
+
 // fontFamilies are the first family names of the body and heading fonts, as
 // the old site wrote them.
 type fontFamilies struct{ body, heading string }

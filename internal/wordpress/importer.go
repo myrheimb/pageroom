@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -94,8 +96,11 @@ type Options struct {
 	Site           *site.Site
 	PostsSection   string // folder for posts, default "posts"
 	DownloadImages bool
-	Fetch          Fetcher
-	Progress       func(done, total int, label string)
+	// NewSite says the site was just created, so the import may write its
+	// home page.
+	NewSite  bool
+	Fetch    Fetcher
+	Progress func(done, total int, label string)
 }
 
 type Report struct {
@@ -109,6 +114,9 @@ type Report struct {
 	FailedImages []string `json:"failedImages,omitempty"`
 	FailedFiles  []string `json:"failedFiles,omitempty"`
 	Warnings     []string `json:"warnings,omitempty"`
+	// headerPhotoSaved is set once the old header photo is next to the home
+	// page, which is when Studio is picked.
+	headerPhotoSaved bool
 	// Icon is the WordPress Site Icon. Import doesn't write it, so the
 	// caller can keep an icon the owner already chose.
 	Icon *favicon.Icons `json:"-"`
@@ -133,6 +141,7 @@ type planned struct {
 	file    string // relative to site root
 	url     string // new address
 	section bool   // written as _index.md because it has child pages
+	photo   string // the old header photo, only for the home page
 }
 
 // Import writes the export into the site. Existing files are never
@@ -146,6 +155,21 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	}
 	base, _ := url.Parse(e.Link)
 	rep := &Report{CustomCSS: customCSSComments(e)}
+
+	var homePage []byte
+	if opt.DownloadImages && base != nil {
+		if page, err := opt.Fetch.Get(ctx, e.Link); err == nil {
+			homePage = page
+		}
+	}
+	homeID := 0
+	var photoURL string
+	if opt.NewSite {
+		homeID = homePageID(homePage)
+		if base != nil {
+			photoURL = HeaderPhoto(homePage, base)
+		}
+	}
 
 	attachments := map[int]string{}
 	blocks := map[int]string{}
@@ -177,6 +201,12 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	var place func(it *Item) *planned
 	place = func(it *Item) *planned {
 		if p := plans[it.ID]; p != nil {
+			return p
+		}
+		if it.ID == homeID && it.Type == "page" {
+			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true, photo: photoURL}
+			plans[it.ID] = p
+			order = append(order, p)
 			return p
 		}
 		slug := it.Slug
@@ -211,6 +241,18 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	for _, it := range content {
 		place(it)
 	}
+	pages := map[string]pageLink{}
+	for _, p := range order {
+		if old := oldPath(p.item.Link, base); old != "" && p.url != "/" {
+			pages[oldPathKey(old)] = pageLink{url: p.url, title: p.item.Title}
+		}
+	}
+
+	if plans[homeID] != nil {
+		if err := os.Remove(filepath.Join(s.Root, filepath.FromSlash(plans[homeID].file))); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return rep, err
+		}
+	}
 
 	cache := map[string][]byte{}
 	for i, p := range order {
@@ -222,7 +264,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		if opt.Progress != nil {
 			opt.Progress(i, len(order), p.item.Title)
 		}
-		if err := writeItem(ctx, e, p, opt, base, attachments, blocks, cache, rep); err != nil {
+		if err := writeItem(ctx, e, p, opt, base, attachments, blocks, pages, cache, rep); err != nil {
 			return rep, fmt.Errorf("%q: %w", p.item.Title, err)
 		}
 	}
@@ -235,35 +277,41 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	if err := importMenus(e, plans, opt.Site, base, rep); err != nil {
 		rep.Warnings = append(rep.Warnings, "Menus couldn't be imported: "+err.Error())
 	}
-	if opt.DownloadImages && base != nil {
-		if page, err := opt.Fetch.Get(ctx, e.Link); err == nil {
-			var stylesheets [][]byte
-			var faces []FontFace
-			for _, block := range styleBlock.FindAllSubmatch(page, -1) {
-				faces = append(faces, FontFaces(string(block[2]), base)...)
-			}
-			for _, sheetURL := range StylesheetURLs(page, base) {
-				if sheet, err := opt.Fetch.Get(ctx, sheetURL); err == nil {
-					stylesheets = append(stylesheets, sheet)
-					if sheetBase, err := url.Parse(sheetURL); err == nil {
-						faces = append(faces, FontFaces(string(sheet), sheetBase)...)
-					}
+	if opt.NewSite && plans[homeID] == nil {
+		if err := writeTagline(ctx, opt, e.Description, photoURL, cache, rep); err != nil {
+			return rep, err
+		}
+	}
+	if page := homePage; page != nil {
+		var stylesheets [][]byte
+		var faces []FontFace
+		for _, block := range styleBlock.FindAllSubmatch(page, -1) {
+			faces = append(faces, FontFaces(string(block[2]), base)...)
+		}
+		for _, sheetURL := range StylesheetURLs(page, base) {
+			if sheet, err := opt.Fetch.Get(ctx, sheetURL); err == nil {
+				stylesheets = append(stylesheets, sheet)
+				if sheetBase, err := url.Parse(sheetURL); err == nil {
+					faces = append(faces, FontFaces(string(sheet), sheetBase)...)
 				}
 			}
-			for _, fontsURL := range GoogleFontsURLs(page, base) {
-				if sheet, err := opt.Fetch.Get(ctx, fontsURL); err == nil {
-					if sheetBase, err := url.Parse(fontsURL); err == nil {
-						faces = append(faces, FontFaces(string(sheet), sheetBase)...)
-					}
+		}
+		for _, fontsURL := range GoogleFontsURLs(page, base) {
+			if sheet, err := opt.Fetch.Get(ctx, fontsURL); err == nil {
+				if sheetBase, err := url.Parse(fontsURL); err == nil {
+					faces = append(faces, FontFaces(string(sheet), sheetBase)...)
 				}
 			}
-			var families fontFamilies
-			rep.Style, families = readStyles(page, stylesheets...)
-			rep.Theme = pickTheme(page, rep.Style)
-			rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
-			if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
-				return rep, err
-			}
+		}
+		var families fontFamilies
+		rep.Style, families = readStyles(page, stylesheets...)
+		rep.Theme = pickTheme(page, rep.Style)
+		if rep.headerPhotoSaved {
+			rep.Theme = themeStudio
+		}
+		rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
+		if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
+			return rep, err
 		}
 	}
 	if u := siteIcon(e); u != "" && opt.DownloadImages {
@@ -279,6 +327,57 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		opt.Progress(len(order), len(order), "")
 	}
 	return rep, nil
+}
+
+var bodyPageID = regexp.MustCompile(`(?is)<body[^>]*\sclass=["'][^"']*?\bpage-id-(\d+)`)
+
+// homePageID is the ID of the page the old site shows as its home page, or 0
+// when the home page is not a page, such as a list of posts.
+func homePageID(homePage []byte) int {
+	match := bodyPageID.FindSubmatch(homePage)
+	if match == nil {
+		return 0
+	}
+	id, _ := strconv.Atoi(string(match[1]))
+	return id
+}
+
+// importHeaderPhoto downloads the old header photo next to the home page and
+// returns its file name, or "" when there is none or it can't be downloaded.
+func importHeaderPhoto(ctx context.Context, photoURL, dir string, opt Options, cache map[string][]byte, rep *Report) string {
+	if photoURL == "" || !opt.DownloadImages {
+		return ""
+	}
+	name, err := download(ctx, photoURL, dir, opt, cache)
+	if err != nil {
+		rep.FailedImages = append(rep.FailedImages, photoURL)
+		return ""
+	}
+	rep.Images++
+	rep.headerPhotoSaved = true
+	return name
+}
+
+// writeTagline replaces the starter's welcome text with the old site's
+// tagline, under the old header photo if there is one.
+func writeTagline(ctx context.Context, opt Options, tagline, photoURL string, cache map[string][]byte, rep *Report) error {
+	s := opt.Site
+	contentDir := filepath.Join(s.Root, filepath.FromSlash(s.ContentDir))
+	doc, _ := frontmatter.Parse(nil)
+	if err := doc.Set("title", "Home", s.DefaultFormat()); err != nil {
+		return err
+	}
+	if name := importHeaderPhoto(ctx, photoURL, contentDir, opt, cache, rep); name != "" {
+		if err := doc.Set("image", name, s.DefaultFormat()); err != nil {
+			return err
+		}
+	}
+	doc.SetBody([]byte(tagline))
+	out, err := doc.Bytes()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(contentDir, "_index.md"), out, 0o644)
 }
 
 // importFonts copies the body and heading fonts from the old site and from
@@ -367,7 +466,7 @@ func importLogo(ctx context.Context, page []byte, base *url.URL, opt Options, ca
 }
 
 //nolint:gocyclo // One pass over an item keeps the import steps in order, and the importer is well tested.
-func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *url.URL, attachments, blocks map[int]string, cache map[string][]byte, rep *Report) error {
+func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *url.URL, attachments, blocks map[int]string, pages map[string]pageLink, cache map[string][]byte, rep *Report) error {
 	it := p.item
 	dirRel := path.Dir(p.file)
 	dirAbs := filepath.Join(opt.Site.Root, filepath.FromSlash(dirRel))
@@ -410,7 +509,7 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 		rep.Images++
 	}
 
-	md, unknown, err := toMarkdown(prepared, it.Meta["footnotes"], local, base)
+	md, unknown, err := toMarkdown(prepared, it.Meta["footnotes"], local, base, pages)
 	if err != nil {
 		return err
 	}
@@ -481,6 +580,9 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 		set("tags", tags)
 	}
 	if name, ok := local[featured]; ok && featured != "" {
+		set("image", name)
+	}
+	if name := importHeaderPhoto(ctx, p.photo, dirAbs, opt, cache, rep); name != "" {
 		set("image", name)
 	}
 	if old := oldPath(it.Link, base); old != "" && old != p.url && it.Status == "publish" {

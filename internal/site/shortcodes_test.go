@@ -367,7 +367,7 @@ Other.
 	}
 }
 
-func buildThemedPages(t *testing.T, theme string, pages map[string]string) string {
+func buildThemedPages(t *testing.T, theme string, pages map[string]string, extraEnv ...string) string {
 	t.Helper()
 	hugo, err := exec.LookPath("hugo")
 	if err != nil {
@@ -393,6 +393,7 @@ func buildThemedPages(t *testing.T, theme string, pages map[string]string) strin
 		}
 	}
 	cmd := exec.Command(hugo, "--source", dir, "--destination", filepath.Join(dir, "public"), "--theme", theme, "--cacheDir", t.TempDir())
+	cmd.Env = append(os.Environ(), extraEnv...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("hugo: %v\n%s", err, out)
 	}
@@ -445,9 +446,9 @@ func TestStarterThemesUseImageAltAsAltText(t *testing.T) {
 	}
 	wantFiles := map[string][]string{
 		"pageroom-paper":  {"landing/index.html"},
-		"pageroom-soft":   {"landing/index.html", "posts/index.html"},
+		"pageroom-soft":   {"landing/index.html", "posts/index.html", "index.html"},
 		"pageroom-studio": {"landing/index.html", "posts/index.html", "index.html"},
-		"pageroom-tinted": {"landing/index.html", "posts/index.html"},
+		"pageroom-tinted": {"landing/index.html", "posts/index.html", "index.html"},
 	}
 	for _, theme := range starterThemes {
 		t.Run(theme, func(t *testing.T) {
@@ -507,7 +508,7 @@ const phoneProbe = `<script>document.documentElement.dataset.probe = document.do
 
 const desktopProbe = `<script>const wide = document.querySelector(".pr-columns-2-1").children; const three = document.querySelector(".pr-columns-1-1-1").children; document.documentElement.dataset.probe = (Math.round(wide[0].offsetWidth / wide[1].offsetWidth) === 2) + "/" + (wide[1].getBoundingClientRect().top > wide[0].getBoundingClientRect().top && wide[1].getBoundingClientRect().bottom === wide[0].getBoundingClientRect().bottom) + "/" + (three[0].offsetTop === three[2].offsetTop && three[0].offsetLeft < three[1].offsetLeft && three[1].offsetLeft < three[2].offsetLeft)</script>`
 
-func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
+func requireBrowser(t *testing.T) string {
 	t.Helper()
 	browser := findBrowser()
 	if browser == "" {
@@ -516,7 +517,18 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 		}
 		t.Skip("no Chromium or Chrome installed")
 	}
-	page := buildBlocksSite(t, theme, "HUGO_RELATIVEURLS=true")
+	return browser
+}
+
+func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
+	t.Helper()
+	requireBrowser(t)
+	return probePage(t, buildBlocksSite(t, theme, "HUGO_RELATIVEURLS=true"), windowSize, probe)
+}
+
+func probePage(t *testing.T, page, windowSize, probe string) []byte {
+	t.Helper()
+	browser := requireBrowser(t)
 	raw, err := os.ReadFile(page)
 	if err != nil {
 		t.Fatal(err)
@@ -538,6 +550,31 @@ func probeBlocks(t *testing.T, theme, windowSize, probe string) []byte {
 		t.Fatalf("browser: %v\n%s", err, out)
 	}
 	return out
+}
+
+func TestHomeCardsDoNotScrollSideways(t *testing.T) {
+	longUrl := "https://example.com/" + strings.Repeat("a", 180)
+	pages := map[string]string{
+		"_index.md":       "---\ntitle: Home\n---\n\nHome.\n",
+		"posts/_index.md": "---\ntitle: Posts\n---\n",
+		"posts/first.md":  "---\ntitle: First\ndate: 2026-01-01\nimage: beach.jpg\n---\n\n" + longUrl + "\n",
+	}
+	for _, theme := range starterThemes {
+		for _, windowSize := range []string{"360,800", "1200,800"} {
+			t.Run(theme+"/"+windowSize, func(t *testing.T) {
+				requireBrowser(t)
+				public := buildThemedPages(t, theme, pages, "HUGO_RELATIVEURLS=true")
+				out := probePage(t, filepath.Join(public, "index.html"), windowSize, phoneProbe)
+				match := regexp.MustCompile(`data-probe="(\d+)/(\d+)/(\d+)/`).FindSubmatch(out)
+				if match == nil {
+					t.Fatalf("no probe result in\n%s", out)
+				}
+				if string(match[1]) != string(match[2]) {
+					t.Errorf("home page is %spx wide in a %spx viewport", match[1], match[2])
+				}
+			})
+		}
+	}
 }
 
 func TestColumnLayoutsOnADesktop(t *testing.T) {

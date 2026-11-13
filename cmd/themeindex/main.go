@@ -2,8 +2,9 @@
 // listed on themes.gohugo.io. It keeps themes that build with plain Hugo
 // against the starter site and show its home page text or latest post.
 //
-// Run it with `task theme-index`. Theme templates run under Hugo's security
-// policy, without credentials in the environment.
+// Run it with `task theme-index`. It tests with the Hugo that Pageroom
+// downloads for new sites. Theme templates run under Hugo's security policy,
+// without credentials in the environment.
 package main
 
 import (
@@ -45,7 +46,7 @@ var client = &http.Client{Timeout: 5 * time.Minute}
 func main() {
 	out := flag.String("out", "internal/themes/themes.json", "where to write the index")
 	list := flag.String("list", themeList, "URL or file with theme module paths, one per line")
-	hugoBin := flag.String("hugo", "hugo", "the Hugo to test-build themes with")
+	hugoBin := flag.String("hugo", "", "the Hugo "+hugo.DefaultVersion+" to test-build themes with, downloaded if empty")
 	jobs := flag.Int("jobs", runtime.NumCPU(), "themes to check at once")
 	flag.Parse()
 
@@ -56,9 +57,24 @@ func main() {
 }
 
 func run(ctx context.Context, out, list, hugoBin string, jobs int) error {
+	if hugoBin == "" {
+		cache, err := os.UserCacheDir()
+		if err != nil {
+			return err
+		}
+		manager := &hugo.Manager{CacheDir: filepath.Join(cache, "Pageroom", "hugo")}
+		if hugoBin, err = manager.Download(ctx, hugo.DefaultVersion); err != nil {
+			return err
+		}
+	}
 	version, err := hugoVersion(hugoBin)
 	if err != nil {
 		return err
+	}
+	// The index records one Hugo version, and a theme that builds with an
+	// older Hugo can fail with the one Pageroom gives new sites.
+	if version != hugo.DefaultVersion {
+		return fmt.Errorf("%s is Hugo %s, but Pageroom uses %s", hugoBin, version, hugo.DefaultVersion)
 	}
 	modules, err := readList(ctx, list)
 	if err != nil {
@@ -166,10 +182,8 @@ type themeMeta struct {
 	Demosite    string   `toml:"demosite"`
 	Tags        []string `toml:"tags"`
 	MinVersion  any      `toml:"min_version"`
-	Author      struct {
-		Name string `toml:"name"`
-	} `toml:"author"`
-	Authors []struct {
+	Author      any      `toml:"author"`
+	Authors     []struct {
 		Name string `toml:"name"`
 	} `toml:"authors"`
 }
@@ -221,14 +235,14 @@ func check(ctx context.Context, hugoBin, version, module string) (themes.Theme, 
 	if strings.TrimSpace(meta.License) == "" {
 		return themes.Theme{}, errors.New("no license in theme.toml")
 	}
-	if !fsutil.Exists(filepath.Join(themeDir, "images", "tn.png")) {
+	thumbnail := findImage(themeDir, "tn")
+	if thumbnail == "" {
 		return themes.Theme{}, errors.New("no thumbnail")
 	}
 
 	public := filepath.Join(scratch, "public")
 	if err := hugo.Check(ctx, hugoBin, site, filepath.Join(scratch, "work"), name, public); err != nil {
-		firstLine, _, _ := strings.Cut(err.Error(), "\n")
-		return themes.Theme{}, fmt.Errorf("build failed: %.300s", firstLine)
+		return themes.Theme{}, fmt.Errorf("build failed: %s", buildError(err))
 	}
 	// A theme can build and still show an empty home page when it expects other
 	// sections or settings than a new site has. The home page's own text is
@@ -242,7 +256,7 @@ func check(ctx context.Context, hugoBin, version, module string) (themes.Theme, 
 		Name:        name,
 		Title:       cmp.Or(strings.TrimSpace(meta.Name), name),
 		Description: strings.TrimSpace(meta.Description),
-		Author:      meta.Author.Name,
+		Author:      authorName(meta.Author),
 		Tags:        meta.Tags,
 		License:     strings.TrimSpace(meta.License),
 		Demo:        meta.Demosite,
@@ -252,7 +266,7 @@ func check(ctx context.Context, hugoBin, version, module string) (themes.Theme, 
 		Archive:     archiveLink,
 		Subdir:      subdir,
 		SHA256:      sum,
-		Thumbnail:   rawURL(repo, commit, path.Join(subdir, "images/tn.png")),
+		Thumbnail:   rawURL(repo, commit, path.Join(subdir, thumbnail)),
 	}
 	if theme.Author == "" && len(meta.Authors) > 0 {
 		theme.Author = meta.Authors[0].Name
@@ -260,10 +274,44 @@ func check(ctx context.Context, hugoBin, version, module string) (themes.Theme, 
 	if meta.MinVersion != nil {
 		theme.MinHugoVersion = fmt.Sprint(meta.MinVersion)
 	}
-	if fsutil.Exists(filepath.Join(themeDir, "images", "screenshot.png")) {
-		theme.Screenshot = rawURL(repo, commit, path.Join(subdir, "images/screenshot.png"))
+	if screenshot := findImage(themeDir, "screenshot"); screenshot != "" {
+		theme.Screenshot = rawURL(repo, commit, path.Join(subdir, screenshot))
 	}
 	return theme, nil
+}
+
+// findImage returns the path of images/name.png or images/name.jpg in the
+// theme, the formats themes.gohugo.io accepts, or "" if there is neither.
+func findImage(themeDir, name string) string {
+	for _, file := range []string{"images/" + name + ".png", "images/" + name + ".jpg"} {
+		if fsutil.Exists(filepath.Join(themeDir, filepath.FromSlash(file))) {
+			return file
+		}
+	}
+	return ""
+}
+
+// authorName reads theme.toml's author, which themes write as a table with
+// a name or as a plain string.
+func authorName(author any) string {
+	switch author := author.(type) {
+	case string:
+		return strings.TrimSpace(author)
+	case map[string]any:
+		name, _ := author["name"].(string)
+		return strings.TrimSpace(name)
+	}
+	return ""
+}
+
+// buildError keeps the end of Hugo's error, where the cause is. The start is
+// a chain of long template paths.
+func buildError(err error) string {
+	message := []rune(strings.Join(strings.Fields(err.Error()), " "))
+	if len(message) > 400 {
+		return "…" + string(message[len(message)-400:])
+	}
+	return string(message)
 }
 
 // splitModule separates a module path like github.com/owner/repo/v2 into

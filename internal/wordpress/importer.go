@@ -244,7 +244,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	pages := map[string]pageLink{}
 	for _, p := range order {
 		if old := oldPath(p.item.Link, base); old != "" && p.url != "/" {
-			pages[oldPathKey(old)] = pageLink{url: p.url, title: firstNonEmpty(p.item.Title, "Untitled")}
+			pages[oldPathKey(old)] = pageLink{url: p.url, title: p.item.Title}
 		}
 	}
 

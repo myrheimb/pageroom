@@ -391,7 +391,7 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 	}
 	// Links alone on a line were auto-embedded by WordPress. Videos still are,
 	// and the rest become links.
-	md = bareURLLine.ReplaceAllStringFunc(md, func(line string) string {
+	md = replaceOutsideCode(md, bareURLLine, func(line string) string {
 		u := strings.TrimSpace(line)
 		if m := youtubeURL.FindStringSubmatch(u); m != nil {
 			return `{{< pr-video id="` + m[1] + `" >}}`
@@ -404,7 +404,7 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		}
 		if parsed, err := url.Parse(u); err == nil && oldBase != nil && sameHost(parsed, oldBase) {
 			if target, ok := pages[oldPathKey(parsed.Path)]; ok && parsed.RawQuery == "" && parsed.Fragment == "" {
-				return "[" + linkTextEscaper.Replace(target.title) + "](" + target.url + ")"
+				return "[" + linkTextEscaper.Replace(firstNonEmpty(target.title, target.url)) + "](" + target.url + ")"
 			}
 		}
 		return "[" + u + "](" + u + ")"
@@ -421,6 +421,46 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		}
 	}
 	return strings.TrimSpace(md) + "\n", warnings, nil
+}
+
+var (
+	codeFence  = regexp.MustCompile("^ {0,3}(```|~~~)")
+	listMarker = regexp.MustCompile(`^\s*(?:[-*+]|\d+[.)])\s`)
+)
+
+// replaceOutsideCode applies re to every line of md except those in fenced or
+// indented code blocks, which stay as written.
+func replaceOutsideCode(md string, re *regexp.Regexp, replace func(string) string) string {
+	lines := strings.Split(md, "\n")
+	fence := ""
+	previousBlank, inList, inIndentedCode := true, false, false
+	for i, line := range lines {
+		if fence != "" {
+			if m := codeFence.FindStringSubmatch(line); m != nil && m[1] == fence {
+				fence = ""
+			}
+			continue
+		}
+		if m := codeFence.FindStringSubmatch(line); m != nil {
+			fence = m[1]
+			continue
+		}
+		blank := strings.TrimSpace(line) == ""
+		indented := strings.HasPrefix(line, "    ") || strings.HasPrefix(line, "\t")
+		switch {
+		case blank:
+		case indented:
+			inIndentedCode = !inList && (previousBlank || inIndentedCode)
+		default:
+			inList = listMarker.MatchString(line)
+			inIndentedCode = false
+		}
+		previousBlank = blank
+		if !inIndentedCode || blank {
+			lines[i] = re.ReplaceAllStringFunc(line, replace)
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 func sameHost(a, b *url.URL) bool {

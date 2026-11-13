@@ -30,3 +30,17 @@ Read [our sushi story](/posts/すし/) first.
 [https://example.com/recipe](https://example.com/recipe)
 
 [About](/about/)
+
+[/posts/notes/](/posts/notes/)
+
+```
+curl
+https://example.com/in-a-fence
+done
+```
+
+Indented sample:
+
+```
+    https://example.com/in-an-indent
+```

@@ -55,7 +55,7 @@ func load(t *testing.T) *Export {
 
 func TestSummarize(t *testing.T) {
 	s := load(t).Summarize()
-	if s.Title != "Hannah's Bakery" || s.Posts != 4 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
+	if s.Title != "Hannah's Bakery" || s.Posts != 5 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
 		!slices.Equal(s.Skipped, []SkippedKind{{Type: "product", Count: 1}}) {
 		t.Fatalf("%+v", s)
 	}
@@ -80,7 +80,7 @@ func TestImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rep.Posts != 4 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
+	if rep.Posts != 5 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
 		t.Fatalf("report %+v", rep)
 	}
 	if rep.Icon == nil || len(rep.FailedImages) != 0 {
@@ -828,5 +828,14 @@ func TestImportCarriesTheHeaderPhotoToTheHomePage(t *testing.T) {
 				t.Errorf("theme %q, studio is %v, want %v", rep.Theme, got, test.want)
 			}
 		})
+	}
+}
+
+func TestReplaceOutsideCodeKeepsIndentedCode(t *testing.T) {
+	md := "Text\n\n    https://example.com/a\n\n- item\n\n    https://example.com/b\n\nhttps://example.com/c\n"
+	got := replaceOutsideCode(md, bareURLLine, func(string) string { return "X" })
+	want := "Text\n\n    https://example.com/a\n\n- item\n\nX\n\nX\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }

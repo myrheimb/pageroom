@@ -614,3 +614,32 @@ func checkGolden(t *testing.T, root string) {
 		}
 	}
 }
+
+func TestPickTheme(t *testing.T) {
+	cover := []byte(`<div class="wp-block-cover alignfull"></div>`)
+	plain := []byte(`<div class="wp-block-cover__inner-container"></div>`)
+	tests := []struct {
+		name  string
+		page  []byte
+		style *appearance.Tokens
+		want  string
+	}{
+		{"cover on the home page", cover, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 620, Radius: 24}, "pageroom-studio"},
+		{"cover without a style", cover, nil, "pageroom-studio"},
+		{"serif body in a narrow column", plain, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 620, Radius: 24}, "pageroom-paper"},
+		{"serif heading in a narrow column", plain, &appearance.Tokens{BodyFont: "system", HeadingFont: "transitional", ContentWidth: 720, Radius: -1}, "pageroom-paper"},
+		{"serif in a wide column", plain, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 1100, Radius: -1}, "pageroom-tinted"},
+		{"serif without a width", plain, &appearance.Tokens{BodyFont: "transitional", Radius: -1}, "pageroom-tinted"},
+		{"narrow column in sans", plain, &appearance.Tokens{BodyFont: "system", ContentWidth: 620, Radius: -1}, "pageroom-tinted"},
+		{"large button radius", plain, &appearance.Tokens{BodyFont: "system", ContentWidth: 1100, Radius: 16}, "pageroom-soft"},
+		{"small button radius", plain, &appearance.Tokens{Radius: 6}, "pageroom-tinted"},
+		{"no style", plain, nil, "pageroom-tinted"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := pickTheme(test.page, test.style); got != test.want {
+				t.Fatalf("got %s, want %s", got, test.want)
+			}
+		})
+	}
+}

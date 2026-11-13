@@ -123,6 +123,9 @@ type Report struct {
 	// the site's contact email.
 	ContactForms []string `json:"-"`
 	ContactEmail string   `json:"-"`
+	// Theme is the starter theme closest to the old site, which the caller
+	// applies when it creates a new site.
+	Theme string `json:"-"`
 }
 
 type planned struct {
@@ -256,6 +259,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 			}
 			var families fontFamilies
 			rep.Style, families = readStyles(page, stylesheets...)
+			rep.Theme = pickTheme(page, rep.Style)
 			rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
 			if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
 				return rep, err

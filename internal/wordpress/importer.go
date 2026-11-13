@@ -138,6 +138,8 @@ type planned struct {
 	file    string // relative to site root
 	url     string // new address
 	section bool   // written as _index.md because it has child pages
+	photo   string // the old header photo, only for the home page
+	alt     string
 }
 
 // Import writes the export into the site. Existing files are never
@@ -159,8 +161,12 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		}
 	}
 	homeID := 0
+	var photoURL, photoAlt string
 	if opt.NewSite {
 		homeID = homePageID(homePage)
+		if base != nil {
+			photoURL, photoAlt = HeaderPhoto(homePage, base)
+		}
 	}
 
 	attachments := map[int]string{}
@@ -196,7 +202,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 			return p
 		}
 		if it.ID == homeID && it.Type == "page" {
-			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true}
+			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true, photo: photoURL, alt: photoAlt}
 			plans[it.ID] = p
 			order = append(order, p)
 			return p
@@ -264,7 +270,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		rep.Warnings = append(rep.Warnings, "Menus couldn't be imported: "+err.Error())
 	}
 	if opt.NewSite && plans[homeID] == nil {
-		if err := writeTagline(opt.Site, e.Description); err != nil {
+		if err := writeTagline(ctx, opt, e.Description, photoURL, photoAlt, cache, rep); err != nil {
 			return rep, err
 		}
 	}
@@ -292,6 +298,9 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		var families fontFamilies
 		rep.Style, families = readStyles(page, stylesheets...)
 		rep.Theme = pickTheme(page, rep.Style)
+		if photoURL != "" {
+			rep.Theme = themeStudio
+		}
 		rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
 		if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
 			return rep, err
@@ -325,19 +334,44 @@ func homePageID(homePage []byte) int {
 	return id
 }
 
+// importHeaderPhoto downloads the old header photo next to the home page and
+// returns its file name, or "" when there is none or it can't be downloaded.
+func importHeaderPhoto(ctx context.Context, photoURL, dir string, opt Options, cache map[string][]byte, rep *Report) string {
+	if photoURL == "" || !opt.DownloadImages {
+		return ""
+	}
+	name, err := download(ctx, photoURL, dir, opt, cache)
+	if err != nil {
+		rep.FailedImages = append(rep.FailedImages, photoURL)
+		return ""
+	}
+	rep.Images++
+	return name
+}
+
 // writeTagline replaces the starter's welcome text with the old site's
-// tagline.
-func writeTagline(s *site.Site, tagline string) error {
+// tagline, under the old header photo if there is one.
+func writeTagline(ctx context.Context, opt Options, tagline, photoURL, photoAlt string, cache map[string][]byte, rep *Report) error {
+	s := opt.Site
+	contentDir := filepath.Join(s.Root, filepath.FromSlash(s.ContentDir))
 	doc, _ := frontmatter.Parse(nil)
 	if err := doc.Set("title", "Home", s.DefaultFormat()); err != nil {
 		return err
+	}
+	if name := importHeaderPhoto(ctx, photoURL, contentDir, opt, cache, rep); name != "" {
+		if err := doc.Set("image", name, s.DefaultFormat()); err != nil {
+			return err
+		}
+		if err := doc.Set("imageAlt", photoAlt, s.DefaultFormat()); err != nil {
+			return err
+		}
 	}
 	doc.SetBody([]byte(tagline))
 	out, err := doc.Bytes()
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(s.Root, filepath.FromSlash(s.ContentDir), "_index.md"), out, 0o644)
+	return os.WriteFile(filepath.Join(contentDir, "_index.md"), out, 0o644)
 }
 
 // importFonts copies the body and heading fonts from the old site and from
@@ -541,6 +575,10 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 	}
 	if name, ok := local[featured]; ok && featured != "" {
 		set("image", name)
+	}
+	if name := importHeaderPhoto(ctx, p.photo, dirAbs, opt, cache, rep); name != "" {
+		set("image", name)
+		set("imageAlt", p.alt)
 	}
 	if old := oldPath(it.Link, base); old != "" && old != p.url && it.Status == "publish" {
 		set("aliases", []string{old})

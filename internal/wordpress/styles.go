@@ -133,6 +133,52 @@ func LogoURL(page []byte, base *url.URL) string {
 	return link.String()
 }
 
+var (
+	headerElement = regexp.MustCompile(`(?is)<header\b.*?</header>`)
+	headingOne    = regexp.MustCompile(`(?is)<h1\b[^>]*>(.*?)</h1>`)
+	anyTag        = regexp.MustCompile(`(?s)<[^>]*>`)
+)
+
+// headerSelectors are the ones classic themes use for the site header, where
+// a photo set as its background is the old site's header photo.
+var headerSelectors = []string{".custom-header", ".header", ".site-header", "#header", "#masthead", "header"}
+
+// HeaderPhoto finds the photo behind a homepage's header: the last header
+// rule with a background image in the page's own styles. The alt text is the
+// site name shown in the header. It returns "" if there is no photo or it's
+// not on the site's own host.
+func HeaderPhoto(page []byte, base *url.URL) (photoURL, alt string) {
+	for _, block := range styleBlock.FindAllSubmatch(page, -1) {
+		for _, rule := range parseRules(cssComment.ReplaceAllString(string(block[2]), "")) {
+			if !slices.ContainsFunc(rule.selectors, func(selector string) bool { return slices.Contains(headerSelectors, selector) }) {
+				continue
+			}
+			for _, declaration := range rule.declarations {
+				if declaration.name != "background-image" && declaration.name != "background" {
+					continue
+				}
+				source := fontSourceUrl.FindStringSubmatch(declaration.value)
+				if source == nil {
+					continue
+				}
+				link, err := base.Parse(html.UnescapeString(source[1]))
+				if err != nil || link.Host != base.Host || (link.Scheme != "http" && link.Scheme != "https") {
+					continue
+				}
+				link.Fragment = ""
+				photoURL = link.String()
+			}
+		}
+	}
+	if photoURL == "" {
+		return "", ""
+	}
+	if heading := headingOne.FindSubmatch(headerElement.Find(page)); heading != nil {
+		alt = strings.Join(strings.Fields(html.UnescapeString(anyTag.ReplaceAllString(string(heading[1]), ""))), " ")
+	}
+	return photoURL, alt
+}
+
 // fontFamilies are the first family names of the body and heading fonts, as
 // the old site wrote them.
 type fontFamilies struct{ body, heading string }

@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -725,6 +726,100 @@ func TestPickTheme(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := pickTheme(test.page, test.style); got != test.want {
 				t.Fatalf("got %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+const (
+	madeUpHeaderPage  = `<html><head><style id="skin-inline-css">.header{background-image:url(https://example.com/wp-content/uploads/beach.jpg)}</style></head><body><header id="header" class="header cf"><div class="tagline">Life</div><h1 class="logo"><a href="/"><span>Dog &amp; Max</span></a></h1></header></body></html>`
+	madeUpThemePage   = `<html><head><style>#masthead{color:red}.site-header{background:#fff url('/wp-content/uploads/beach.jpg') no-repeat}</style></head><body><header class="site-header"><h1>Beach house</h1></header></body></html>`
+	logoOnlyPage      = `<html><head><style>.header{color:red}</style></head><body><header class="header"><h1><img class="custom-logo" src="https://example.com/logo.png"></h1></header></body></html>`
+	otherHostPhotoCss = `<html><head><style>.header{background-image:url(https://cdn.other.com/beach.jpg)}</style></head><body></body></html>`
+)
+
+func TestHeaderPhoto(t *testing.T) {
+	base, _ := url.Parse("https://example.com/")
+	tests := []struct {
+		name    string
+		page    string
+		wantURL string
+		wantAlt string
+	}{
+		{"Dog life Max markup", madeUpHeaderPage, "https://example.com/wp-content/uploads/beach.jpg", "Dog & Max"},
+		{"theme with a header background", madeUpThemePage, "https://example.com/wp-content/uploads/beach.jpg", "Beach house"},
+		{"no photo", `<html><body><header><h1>Plain</h1></header></body></html>`, "", ""},
+		{"only a logo", logoOnlyPage, "", ""},
+		{"photo on another host", otherHostPhotoCss, "", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotURL, gotAlt := HeaderPhoto([]byte(test.page), base)
+			if gotURL != test.wantURL || gotAlt != test.wantAlt {
+				t.Fatalf("got %q, %q, want %q, %q", gotURL, gotAlt, test.wantURL, test.wantAlt)
+			}
+		})
+	}
+}
+
+func TestHeaderPhotoOfSavedHomePage(t *testing.T) {
+	page, err := os.ReadFile(filepath.Join("testdata", "home-doglifemax.html"))
+	if err != nil {
+		t.Skip("the saved Dog life Max home page is not in testdata")
+	}
+	base, _ := url.Parse("https://doglifemax.com/")
+
+	gotURL, gotAlt := HeaderPhoto(page, base)
+
+	if gotURL != "https://doglifemax.com/wp-content/uploads/2026/10/DSC00312-2.jpg" || gotAlt != "Dog life Max" {
+		t.Fatalf("got %q, %q", gotURL, gotAlt)
+	}
+}
+
+func TestImportCarriesTheHeaderPhotoToTheHomePage(t *testing.T) {
+	var photo bytes.Buffer
+	_ = jpeg.Encode(&photo, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil)
+	photoURL := "https://hannahsbakery.example/wp-content/uploads/beach.jpg"
+	headerPage := func(body string) string {
+		return `<html><head><style>.header{background-image:url(` + photoURL + `)}</style></head><body class="` + body + `"><header class="header"><h1>Hannah's</h1></header></body></html>`
+	}
+	tests := []struct {
+		name    string
+		page    string
+		newSite bool
+		want    bool
+	}{
+		{"tagline home page", headerPage("home blog"), true, true},
+		{"static front page", headerPage("page-id-20"), true, true},
+		{"existing site", headerPage("home blog"), false, false},
+		{"no photo", `<html><body class="home blog"></body></html>`, true, false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, root := newBakerySite(t)
+			fetcher := homepageFetcher{map[string]string{"https://hannahsbakery.example": test.page, photoURL: photo.String()}}
+
+			rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, NewSite: test.newSite, Fetch: fetcher})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			home, err := os.ReadFile(filepath.Join(root, "content", "_index.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, statErr := os.Stat(filepath.Join(root, "content", "beach.jpg"))
+			if got := statErr == nil; got != test.want {
+				t.Errorf("photo downloaded %v, want %v", got, test.want)
+			}
+			if got := strings.Contains(string(home), "beach.jpg"); got != test.want {
+				t.Errorf("front matter has the photo %v, want %v:\n%s", got, test.want, home)
+			}
+			if test.want && !strings.Contains(string(home), "Hannah's") {
+				t.Errorf("front matter has no imageAlt:\n%s", home)
+			}
+			if got := rep.Theme == "pageroom-studio"; got != test.want {
+				t.Errorf("theme %q, studio is %v, want %v", rep.Theme, got, test.want)
 			}
 		})
 	}

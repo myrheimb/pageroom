@@ -321,8 +321,8 @@ function VideoView({ node, deleteNode }: NodeViewProps) {
     <NodeViewWrapper className="atom-block pr-video-block" data-drag-handle contentEditable={false}>
       <div className="ab-icon"><SquarePlay size={16} /></div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="ab-title">{t.shortcodes.known.youtube}</div>
-        <div className="dim small">{node.attrs.id}</div>
+        <div className="ab-title">{node.attrs.id ? t.shortcodes.known.youtube : node.attrs.vimeo ? t.shortcodes.known.vimeo : t.shortcodes.known.video}</div>
+        <div className="dim small">{node.attrs.id || node.attrs.vimeo || node.attrs.src}</div>
       </div>
       <button type="button" className="btn sm ghost danger" onClick={() => deleteNode()}>
         <Trash2 size={13} /> {t.common.remove}
@@ -560,7 +560,7 @@ export const CardBlock = pageBlock("prCard", "card", BANNER_AND_CARD_CONTENT, []
 export const ButtonBlock = pageBlock("prButton", "button", "text*", ["link", "align"], "block", ButtonView);
 export const ColumnsBlock = pageBlock("prColumns", "columns", "prColumn{2,3}", ["layout", "valign"], "block", ColumnsView);
 export const ColumnBlock = pageBlock("prColumn", "column", "(paragraph | heading | bulletList | orderedList | taskList | blockquote | table | image | codeBlock | prButton | prVideo)+", [], "prColumnItem", ColumnView);
-export const VideoBlock = pageBlock("prVideo", "video", "", ["id"], "block", VideoView).extend({
+export const VideoBlock = pageBlock("prVideo", "video", "", ["id", "vimeo", "src"], "block", VideoView).extend({
   atom: true,
   renderHTML({ HTMLAttributes }) {
     return ["div", mergeAttributes({ "data-pr": "video" }, HTMLAttributes)];

@@ -3,5 +3,13 @@
 <style>
 .pr-video { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 1.5rem 0; border: 0; }
 </style>
+{{- if .Get "src" }}
+{{- $src := .Get "src" -}}
+{{- with .Page.Resources.Get $src }}{{ $src = .RelPermalink }}{{ end }}
+<video class="pr-video" controls preload="metadata" src="{{ $src }}"></video>
+{{- else if .Get "vimeo" }}
+<iframe class="pr-video" src="https://player.vimeo.com/video/{{ .Get "vimeo" }}?dnt=1" title="Vimeo video player" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+{{- else }}
 <iframe class="pr-video" src="https://www.youtube-nocookie.com/embed/{{ .Get "id" }}" title="YouTube video player" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+{{- end }}
 {{- if $inColumn }}{{ "<!--/pr-button-->" | safeHTML }}{{ end }}

@@ -1,6 +1,7 @@
 package wordpress
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -27,6 +28,7 @@ import (
 var (
 	blockComment = regexp.MustCompile(`<!--\s*/?wp:[\s\S]*?-->`)
 	reusableRef  = regexp.MustCompile(`<!--\s*wp:block\s+\{[^}]*?"ref":\s*(\d+)[^}]*\}\s*/-->`)
+	figcaption   = regexp.MustCompile(`(?is)<figcaption[^>]*>(.*?)</figcaption>`)
 	captionSC    = regexp.MustCompile(`(?s)\[caption[^\]]*\](.*?)\[/caption\]`)
 	embedSC      = regexp.MustCompile(`(?s)\[embed[^\]]*\](.*?)\[/embed\]`)
 	gallerySC    = regexp.MustCompile(`\[gallery([^\]]*)\]`)
@@ -37,6 +39,10 @@ var (
 	googleMapURL = regexp.MustCompile(`^https://(?:www\.|maps\.)?google\.[a-z.]+/maps(?:/d)?(?:/embed\?|\?.*\boutput=embed)`)
 	gistURL      = regexp.MustCompile(`^https?://gist\.github\.com/((?:[\w-]+/)?[0-9a-f]+)(?:\.js)?/?(?:[?#].*)?$`)
 	gistPath     = regexp.MustCompile(`^(?:[\w-]+/)?[0-9a-f]+$`)
+	alignMarker  = regexp.MustCompile(`(?s)PRALIGNSTART(center|right)\s+(.*?)\s+PRALIGNEND`)
+	buttonMarker = regexp.MustCompile(`PRBUTTON([0-9a-f]+)`)
+	columnMarker = regexp.MustCompile(`(?s)PRCOLUMNSSTART([0-9a-f]*)\s+(.*?)\s*PRCOLUMNSEND`)
+	heroMarker   = regexp.MustCompile(`(?s)PRHEROSTART([0-9a-f]*)\s+!\[[^\]]*\]\((\S+?)\)\s*(.*?)\s*PRHEROEND`)
 	moreTag      = regexp.MustCompile(`<!--more\b.*?-->`)
 	audioSC      = regexp.MustCompile(`\[audio(\s[^\]]*)?\](?:\s*\[/audio\])?`)
 	audioSrc     = regexp.MustCompile(`\b(?:src|mp3|m4a|ogg|wav)=["']([^"']+)["']`)
@@ -99,7 +105,11 @@ func newConverter() *converter.Converter {
 				}
 			}
 			if src != "" && !strings.Contains(src, `"`) {
-				_, _ = fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", tag, src)
+				name := tag
+				if tag == "video" {
+					name = "pr-video"
+				}
+				_, _ = fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", name, src)
 			}
 			return converter.RenderSuccess
 		}, converter.PriorityEarly)
@@ -123,10 +133,10 @@ func embedShortcode(src, title string) string {
 		src = "https:" + src
 	}
 	if video := youtubeURL.FindStringSubmatch(src); video != nil {
-		return "{{< youtube " + video[1] + " >}}"
+		return `{{< pr-video id="` + video[1] + `" >}}`
 	}
 	if video := vimeoURL.FindStringSubmatch(src); video != nil {
-		return "{{< vimeo " + video[1] + " >}}"
+		return `{{< pr-video vimeo="` + video[1] + `" >}}`
 	}
 	if googleMapURL.MatchString(src) && !strings.Contains(src, `"`) {
 		if title = strings.ReplaceAll(title, `"`, ""); title != "" {
@@ -203,6 +213,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		}
 		return "<figure>" + img + "<figcaption>" + strings.TrimSpace(inner) + "</figcaption></figure>"
 	})
+	s = figcaption.ReplaceAllString(s, "<p><em>$1</em></p>")
 	s = gallerySC.ReplaceAllStringFunc(s, func(m string) string {
 		ids := galleryIDs.FindStringSubmatch(m)
 		if ids == nil {
@@ -229,7 +240,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		}
 		s = strings.Join(paras, "\n")
 	}
-	return s
+	return markLayout(s)
 }
 
 // fileURLs lists the images and files the content shows or links to.
@@ -314,6 +325,28 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 	if err != nil {
 		return "", nil, err
 	}
+	md = alignMarker.ReplaceAllString(md, "{{< pr-align to=\"$1\" >}}\n$2\n{{< /pr-align >}}")
+	md = buttonMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		decoded, _ := hex.DecodeString(strings.TrimPrefix(marker, "PRBUTTON"))
+		return string(decoded)
+	})
+	md = columnMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		parts := columnMarker.FindStringSubmatch(marker)
+		attributes, _ := hex.DecodeString(parts[1])
+		var columns []string
+		for _, column := range strings.Split(parts[2], "PRCOLUMNNEXT") {
+			if column = strings.TrimSpace(column); column != "" {
+				column += "\n"
+			}
+			columns = append(columns, "{{< pr-column >}}\n"+column+"{{< /pr-column >}}")
+		}
+		return "{{< pr-columns" + string(attributes) + " >}}\n" + strings.Join(columns, "\n\n") + "\n{{< /pr-columns >}}"
+	})
+	md = heroMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		parts := heroMarker.FindStringSubmatch(marker)
+		attributes, _ := hex.DecodeString(parts[1])
+		return `{{< pr-hero image="` + parts[2] + `"` + string(attributes) + " >}}\n" + parts[3] + "\n{{< /pr-hero >}}"
+	})
 	md = addFootnotes(md, footnotes)
 	// Longest URLs first so a sized variant isn't partially replaced.
 	for _, from := range sortedByLength(local) {
@@ -324,23 +357,23 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		// working. Files in wp-content that failed to download keep their full
 		// address and load from the old site.
 		host := regexp.QuoteMeta(strings.TrimPrefix(oldBase.Hostname(), "www."))
-		re := regexp.MustCompile(`\]\(https?://(?:www\.)?` + host + `(/[^)\s]*)`)
+		re := regexp.MustCompile(`(\]\(|link=")https?://(?:www\.)?` + host + `(/[^)\s"]*)`)
 		md = re.ReplaceAllStringFunc(md, func(m string) string {
-			p := re.FindStringSubmatch(m)[1]
-			if strings.HasPrefix(p, "/wp-content/") {
+			parts := re.FindStringSubmatch(m)
+			if strings.HasPrefix(parts[2], "/wp-content/") {
 				return m
 			}
-			return "](" + p
+			return parts[1] + parts[2]
 		})
 	}
 	// Video links alone on a line were auto-embedded by WordPress.
 	md = bareURLLine.ReplaceAllStringFunc(md, func(line string) string {
 		u := strings.TrimSpace(line)
 		if m := youtubeURL.FindStringSubmatch(u); m != nil {
-			return "{{< youtube " + m[1] + " >}}"
+			return `{{< pr-video id="` + m[1] + `" >}}`
 		}
 		if m := vimeoURL.FindStringSubmatch(u); m != nil {
-			return "{{< vimeo " + m[1] + " >}}"
+			return `{{< pr-video vimeo="` + m[1] + `" >}}`
 		}
 		if gist := gistURL.FindStringSubmatch(u); gist != nil {
 			return gistShortcode(gist[1])

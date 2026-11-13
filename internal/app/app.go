@@ -22,6 +22,7 @@ import (
 	"github.com/myrheimb/pageroom/internal/site"
 	"github.com/myrheimb/pageroom/internal/starter"
 	"github.com/myrheimb/pageroom/internal/update"
+	"github.com/myrheimb/pageroom/internal/wordpress"
 )
 
 // redactor is shared by everything that might put text in front of the user.
@@ -36,7 +37,8 @@ type App struct {
 	github   *secrets.GitHubAuth
 	hugo     *hugo.Manager
 
-	cloudflareHTTP *http.Client // nil uses the default. Tests replace it.
+	cloudflareHTTP *http.Client      // nil uses the default. Tests replace it.
+	wordPressFetch wordpress.Fetcher // nil downloads over HTTP. Tests replace it.
 
 	mu          sync.Mutex
 	previewMu   sync.Mutex

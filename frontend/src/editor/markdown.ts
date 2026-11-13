@@ -153,7 +153,7 @@ const PR_ATTRIBUTES: Record<string, string[]> = {
   "pr-columns": ["layout", "valign"],
   "pr-column": [],
   "pr-button": ["link", "align"],
-  "pr-video": ["id"],
+  "pr-video": ["id", "vimeo", "src"],
 };
 
 interface PrToken {
@@ -230,8 +230,12 @@ function renderColumn(inner: string): string | null {
 function renderPrBlock(raw: string): string | null {
   const toks = prTokens(raw);
   if (toks.length === 1 && toks[0].name === "pr-video") {
-    const id = parsePrAttributes(toks[0].raw, "pr-video")?.id;
-    return id && /^[\w-]+$/.test(id) ? `<div data-pr="video" data-id="${id}"></div>` : null;
+    const attrs = parsePrAttributes(toks[0].raw, "pr-video");
+    const entries = Object.entries(attrs ?? {});
+    if (entries.length !== 1) return null;
+    const [key, value] = entries[0];
+    const valid = key === "src" ? value.trim() !== "" && !/[\s<>]/.test(value) : key === "vimeo" ? /^\d+$/.test(value) : /^[\w-]+$/.test(value);
+    return valid ? `<div data-pr="video" data-${key}="${esc(value)}"></div>` : null;
   }
   if (toks.length < 2 || toks[0].start !== 0 || toks[0].closing || toks[0].selfClosing) return null;
   const close = prMatchingClose(toks, 0);

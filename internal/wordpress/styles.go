@@ -31,6 +31,7 @@ var (
 	siteLogoBlock = regexp.MustCompile(`(?i)class=['"][^'"]*\bwp-block-site-logo\b`)
 	srcAttribute  = regexp.MustCompile(`(?i)\bsrc=(?:"([^"]*)"|'([^']*)')`)
 	iconOrFontCss = regexp.MustCompile(`(?i)font|icon|dashicons`)
+	coverBlock    = regexp.MustCompile(`(?i)\bclass=['"][^'"]*\bwp-block-cover\b`)
 )
 
 // globalSelectors are the ones whose custom properties apply to the whole
@@ -135,6 +136,36 @@ func LogoURL(page []byte, base *url.URL) string {
 // fontFamilies are the first family names of the body and heading fonts, as
 // the old site wrote them.
 type fontFamilies struct{ body, heading string }
+
+const (
+	themeStudio = "pageroom-studio"
+	themePaper  = "pageroom-paper"
+	themeSoft   = "pageroom-soft"
+	themeTinted = "pageroom-tinted"
+
+	narrowContentWidth = 720
+	largeButtonRadius  = 16
+)
+
+// pickTheme chooses the starter theme closest to the old site: Studio for a
+// cover on the home page, Paper for serif fonts in a narrow column, Soft for
+// rounded buttons, else Tinted.
+func pickTheme(homePage []byte, style *appearance.Tokens) string {
+	if coverBlock.Match(homePage) {
+		return themeStudio
+	}
+	if style == nil {
+		return themeTinted
+	}
+	serif := style.BodyFont == "transitional" || style.HeadingFont == "transitional"
+	if serif && style.ContentWidth > 0 && style.ContentWidth <= narrowContentWidth {
+		return themePaper
+	}
+	if style.Radius >= largeButtonRadius {
+		return themeSoft
+	}
+	return themeTinted
+}
 
 func readStyles(page []byte, stylesheets ...[]byte) (*appearance.Tokens, fontFamilies) {
 	var core, linked, theme []string

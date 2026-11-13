@@ -22,7 +22,7 @@
 <!-- /wp:paragraph -->
 
 <!-- wp:image {"id":11} -->
-<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="A sourdough loaf" class="wp-image-11"/></figure>
+<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="A sourdough loaf" class="wp-image-11"/><figcaption class="wp-element-caption">Fresh from the oven</figcaption></figure>
 <!-- /wp:image -->
 
 <!-- wp:embed {"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} -->
@@ -92,11 +92,178 @@ Second paragraph.]]></content:encoded>
 <figure class="wp-block-video"><video controls src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"></video></figure>
 <!-- /wp:video -->
 
+[video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"][/video]
+
 <!-- wp:html -->
 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" width="600" height="450"></iframe>
 <iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+<iframe src="https://player.vimeo.com/video/76979871" width="560" height="315"></iframe>
 <iframe src="https://forms.example.com/embed/signup"></iframe>
 <!-- /wp:html -->
+
+<!-- wp:heading {"textAlign":"center"} -->
+<h2 class="wp-block-heading has-text-align-center">Come by</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"right"} -->
+<p class="has-text-align-right">Open every morning.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:quote {"textAlign":"center"} -->
+<blockquote class="wp-block-quote has-text-align-center"><p>Best bread in town.</p></blockquote>
+<!-- /wp:quote -->
+
+<!-- wp:image {"id":11,"align":"center"} -->
+<figure class="wp-block-image aligncenter"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="Another loaf" class="wp-image-11"/></figure>
+<!-- /wp:image -->
+
+<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
+<div class="wp-block-buttons is-content-justification-center"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/about/">Our story</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/wp-content/uploads/2024/04/menu.pdf">Menu</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="mailto:hannah@hannahsbakery.example">Write to us</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:columns {"verticalAlignment":"center"} -->
+<div class="wp-block-columns are-vertically-aligned-center"><!-- wp:column {"width":"66.66%"} -->
+<div class="wp-block-column" style="flex-basis:66.66%"><!-- wp:paragraph -->
+<p>Fresh from the oven.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/about/">Visit</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"width":"33.33%"} -->
+<div class="wp-block-column" style="flex-basis:33.33%"><!-- wp:image {"id":11} -->
+<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="Third loaf" class="wp-image-11"/></figure>
+<!-- /wp:image --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Bread</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Rolls</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Cakes</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column {"width":"25%"} -->
+<div class="wp-block-column" style="flex-basis:25%"><!-- wp:paragraph -->
+<p>Narrow</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"width":"75%"} -->
+<div class="wp-block-column" style="flex-basis:75%"><!-- wp:paragraph -->
+<p>Wide</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column -->
+<div class="wp-block-column"><!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">Small print</h5>
+<!-- /wp:heading --></div>
+<!-- /wp:column -->
+
+<!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Ask us.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:media-text {"mediaPosition":"right","mediaType":"image"} -->
+<div class="wp-block-media-text has-media-on-the-right is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="Loaf on the side"/></figure><div class="wp-block-media-text__content"><!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Our loaves</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Baked daily.</p>
+<!-- /wp:paragraph --></div></div>
+<!-- /wp:media-text -->
+
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column -->
+<div class="wp-block-column"><!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Opening hours</h3>
+<!-- /wp:heading -->
+
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Weekdays 7 to 17</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Saturdays 8 to 14</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns --></div>
+<!-- /wp:column -->
+
+<!-- wp:column -->
+<div class="wp-block-column"><!-- wp:paragraph -->
+<p>Closed on Sundays.</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:cover {"url":"https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg","id":11} -->
+<div class="wp-block-cover"><span aria-hidden="true" class="wp-block-cover__background has-background-dim"></span><img class="wp-block-cover__image-background wp-image-11" alt="A loaf behind the title" src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" data-object-fit="cover"/><div class="wp-block-cover__inner-container"><!-- wp:heading {"textAlign":"center"} -->
+<h2 class="wp-block-heading has-text-align-center">Bread for everyone</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center"} -->
+<p class="has-text-align-center">Baked before sunrise.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/about/">Visit us</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="mailto:hannah@hannahsbakery.example">Write to us</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons --></div></div>
+<!-- /wp:cover -->
+
+<!-- wp:cover {"overlayColor":"black"} -->
+<div class="wp-block-cover"><span aria-hidden="true" class="wp-block-cover__background has-black-background-color has-background-dim-100 has-background-dim"></span><div class="wp-block-cover__inner-container"><!-- wp:paragraph -->
+<p>Plain colour cover.</p>
+<!-- /wp:paragraph --></div></div>
+<!-- /wp:cover -->
 
 [gist]https://gist.github.com/hannah/0123abcd[/gist]
 

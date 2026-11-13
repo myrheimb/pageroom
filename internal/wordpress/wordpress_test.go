@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"image"
 	"image/jpeg"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,11 +15,14 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/myrheimb/pageroom/internal/appearance"
 	"github.com/myrheimb/pageroom/internal/site"
 	"github.com/myrheimb/pageroom/internal/starter"
 )
+
+var update = flag.Bool("update", false, "rewrite the golden files in testdata/golden")
 
 type fakeFetcher struct{ got []string }
 
@@ -56,6 +61,11 @@ func TestSummarize(t *testing.T) {
 }
 
 func TestImport(t *testing.T) {
+	// A draft has only a local date, which the importer reads in the machine's time zone.
+	local := time.Local
+	time.Local = time.UTC
+	t.Cleanup(func() { time.Local = local })
+
 	root := filepath.Join(t.TempDir(), "site")
 	if err := starter.CreateEmpty(root, "Hannah's Bakery", "0.168.0"); err != nil {
 		t.Fatal(err)
@@ -90,7 +100,7 @@ func TestImport(t *testing.T) {
 		"title = 'Our new sourdough'", "date = 2024-03-02T09:30:00Z", "categories = ['Bread', 'Coffee & cake']", "tags = ['sourdough']",
 		"aliases = ['/2024/03/02/our-new-sourdough/']", "description = \"The loaf we're proudest of.\"", "author = 'Hannah Baker'",
 		"image = 'loaf.jpg'", "We spent **months** perfecting", "[story](/about/)", "![A sourdough loaf](loaf.jpg)",
-		"{{< youtube dQw4w9WgXcQ >}}", "- Flour", "{{< contact-form >}}", "https://evil.internal/x.jpg",
+		`{{< pr-video id="dQw4w9WgXcQ" >}}`, "_Fresh from the oven_", "- Flour", "{{< contact-form >}}", "https://evil.internal/x.jpg",
 	} {
 		if !strings.Contains(p, want) {
 			t.Errorf("post missing %q:\n%s", want, p)
@@ -125,9 +135,9 @@ func TestImport(t *testing.T) {
 	bakingPage := string(baking)
 	for _, want := range []string{
 		"Rye[^1] is in the oven.", "\n<!--more-->\n", "[menu](menu.pdf)", `{{< audio src="oven.mp3" >}}`,
-		`{{< video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}`,
+		`{{< pr-video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}`,
 		`{{< google-map src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" >}}`,
-		"{{< youtube dQw4w9WgXcQ >}}", "{{< gist hannah 0123abcd >}}", "[^1]: Mostly _whole_ rye.",
+		`{{< pr-video id="dQw4w9WgXcQ" >}}`, `{{< pr-video vimeo="76979871" >}}`, "{{< gist hannah 0123abcd >}}", "[^1]: Mostly _whole_ rye.",
 	} {
 		if !strings.Contains(bakingPage, want) {
 			t.Errorf("baking day missing %q:\n%s", want, bakingPage)
@@ -137,7 +147,7 @@ func TestImport(t *testing.T) {
 		t.Errorf("leftover embed or footnote link:\n%s", bakingPage)
 	}
 	for _, name := range []string{"content/posts/baking-day/menu.pdf", "content/posts/baking-day/oven.mp3", "layouts/shortcodes/audio.html",
-		"layouts/shortcodes/gist.html", "layouts/shortcodes/google-map.html", "layouts/shortcodes/video.html"} {
+		"layouts/shortcodes/gist.html", "layouts/shortcodes/google-map.html", "layouts/shortcodes/pr-video.html"} {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
 			t.Errorf("%s wasn't written", name)
 		}
@@ -145,6 +155,8 @@ func TestImport(t *testing.T) {
 	if !slices.Equal(rep.FailedFiles, []string{"https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"}) {
 		t.Errorf("failed files %v", rep.FailedFiles)
 	}
+
+	checkGolden(t, root)
 
 	// A page with children becomes a section. Its child nests under it.
 	about, err := os.ReadFile(filepath.Join(root, "content/about/_index.md"))
@@ -361,6 +373,27 @@ func TestImportReadsLinkedStylesheets(t *testing.T) {
 	}
 }
 
+func TestImportPicksTheThemeFromTheHomePage(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "site")
+	if err := starter.CreateEmpty(root, "Bakery", "0.168.0"); err != nil {
+		t.Fatal(err)
+	}
+	s, err := site.Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := map[string]string{"https://bakery.example/": `<html><body><div class="wp-block-cover"></div></body></html>`}
+	export := &Export{Title: "Bakery", Link: "https://bakery.example/"}
+
+	rep, err := Import(context.Background(), export, Options{Site: s, DownloadImages: true, Fetch: homepageFetcher{files}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.Theme != "pageroom-studio" {
+		t.Fatalf("got theme %q, want pageroom-studio", rep.Theme)
+	}
+}
+
 func TestImportCopiesSiteFonts(t *testing.T) {
 	page, err := os.ReadFile(filepath.Join("testdata", "themes", "twentytwentyfive.html"))
 	if err != nil {
@@ -557,4 +590,83 @@ func TestImportLogo(t *testing.T) {
 func stylesOf(page []byte, stylesheets ...[]byte) *appearance.Tokens {
 	tokens, _ := readStyles(page, stylesheets...)
 	return tokens
+}
+
+// checkGolden compares every imported Markdown file under content/ with
+// testdata/golden, leaving out the two index files the starter site has. The flattened path names the golden file.
+func checkGolden(t *testing.T, root string) {
+	t.Helper()
+	content := filepath.Join(root, "content")
+	var found []string
+	err := filepath.WalkDir(content, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || filepath.Ext(path) != ".md" {
+			return err
+		}
+		rel, err := filepath.Rel(content, path)
+		if err != nil {
+			return err
+		}
+		if rel == "_index.md" || rel == filepath.Join("posts", "_index.md") {
+			return nil
+		}
+		name := strings.ReplaceAll(filepath.ToSlash(rel), "/", "__")
+		found = append(found, name)
+		got, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		golden := filepath.Join("testdata", "golden", name)
+		if *update {
+			if err := os.MkdirAll(filepath.Dir(golden), 0o755); err != nil {
+				return err
+			}
+			return os.WriteFile(golden, got, 0o644)
+		}
+		want, err := os.ReadFile(golden)
+		if err != nil {
+			t.Errorf("%s: no golden file, run with -update: %v", rel, err)
+		} else if !bytes.Equal(got, want) {
+			t.Errorf("%s differs from %s, run with -update to accept:\n%s", rel, golden, got)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries, err := os.ReadDir(filepath.Join("testdata", "golden")); err == nil {
+		for _, entry := range entries {
+			if !slices.Contains(found, entry.Name()) && !*update {
+				t.Errorf("golden file %s has no imported page", entry.Name())
+			}
+		}
+	}
+}
+
+func TestPickTheme(t *testing.T) {
+	cover := []byte(`<div class="wp-block-cover alignfull"></div>`)
+	plain := []byte(`<div class="wp-block-cover__inner-container"></div>`)
+	tests := []struct {
+		name  string
+		page  []byte
+		style *appearance.Tokens
+		want  string
+	}{
+		{"cover on the home page", cover, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 620, Radius: 24}, "pageroom-studio"},
+		{"cover without a style", cover, nil, "pageroom-studio"},
+		{"serif body in a narrow column", plain, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 620, Radius: 24}, "pageroom-paper"},
+		{"serif heading in a narrow column", plain, &appearance.Tokens{BodyFont: "system", HeadingFont: "transitional", ContentWidth: 720, Radius: -1}, "pageroom-paper"},
+		{"serif in a wide column", plain, &appearance.Tokens{BodyFont: "transitional", ContentWidth: 1100, Radius: -1}, "pageroom-tinted"},
+		{"serif without a width", plain, &appearance.Tokens{BodyFont: "transitional", Radius: -1}, "pageroom-tinted"},
+		{"narrow column in sans", plain, &appearance.Tokens{BodyFont: "system", ContentWidth: 620, Radius: -1}, "pageroom-tinted"},
+		{"large button radius", plain, &appearance.Tokens{BodyFont: "system", ContentWidth: 1100, Radius: 16}, "pageroom-soft"},
+		{"small button radius", plain, &appearance.Tokens{Radius: 6}, "pageroom-tinted"},
+		{"no style", plain, nil, "pageroom-tinted"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := pickTheme(test.page, test.style); got != test.want {
+				t.Fatalf("got %s, want %s", got, test.want)
+			}
+		})
+	}
 }

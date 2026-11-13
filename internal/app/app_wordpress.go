@@ -49,7 +49,7 @@ func (a *App) PeekWordPress(path string) (*wordpress.Summary, error) {
 	return &s, nil
 }
 
-func (a *App) runImport(s *site.Site, e *wordpress.Export, download bool) (*wordpress.Report, error) {
+func (a *App) runImport(s *site.Site, e *wordpress.Export, download, pickTheme bool) (*wordpress.Report, error) {
 	ctx, cancel := context.WithCancel(a.ctx)
 	defer cancel()
 	section := "posts"
@@ -59,14 +59,32 @@ func (a *App) runImport(s *site.Site, e *wordpress.Export, download bool) (*word
 			break
 		}
 	}
+	fetch := a.wordPressFetch
+	if fetch == nil {
+		fetch = wordpress.NewHTTPFetcher()
+	}
 	rep, err := wordpress.Import(ctx, e, wordpress.Options{
-		Site: s, PostsSection: section, DownloadImages: download, Fetch: wordpress.NewHTTPFetcher(),
+		Site: s, PostsSection: section, DownloadImages: download, Fetch: fetch,
 		Progress: func(done, total int, label string) {
+			if application.Get() == nil {
+				return
+			}
 			application.Get().Event.Emit("wp:progress", map[string]any{"done": done, "total": total, "label": label})
 		},
 	})
 	if err != nil {
 		return rep, err
+	}
+
+	if pickTheme && rep.Theme != "" {
+		st := s.Settings()
+		st.Theme = rep.Theme
+		if err := s.SaveSettings(st); err != nil {
+			return rep, err
+		}
+		if err := s.Reload(); err != nil {
+			return rep, err
+		}
 	}
 
 	style := &appearance.Engine{Root: s.Root, Theme: s.Config.Theme(), HeadHook: s.Prefs.Appearance.HeadHook}
@@ -131,7 +149,7 @@ func (a *App) ImportWordPress(path string, downloadImages bool) (*wordpress.Repo
 	if err != nil {
 		return nil, err
 	}
-	return a.runImport(s, e, downloadImages)
+	return a.runImport(s, e, downloadImages, false)
 }
 
 type WordPressSiteResult struct {
@@ -173,7 +191,7 @@ func (a *App) CreateSiteFromWordPress(path string, downloadImages bool) (*WordPr
 	if err := s.Reload(); err != nil {
 		return nil, err
 	}
-	rep, err := a.runImport(s, e, downloadImages)
+	rep, err := a.runImport(s, e, downloadImages, true)
 	if err != nil {
 		return nil, err
 	}

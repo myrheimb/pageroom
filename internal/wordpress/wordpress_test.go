@@ -744,19 +744,17 @@ func TestHeaderPhoto(t *testing.T) {
 		name    string
 		page    string
 		wantURL string
-		wantAlt string
 	}{
-		{"Dog life Max markup", madeUpHeaderPage, "https://example.com/wp-content/uploads/beach.jpg", "Dog & Max"},
-		{"theme with a header background", madeUpThemePage, "https://example.com/wp-content/uploads/beach.jpg", "Beach house"},
-		{"no photo", `<html><body><header><h1>Plain</h1></header></body></html>`, "", ""},
-		{"only a logo", logoOnlyPage, "", ""},
-		{"photo on another host", otherHostPhotoCss, "", ""},
+		{"Dog life Max markup", madeUpHeaderPage, "https://example.com/wp-content/uploads/beach.jpg"},
+		{"theme with a header background", madeUpThemePage, "https://example.com/wp-content/uploads/beach.jpg"},
+		{"no photo", `<html><body><header><h1>Plain</h1></header></body></html>`, ""},
+		{"only a logo", logoOnlyPage, ""},
+		{"photo on another host", otherHostPhotoCss, ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gotURL, gotAlt := HeaderPhoto([]byte(test.page), base)
-			if gotURL != test.wantURL || gotAlt != test.wantAlt {
-				t.Fatalf("got %q, %q, want %q, %q", gotURL, gotAlt, test.wantURL, test.wantAlt)
+			if got := HeaderPhoto([]byte(test.page), base); got != test.wantURL {
+				t.Fatalf("got %q, want %q", got, test.wantURL)
 			}
 		})
 	}
@@ -769,10 +767,10 @@ func TestHeaderPhotoOfSavedHomePage(t *testing.T) {
 	}
 	base, _ := url.Parse("https://doglifemax.com/")
 
-	gotURL, gotAlt := HeaderPhoto(page, base)
+	got := HeaderPhoto(page, base)
 
-	if gotURL != "https://doglifemax.com/wp-content/uploads/2026/10/DSC00312-2.jpg" || gotAlt != "Dog life Max" {
-		t.Fatalf("got %q, %q", gotURL, gotAlt)
+	if got != "https://doglifemax.com/wp-content/uploads/2026/10/DSC00312-2.jpg" {
+		t.Fatalf("got %q", got)
 	}
 }
 
@@ -784,22 +782,30 @@ func TestImportCarriesTheHeaderPhotoToTheHomePage(t *testing.T) {
 		return `<html><head><style>.header{background-image:url(` + photoURL + `)}</style></head><body class="` + body + `"><header class="header"><h1>Hannah's</h1></header></body></html>`
 	}
 	tests := []struct {
-		name    string
-		page    string
-		newSite bool
-		want    bool
+		name      string
+		page      string
+		newSite   bool
+		want      bool
+		downloads bool
+		broken    bool
 	}{
-		{"tagline home page", headerPage("home blog"), true, true},
-		{"static front page", headerPage("page-id-20"), true, true},
-		{"existing site", headerPage("home blog"), false, false},
-		{"no photo", `<html><body class="home blog"></body></html>`, true, false},
+		{"tagline home page", headerPage("home blog"), true, true, true, false},
+		{"static front page", headerPage("page-id-20"), true, true, true, false},
+		{"existing site", headerPage("home blog"), false, false, true, false},
+		{"no photo", `<html><body class="home blog"></body></html>`, true, false, true, false},
+		{"photo fails to download", headerPage("home blog"), true, false, true, true},
+		{"image downloads off", headerPage("home blog"), true, false, false, false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s, root := newBakerySite(t)
-			fetcher := homepageFetcher{map[string]string{"https://hannahsbakery.example": test.page, photoURL: photo.String()}}
+			files := map[string]string{"https://hannahsbakery.example": test.page, photoURL: photo.String()}
+			if test.broken {
+				delete(files, photoURL)
+			}
+			fetcher := homepageFetcher{files}
 
-			rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, NewSite: test.newSite, Fetch: fetcher})
+			rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: test.downloads, NewSite: test.newSite, Fetch: fetcher})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -815,8 +821,8 @@ func TestImportCarriesTheHeaderPhotoToTheHomePage(t *testing.T) {
 			if got := strings.Contains(string(home), "beach.jpg"); got != test.want {
 				t.Errorf("front matter has the photo %v, want %v:\n%s", got, test.want, home)
 			}
-			if test.want && !strings.Contains(string(home), "Hannah's") {
-				t.Errorf("front matter has no imageAlt:\n%s", home)
+			if strings.Contains(string(home), "imageAlt") {
+				t.Errorf("front matter has an imageAlt:\n%s", home)
 			}
 			if got := rep.Theme == "pageroom-studio"; got != test.want {
 				t.Errorf("theme %q, studio is %v, want %v", rep.Theme, got, test.want)

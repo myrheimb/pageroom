@@ -114,6 +114,9 @@ type Report struct {
 	FailedImages []string `json:"failedImages,omitempty"`
 	FailedFiles  []string `json:"failedFiles,omitempty"`
 	Warnings     []string `json:"warnings,omitempty"`
+	// headerPhotoSaved is set once the old header photo is next to the home
+	// page, which is when Studio is picked.
+	headerPhotoSaved bool
 	// Icon is the WordPress Site Icon. Import doesn't write it, so the
 	// caller can keep an icon the owner already chose.
 	Icon *favicon.Icons `json:"-"`
@@ -139,7 +142,6 @@ type planned struct {
 	url     string // new address
 	section bool   // written as _index.md because it has child pages
 	photo   string // the old header photo, only for the home page
-	alt     string
 }
 
 // Import writes the export into the site. Existing files are never
@@ -161,11 +163,11 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		}
 	}
 	homeID := 0
-	var photoURL, photoAlt string
+	var photoURL string
 	if opt.NewSite {
 		homeID = homePageID(homePage)
 		if base != nil {
-			photoURL, photoAlt = HeaderPhoto(homePage, base)
+			photoURL = HeaderPhoto(homePage, base)
 		}
 	}
 
@@ -202,7 +204,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 			return p
 		}
 		if it.ID == homeID && it.Type == "page" {
-			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true, photo: photoURL, alt: photoAlt}
+			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true, photo: photoURL}
 			plans[it.ID] = p
 			order = append(order, p)
 			return p
@@ -270,7 +272,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		rep.Warnings = append(rep.Warnings, "Menus couldn't be imported: "+err.Error())
 	}
 	if opt.NewSite && plans[homeID] == nil {
-		if err := writeTagline(ctx, opt, e.Description, photoURL, photoAlt, cache, rep); err != nil {
+		if err := writeTagline(ctx, opt, e.Description, photoURL, cache, rep); err != nil {
 			return rep, err
 		}
 	}
@@ -298,7 +300,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		var families fontFamilies
 		rep.Style, families = readStyles(page, stylesheets...)
 		rep.Theme = pickTheme(page, rep.Style)
-		if photoURL != "" {
+		if rep.headerPhotoSaved {
 			rep.Theme = themeStudio
 		}
 		rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
@@ -346,12 +348,13 @@ func importHeaderPhoto(ctx context.Context, photoURL, dir string, opt Options, c
 		return ""
 	}
 	rep.Images++
+	rep.headerPhotoSaved = true
 	return name
 }
 
 // writeTagline replaces the starter's welcome text with the old site's
 // tagline, under the old header photo if there is one.
-func writeTagline(ctx context.Context, opt Options, tagline, photoURL, photoAlt string, cache map[string][]byte, rep *Report) error {
+func writeTagline(ctx context.Context, opt Options, tagline, photoURL string, cache map[string][]byte, rep *Report) error {
 	s := opt.Site
 	contentDir := filepath.Join(s.Root, filepath.FromSlash(s.ContentDir))
 	doc, _ := frontmatter.Parse(nil)
@@ -360,9 +363,6 @@ func writeTagline(ctx context.Context, opt Options, tagline, photoURL, photoAlt 
 	}
 	if name := importHeaderPhoto(ctx, photoURL, contentDir, opt, cache, rep); name != "" {
 		if err := doc.Set("image", name, s.DefaultFormat()); err != nil {
-			return err
-		}
-		if err := doc.Set("imageAlt", photoAlt, s.DefaultFormat()); err != nil {
 			return err
 		}
 	}
@@ -578,7 +578,6 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 	}
 	if name := importHeaderPhoto(ctx, p.photo, dirAbs, opt, cache, rep); name != "" {
 		set("image", name)
-		set("imageAlt", p.alt)
 	}
 	if old := oldPath(it.Link, base); old != "" && old != p.url && it.Status == "publish" {
 		set("aliases", []string{old})

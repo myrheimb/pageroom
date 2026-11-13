@@ -107,7 +107,7 @@ main:has(> .home-hero) { padding-top: 0; }
 .cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr)); gap: 0 1.5rem; }
 /* Subgrid keeps titles, summaries and dates lined up across a row, whatever the title length. */
 .card, .card > a { display: grid; grid-template-rows: subgrid; grid-row: span 4; gap: 0; }
-.card { padding-bottom: 2.5rem; }
+.card { padding-bottom: 2.5rem; overflow-wrap: anywhere; }
 .card > a { color: inherit; text-decoration: none; }
 .card img, .card-placeholder { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; transition: scale .3s; }
 .card-placeholder { background: var(--pr-hero); }

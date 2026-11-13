@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/myrheimb/pageroom/internal/appearance"
 	"github.com/myrheimb/pageroom/internal/site"
@@ -60,6 +61,11 @@ func TestSummarize(t *testing.T) {
 }
 
 func TestImport(t *testing.T) {
+	// A draft has only a local date, which the importer reads in the machine's time zone.
+	local := time.Local
+	time.Local = time.UTC
+	t.Cleanup(func() { time.Local = local })
+
 	root := filepath.Join(t.TempDir(), "site")
 	if err := starter.CreateEmpty(root, "Hannah's Bakery", "0.168.0"); err != nil {
 		t.Fatal(err)

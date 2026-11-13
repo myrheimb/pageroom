@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"image"
 	"image/jpeg"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +20,8 @@ import (
 	"github.com/myrheimb/pageroom/internal/site"
 	"github.com/myrheimb/pageroom/internal/starter"
 )
+
+var update = flag.Bool("update", false, "rewrite the golden files in testdata/golden")
 
 type fakeFetcher struct{ got []string }
 
@@ -145,6 +149,8 @@ func TestImport(t *testing.T) {
 	if !slices.Equal(rep.FailedFiles, []string{"https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"}) {
 		t.Errorf("failed files %v", rep.FailedFiles)
 	}
+
+	checkGolden(t, root)
 
 	// A page with children becomes a section. Its child nests under it.
 	about, err := os.ReadFile(filepath.Join(root, "content/about/_index.md"))
@@ -557,4 +563,54 @@ func TestImportLogo(t *testing.T) {
 func stylesOf(page []byte, stylesheets ...[]byte) *appearance.Tokens {
 	tokens, _ := readStyles(page, stylesheets...)
 	return tokens
+}
+
+// checkGolden compares every imported Markdown file under content/ with
+// testdata/golden, leaving out the two index files the starter site has. The flattened path names the golden file.
+func checkGolden(t *testing.T, root string) {
+	t.Helper()
+	content := filepath.Join(root, "content")
+	var found []string
+	err := filepath.WalkDir(content, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || filepath.Ext(path) != ".md" {
+			return err
+		}
+		rel, err := filepath.Rel(content, path)
+		if err != nil {
+			return err
+		}
+		if rel == "_index.md" || rel == filepath.Join("posts", "_index.md") {
+			return nil
+		}
+		name := strings.ReplaceAll(filepath.ToSlash(rel), "/", "__")
+		found = append(found, name)
+		got, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		golden := filepath.Join("testdata", "golden", name)
+		if *update {
+			if err := os.MkdirAll(filepath.Dir(golden), 0o755); err != nil {
+				return err
+			}
+			return os.WriteFile(golden, got, 0o644)
+		}
+		want, err := os.ReadFile(golden)
+		if err != nil {
+			t.Errorf("%s: no golden file, run with -update: %v", rel, err)
+		} else if !bytes.Equal(got, want) {
+			t.Errorf("%s differs from %s, run with -update to accept:\n%s", rel, golden, got)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entries, err := os.ReadDir(filepath.Join("testdata", "golden")); err == nil {
+		for _, entry := range entries {
+			if !slices.Contains(found, entry.Name()) && !*update {
+				t.Errorf("golden file %s has no imported page", entry.Name())
+			}
+		}
+	}
 }

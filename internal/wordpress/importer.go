@@ -241,6 +241,12 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	for _, it := range content {
 		place(it)
 	}
+	pages := map[string]pageLink{}
+	for _, p := range order {
+		if old := oldPath(p.item.Link, base); old != "" && p.url != "/" {
+			pages[oldPathKey(old)] = pageLink{url: p.url, title: firstNonEmpty(p.item.Title, "Untitled")}
+		}
+	}
 
 	if plans[homeID] != nil {
 		if err := os.Remove(filepath.Join(s.Root, filepath.FromSlash(plans[homeID].file))); err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -258,7 +264,7 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		if opt.Progress != nil {
 			opt.Progress(i, len(order), p.item.Title)
 		}
-		if err := writeItem(ctx, e, p, opt, base, attachments, blocks, cache, rep); err != nil {
+		if err := writeItem(ctx, e, p, opt, base, attachments, blocks, pages, cache, rep); err != nil {
 			return rep, fmt.Errorf("%q: %w", p.item.Title, err)
 		}
 	}
@@ -460,7 +466,7 @@ func importLogo(ctx context.Context, page []byte, base *url.URL, opt Options, ca
 }
 
 //nolint:gocyclo // One pass over an item keeps the import steps in order, and the importer is well tested.
-func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *url.URL, attachments, blocks map[int]string, cache map[string][]byte, rep *Report) error {
+func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *url.URL, attachments, blocks map[int]string, pages map[string]pageLink, cache map[string][]byte, rep *Report) error {
 	it := p.item
 	dirRel := path.Dir(p.file)
 	dirAbs := filepath.Join(opt.Site.Root, filepath.FromSlash(dirRel))
@@ -503,7 +509,7 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 		rep.Images++
 	}
 
-	md, unknown, err := toMarkdown(prepared, it.Meta["footnotes"], local, base)
+	md, unknown, err := toMarkdown(prepared, it.Meta["footnotes"], local, base, pages)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func load(t *testing.T) *Export {
 
 func TestSummarize(t *testing.T) {
 	s := load(t).Summarize()
-	if s.Title != "Hannah's Bakery" || s.Posts != 3 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
+	if s.Title != "Hannah's Bakery" || s.Posts != 4 || s.Pages != 2 || s.Drafts != 1 || s.Images != 3 || s.MenuItems != 3 || s.Comments != 1 ||
 		!slices.Equal(s.Skipped, []SkippedKind{{Type: "product", Count: 1}}) {
 		t.Fatalf("%+v", s)
 	}
@@ -80,7 +80,7 @@ func TestImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rep.Posts != 3 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
+	if rep.Posts != 4 || rep.Pages != 2 || rep.Drafts != 1 || rep.MenuItems != 3 || rep.Files != 2 {
 		t.Fatalf("report %+v", rep)
 	}
 	if rep.Icon == nil || len(rep.FailedImages) != 0 {
@@ -203,7 +203,7 @@ func TestImport(t *testing.T) {
 		t.Error("downloaded the Site Icon with downloads off")
 	}
 	again, _ := os.ReadFile(filepath.Join(root, "content/posts/our-new-sourdough-2/index.md"))
-	if !strings.Contains(string(again), "](https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg)") || !strings.Contains(string(again), "[story](/about/)") {
+	if !strings.Contains(string(again), "](https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg)") || !strings.Contains(string(again), "[story](/about-2/)") {
 		t.Errorf("undownloaded image or page link wrong:\n%s", again)
 	}
 	if _, err := os.Stat(filepath.Join(root, "content/posts/our-new-sourdough-2/index.md")); err != nil {

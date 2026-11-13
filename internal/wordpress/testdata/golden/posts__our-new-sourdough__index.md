@@ -22,3 +22,11 @@ _Fresh from the oven_
 {{< contact-form >}}
 
 ![tracker](https://evil.internal/x.jpg)
+
+Read [our sushi story](/posts/すし/) first.
+
+[寿司の話](/posts/すし/)
+
+[https://example.com/recipe](https://example.com/recipe)
+
+[About](/about/)

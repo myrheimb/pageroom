@@ -75,7 +75,7 @@ func TestImport(t *testing.T) {
 		t.Fatal(err)
 	}
 	ff := &fakeFetcher{}
-	rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, Fetch: ff})
+	rep, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: true, NewSite: true, Fetch: ff})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -394,6 +394,65 @@ func TestImportPicksTheThemeFromTheHomePage(t *testing.T) {
 	}
 }
 
+func newBakerySite(t *testing.T) (*site.Site, string) {
+	t.Helper()
+	root := filepath.Join(t.TempDir(), "site")
+	if err := starter.CreateEmpty(root, "Bakery", "0.168.0"); err != nil {
+		t.Fatal(err)
+	}
+	s, err := site.Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s, root
+}
+
+func TestImportWritesTheHomePage(t *testing.T) {
+	staticFront := map[string]string{"https://hannahsbakery.example": `<html><body class="page-template page-id-20 logged-out"></body></html>`}
+	postsFront := map[string]string{"https://hannahsbakery.example": `<html><body class="home blog"></body></html>`}
+	tests := []struct {
+		name         string
+		files        map[string]string
+		newSite      bool
+		wantHome     string
+		wantMissing  string
+		wantMenuPage string
+	}{
+		{"static front page", staticFront, true, "Open daily from 7.", "content/about/_index.md", "/"},
+		{"posts front page", postsFront, true, "Fresh bread daily", "", "/about"},
+		{"no fetch", nil, true, "Fresh bread daily", "", "/about"},
+		{"existing site", staticFront, false, "Welcome to your new website", "", "/about"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, root := newBakerySite(t)
+
+			_, err := Import(context.Background(), load(t), Options{Site: s, DownloadImages: test.files != nil, NewSite: test.newSite, Fetch: homepageFetcher{test.files}})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			home, err := os.ReadFile(filepath.Join(root, "content", "_index.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(home), test.wantHome) || (test.newSite && strings.Contains(string(home), "Welcome to your new website")) {
+				t.Errorf("home page:\n%s", home)
+			}
+			if test.wantMissing != "" {
+				if _, err := os.Stat(filepath.Join(root, test.wantMissing)); err == nil {
+					t.Errorf("%s was written, the page is the home page", test.wantMissing)
+				}
+			}
+			_ = s.Reload()
+			menus, _ := s.Menus()
+			if len(menus) == 0 || menus[0].Items[0].PageRef != test.wantMenuPage {
+				t.Errorf("menu %+v, want first entry %q", menus, test.wantMenuPage)
+			}
+		})
+	}
+}
+
 func TestImportCopiesSiteFonts(t *testing.T) {
 	page, err := os.ReadFile(filepath.Join("testdata", "themes", "twentytwentyfive.html"))
 	if err != nil {
@@ -593,7 +652,7 @@ func stylesOf(page []byte, stylesheets ...[]byte) *appearance.Tokens {
 }
 
 // checkGolden compares every imported Markdown file under content/ with
-// testdata/golden, leaving out the two index files the starter site has. The flattened path names the golden file.
+// testdata/golden, leaving out the posts index the starter site has. The flattened path names the golden file.
 func checkGolden(t *testing.T, root string) {
 	t.Helper()
 	content := filepath.Join(root, "content")
@@ -606,7 +665,7 @@ func checkGolden(t *testing.T, root string) {
 		if err != nil {
 			return err
 		}
-		if rel == "_index.md" || rel == filepath.Join("posts", "_index.md") {
+		if rel == filepath.Join("posts", "_index.md") {
 			return nil
 		}
 		name := strings.ReplaceAll(filepath.ToSlash(rel), "/", "__")

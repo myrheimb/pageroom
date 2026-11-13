@@ -64,7 +64,7 @@ func (a *App) runImport(s *site.Site, e *wordpress.Export, download, pickTheme b
 		fetch = wordpress.NewHTTPFetcher()
 	}
 	rep, err := wordpress.Import(ctx, e, wordpress.Options{
-		Site: s, PostsSection: section, DownloadImages: download, Fetch: fetch,
+		Site: s, PostsSection: section, DownloadImages: download, NewSite: pickTheme, Fetch: fetch,
 		Progress: func(done, total int, label string) {
 			if application.Get() == nil {
 				return

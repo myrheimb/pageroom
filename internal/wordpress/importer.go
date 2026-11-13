@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -94,8 +96,11 @@ type Options struct {
 	Site           *site.Site
 	PostsSection   string // folder for posts, default "posts"
 	DownloadImages bool
-	Fetch          Fetcher
-	Progress       func(done, total int, label string)
+	// NewSite says the site was just created, so the import may write its
+	// home page.
+	NewSite  bool
+	Fetch    Fetcher
+	Progress func(done, total int, label string)
 }
 
 type Report struct {
@@ -147,6 +152,17 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	base, _ := url.Parse(e.Link)
 	rep := &Report{CustomCSS: customCSSComments(e)}
 
+	var homePage []byte
+	if opt.DownloadImages && base != nil {
+		if page, err := opt.Fetch.Get(ctx, e.Link); err == nil {
+			homePage = page
+		}
+	}
+	homeID := 0
+	if opt.NewSite {
+		homeID = homePageID(homePage)
+	}
+
 	attachments := map[int]string{}
 	blocks := map[int]string{}
 	byID := map[int]*Item{}
@@ -177,6 +193,12 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	var place func(it *Item) *planned
 	place = func(it *Item) *planned {
 		if p := plans[it.ID]; p != nil {
+			return p
+		}
+		if it.ID == homeID && it.Type == "page" {
+			p := &planned{item: it, file: s.ContentDir + "/_index.md", url: "/", section: true}
+			plans[it.ID] = p
+			order = append(order, p)
 			return p
 		}
 		slug := it.Slug
@@ -212,6 +234,12 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		place(it)
 	}
 
+	if plans[homeID] != nil {
+		if err := os.Remove(filepath.Join(s.Root, filepath.FromSlash(plans[homeID].file))); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return rep, err
+		}
+	}
+
 	cache := map[string][]byte{}
 	for i, p := range order {
 		select {
@@ -235,35 +263,38 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 	if err := importMenus(e, plans, opt.Site, base, rep); err != nil {
 		rep.Warnings = append(rep.Warnings, "Menus couldn't be imported: "+err.Error())
 	}
-	if opt.DownloadImages && base != nil {
-		if page, err := opt.Fetch.Get(ctx, e.Link); err == nil {
-			var stylesheets [][]byte
-			var faces []FontFace
-			for _, block := range styleBlock.FindAllSubmatch(page, -1) {
-				faces = append(faces, FontFaces(string(block[2]), base)...)
-			}
-			for _, sheetURL := range StylesheetURLs(page, base) {
-				if sheet, err := opt.Fetch.Get(ctx, sheetURL); err == nil {
-					stylesheets = append(stylesheets, sheet)
-					if sheetBase, err := url.Parse(sheetURL); err == nil {
-						faces = append(faces, FontFaces(string(sheet), sheetBase)...)
-					}
+	if opt.NewSite && plans[homeID] == nil {
+		if err := writeTagline(opt.Site, e.Description); err != nil {
+			return rep, err
+		}
+	}
+	if page := homePage; page != nil {
+		var stylesheets [][]byte
+		var faces []FontFace
+		for _, block := range styleBlock.FindAllSubmatch(page, -1) {
+			faces = append(faces, FontFaces(string(block[2]), base)...)
+		}
+		for _, sheetURL := range StylesheetURLs(page, base) {
+			if sheet, err := opt.Fetch.Get(ctx, sheetURL); err == nil {
+				stylesheets = append(stylesheets, sheet)
+				if sheetBase, err := url.Parse(sheetURL); err == nil {
+					faces = append(faces, FontFaces(string(sheet), sheetBase)...)
 				}
 			}
-			for _, fontsURL := range GoogleFontsURLs(page, base) {
-				if sheet, err := opt.Fetch.Get(ctx, fontsURL); err == nil {
-					if sheetBase, err := url.Parse(fontsURL); err == nil {
-						faces = append(faces, FontFaces(string(sheet), sheetBase)...)
-					}
+		}
+		for _, fontsURL := range GoogleFontsURLs(page, base) {
+			if sheet, err := opt.Fetch.Get(ctx, fontsURL); err == nil {
+				if sheetBase, err := url.Parse(fontsURL); err == nil {
+					faces = append(faces, FontFaces(string(sheet), sheetBase)...)
 				}
 			}
-			var families fontFamilies
-			rep.Style, families = readStyles(page, stylesheets...)
-			rep.Theme = pickTheme(page, rep.Style)
-			rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
-			if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
-				return rep, err
-			}
+		}
+		var families fontFamilies
+		rep.Style, families = readStyles(page, stylesheets...)
+		rep.Theme = pickTheme(page, rep.Style)
+		rep.Style = importFonts(ctx, faces, families, base, opt, rep.Style)
+		if err := importLogo(ctx, page, base, opt, cache, rep); err != nil {
+			return rep, err
 		}
 	}
 	if u := siteIcon(e); u != "" && opt.DownloadImages {
@@ -279,6 +310,34 @@ func Import(ctx context.Context, e *Export, opt Options) (*Report, error) {
 		opt.Progress(len(order), len(order), "")
 	}
 	return rep, nil
+}
+
+var bodyPageID = regexp.MustCompile(`(?is)<body[^>]*\sclass=["'][^"']*?\bpage-id-(\d+)`)
+
+// homePageID is the ID of the page the old site shows as its home page, or 0
+// when the home page is not a page, such as a list of posts.
+func homePageID(homePage []byte) int {
+	match := bodyPageID.FindSubmatch(homePage)
+	if match == nil {
+		return 0
+	}
+	id, _ := strconv.Atoi(string(match[1]))
+	return id
+}
+
+// writeTagline replaces the starter's welcome text with the old site's
+// tagline.
+func writeTagline(s *site.Site, tagline string) error {
+	doc, _ := frontmatter.Parse(nil)
+	if err := doc.Set("title", "Home", s.DefaultFormat()); err != nil {
+		return err
+	}
+	doc.SetBody([]byte(tagline))
+	out, err := doc.Bytes()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(s.Root, filepath.FromSlash(s.ContentDir), "_index.md"), out, 0o644)
 }
 
 // importFonts copies the body and heading fonts from the old site and from

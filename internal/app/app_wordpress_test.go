@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/myrheimb/pageroom/internal/settings"
@@ -93,5 +94,55 @@ func TestImportWordPressKeepsTheSitesTheme(t *testing.T) {
 	}
 	if got := existing.Config.Theme(); got != before {
 		t.Fatalf("site theme is %q after import, want %q", got, before)
+	}
+}
+
+func TestCreateSiteFromWordPressWritesTheHomePage(t *testing.T) {
+	staticFront := `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<title>Bakery</title>
+<link>https://bakery.example/</link>
+<description>Bread</description>
+<item>
+<title>Welcome</title>
+<content:encoded><![CDATA[Come in.]]></content:encoded>
+<wp:post_id>5</wp:post_id>
+<wp:post_name>welcome</wp:post_name>
+<wp:status>publish</wp:status>
+<wp:post_type>page</wp:post_type>
+</item>
+</channel>
+</rss>`
+	tests := []struct {
+		name   string
+		export string
+		page   string
+		want   string
+	}{
+		{"static front page", staticFront, `<body class="page-id-5">`, "Come in."},
+		{"posts front page", coverExport, `<body class="home blog">`, "Bread"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			app, exportPath := newWordPressApp(t)
+			app.wordPressFetch = homePageFetcher{test.page}
+			if err := os.WriteFile(exportPath, []byte(test.export), 0o644); err != nil {
+				t.Fatal(err)
+			}
+
+			result, err := app.CreateSiteFromWordPress(exportPath, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			home, err := os.ReadFile(filepath.Join(result.Site.Info.Root, "content", "_index.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(home), test.want) || strings.Contains(string(home), "Welcome to your new website") {
+				t.Errorf("home page:\n%s", home)
+			}
+		})
 	}
 }

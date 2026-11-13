@@ -22,7 +22,7 @@
 <!-- /wp:paragraph -->
 
 <!-- wp:image {"id":11} -->
-<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="A sourdough loaf" class="wp-image-11"/></figure>
+<figure class="wp-block-image"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="A sourdough loaf" class="wp-image-11"/><figcaption class="wp-element-caption">Fresh from the oven</figcaption></figure>
 <!-- /wp:image -->
 
 <!-- wp:embed {"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} -->
@@ -92,9 +92,12 @@ Second paragraph.]]></content:encoded>
 <figure class="wp-block-video"><video controls src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"></video></figure>
 <!-- /wp:video -->
 
+[video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4"][/video]
+
 <!-- wp:html -->
 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" width="600" height="450"></iframe>
 <iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+<iframe src="https://player.vimeo.com/video/76979871" width="560" height="315"></iframe>
 <iframe src="https://forms.example.com/embed/signup"></iframe>
 <!-- /wp:html -->
 

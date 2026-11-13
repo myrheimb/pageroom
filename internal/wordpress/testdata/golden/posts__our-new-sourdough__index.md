@@ -12,7 +12,9 @@ We spent **months** perfecting this loaf. See our [story](/about/).
 
 ![A sourdough loaf](loaf.jpg)
 
-{{< youtube dQw4w9WgXcQ >}}
+_Fresh from the oven_
+
+{{< pr-video id="dQw4w9WgXcQ" >}}
 
 - Flour
 - Water

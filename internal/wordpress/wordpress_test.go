@@ -94,7 +94,7 @@ func TestImport(t *testing.T) {
 		"title = 'Our new sourdough'", "date = 2024-03-02T09:30:00Z", "categories = ['Bread', 'Coffee & cake']", "tags = ['sourdough']",
 		"aliases = ['/2024/03/02/our-new-sourdough/']", "description = \"The loaf we're proudest of.\"", "author = 'Hannah Baker'",
 		"image = 'loaf.jpg'", "We spent **months** perfecting", "[story](/about/)", "![A sourdough loaf](loaf.jpg)",
-		"{{< youtube dQw4w9WgXcQ >}}", "- Flour", "{{< contact-form >}}", "https://evil.internal/x.jpg",
+		`{{< pr-video id="dQw4w9WgXcQ" >}}`, "_Fresh from the oven_", "- Flour", "{{< contact-form >}}", "https://evil.internal/x.jpg",
 	} {
 		if !strings.Contains(p, want) {
 			t.Errorf("post missing %q:\n%s", want, p)
@@ -129,9 +129,9 @@ func TestImport(t *testing.T) {
 	bakingPage := string(baking)
 	for _, want := range []string{
 		"Rye[^1] is in the oven.", "\n<!--more-->\n", "[menu](menu.pdf)", `{{< audio src="oven.mp3" >}}`,
-		`{{< video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}`,
+		`{{< pr-video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}`,
 		`{{< google-map src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" >}}`,
-		"{{< youtube dQw4w9WgXcQ >}}", "{{< gist hannah 0123abcd >}}", "[^1]: Mostly _whole_ rye.",
+		`{{< pr-video id="dQw4w9WgXcQ" >}}`, `{{< pr-video vimeo="76979871" >}}`, "{{< gist hannah 0123abcd >}}", "[^1]: Mostly _whole_ rye.",
 	} {
 		if !strings.Contains(bakingPage, want) {
 			t.Errorf("baking day missing %q:\n%s", want, bakingPage)
@@ -141,7 +141,7 @@ func TestImport(t *testing.T) {
 		t.Errorf("leftover embed or footnote link:\n%s", bakingPage)
 	}
 	for _, name := range []string{"content/posts/baking-day/menu.pdf", "content/posts/baking-day/oven.mp3", "layouts/shortcodes/audio.html",
-		"layouts/shortcodes/gist.html", "layouts/shortcodes/google-map.html", "layouts/shortcodes/video.html"} {
+		"layouts/shortcodes/gist.html", "layouts/shortcodes/google-map.html", "layouts/shortcodes/pr-video.html"} {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
 			t.Errorf("%s wasn't written", name)
 		}

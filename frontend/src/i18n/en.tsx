@@ -861,7 +861,7 @@ export const en = {
 
   shortcodes: {
     known: {
-      youtube: "YouTube video", vimeo: "Vimeo video", figure: "Figure", gist: "GitHub gist", tweet: "Post on X",
+      youtube: "YouTube video", vimeo: "Vimeo video", video: "Video file", figure: "Figure", gist: "GitHub gist", tweet: "Post on X",
       x: "Post on X", instagram: "Instagram post", ref: "Link to page", relref: "Link to page", highlight: "Code",
       param: "Site setting", notice: "Notice box", button: "Button", details: "Expandable section", qr: "QR code",
       "contact-form": "Contact form",

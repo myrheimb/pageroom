@@ -39,5 +39,6 @@ var shippedShortcodeHashes = map[string][]string{
 	"pr-video": {
 		"9fabe4eb0c9609b92b6c000943b40e5f52c1650c6c777553fd6537d32b6bf515",
 		"f51500cb0ca258e304b874b4827ffa2584febe8488070764b27be27b1afe79f0",
+		"f4b54136e5a4ec66939a69391c9ee0baa7cc369aec6394dc8a25d319773ee1f8",
 	},
 }

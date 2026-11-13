@@ -7,7 +7,7 @@ First paragraph with a line break.
 
 ![Loaf](loaf.jpg)
 
-Our loaf
+_Our loaf_
 
 <!--more-->
 

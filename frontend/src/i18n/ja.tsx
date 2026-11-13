@@ -904,7 +904,7 @@ export const ja: Messages = {
 
   shortcodes: {
     known: {
-      youtube: "YouTube動画", vimeo: "Vimeo動画", figure: "図", gist: "GitHub Gist", tweet: "Xの投稿",
+      youtube: "YouTube動画", vimeo: "Vimeo動画", video: "動画ファイル", figure: "図", gist: "GitHub Gist", tweet: "Xの投稿",
       x: "Xの投稿", instagram: "Instagramの投稿", ref: "ページへのリンク", relref: "ページへのリンク", highlight: "コード",
       param: "サイトの設定", notice: "お知らせボックス", button: "ボタン", details: "折りたたみ", qr: "QRコード",
       "contact-form": "お問い合わせフォーム",

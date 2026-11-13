@@ -410,7 +410,7 @@ func writeItem(ctx context.Context, e *Export, p *planned, opt Options, base *ur
 	if err != nil {
 		return err
 	}
-	for _, name := range []string{"audio", "gist", "google-map", "video"} {
+	for _, name := range []string{"audio", "gist", "google-map", "pr-video"} {
 		if strings.Contains(md, "{{< "+name+" ") {
 			if err := opt.Site.AddShortcode(name); err != nil {
 				return err

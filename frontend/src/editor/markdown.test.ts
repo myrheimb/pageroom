@@ -121,6 +121,15 @@ describe("page blocks", () => {
     expect(roundTrip(md)).toBe(md);
   });
 
+  it.each(['{{< pr-video vimeo="76979871" >}}\n', '{{< pr-video src="knead.mp4" >}}\n', '{{< pr-video src="https://example.com/a/knead.mp4" >}}\n'])("round trips a Vimeo video or a video file: %s", (video) => {
+    expect(markdownToHtml(video)).toContain('data-pr="video"');
+    expect(roundTrip(video)).toBe(video);
+
+    const editor = editorFor(video);
+    expect(editor.getJSON().content!.map((node) => node.type)).toEqual(["prVideo"]);
+    editor.destroy();
+  });
+
   it("round trips a video on the page and inside a column", () => {
     const video = '{{< pr-video id="abc_123" >}}\n';
     const inColumn = `{{< pr-columns >}}\n{{< pr-column >}}\nText.\n\n${video}{{< /pr-column >}}\n\n{{< pr-column >}}\nB\n{{< /pr-column >}}\n{{< /pr-columns >}}\n`;
@@ -233,6 +242,9 @@ describe("page blocks", () => {
     ["a video without an id", "{{< pr-video >}}\n"],
     ["a video with an unsafe id", '{{< pr-video id="a/b" >}}\n'],
     ["a video with an unknown attribute", '{{< pr-video id="abc" start="10" >}}\n'],
+    ["a video with two sources", '{{< pr-video id="abc" vimeo="123" >}}\n'],
+    ["a Vimeo video with a non-numeric id", '{{< pr-video vimeo="abc" >}}\n'],
+    ["a video file with an empty src", '{{< pr-video src="" >}}\n'],
     ["a self-closing video", '{{< pr-video id="abc" />}}\n'],
     ["a banner inside a column", "{{< pr-columns >}}\n{{< pr-column >}}\n{{< pr-hero >}}\nx\n{{< /pr-hero >}}\n{{< /pr-column >}}\n\n{{< pr-column >}}\nB\n{{< /pr-column >}}\n{{< /pr-columns >}}\n"],
     ["cards inside a column", "{{< pr-columns >}}\n{{< pr-column >}}\nA\n{{< /pr-column >}}\n\n{{< pr-column >}}\n{{< pr-cards >}}\n{{< pr-card >}}\nx\n{{< /pr-card >}}\n{{< /pr-cards >}}\n{{< /pr-column >}}\n{{< /pr-columns >}}\n"],

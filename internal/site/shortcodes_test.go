@@ -278,6 +278,10 @@ Other.
 {{< /pr-columns >}}
 
 {{< pr-video id="onpage" >}}
+
+{{< pr-video vimeo="76979871" >}}
+
+{{< pr-video src="https://example.com/knead.mp4" >}}
 `
 	for _, theme := range starterThemes {
 		t.Run(theme, func(t *testing.T) {
@@ -289,6 +293,8 @@ Other.
 			for _, want := range []string{
 				`src="https://www.youtube-nocookie.com/embed/incolumn"`,
 				`src="https://www.youtube-nocookie.com/embed/onpage"`,
+				`src="https://player.vimeo.com/video/76979871?dnt=1"`,
+				`<video class="pr-video" controls preload="metadata" src="https://example.com/knead.mp4"></video>`,
 				`<p>Before.</p>`,
 				`<p>After.</p>`,
 			} {

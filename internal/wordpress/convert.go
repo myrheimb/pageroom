@@ -27,6 +27,7 @@ import (
 var (
 	blockComment = regexp.MustCompile(`<!--\s*/?wp:[\s\S]*?-->`)
 	reusableRef  = regexp.MustCompile(`<!--\s*wp:block\s+\{[^}]*?"ref":\s*(\d+)[^}]*\}\s*/-->`)
+	figcaption   = regexp.MustCompile(`(?is)<figcaption[^>]*>(.*?)</figcaption>`)
 	captionSC    = regexp.MustCompile(`(?s)\[caption[^\]]*\](.*?)\[/caption\]`)
 	embedSC      = regexp.MustCompile(`(?s)\[embed[^\]]*\](.*?)\[/embed\]`)
 	gallerySC    = regexp.MustCompile(`\[gallery([^\]]*)\]`)
@@ -99,7 +100,11 @@ func newConverter() *converter.Converter {
 				}
 			}
 			if src != "" && !strings.Contains(src, `"`) {
-				_, _ = fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", tag, src)
+				name := tag
+				if tag == "video" {
+					name = "pr-video"
+				}
+				_, _ = fmt.Fprintf(writer, "\n\n{{< %s src=\"%s\" >}}\n\n", name, src)
 			}
 			return converter.RenderSuccess
 		}, converter.PriorityEarly)
@@ -123,10 +128,10 @@ func embedShortcode(src, title string) string {
 		src = "https:" + src
 	}
 	if video := youtubeURL.FindStringSubmatch(src); video != nil {
-		return "{{< youtube " + video[1] + " >}}"
+		return `{{< pr-video id="` + video[1] + `" >}}`
 	}
 	if video := vimeoURL.FindStringSubmatch(src); video != nil {
-		return "{{< vimeo " + video[1] + " >}}"
+		return `{{< pr-video vimeo="` + video[1] + `" >}}`
 	}
 	if googleMapURL.MatchString(src) && !strings.Contains(src, `"`) {
 		if title = strings.ReplaceAll(title, `"`, ""); title != "" {
@@ -203,6 +208,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		}
 		return "<figure>" + img + "<figcaption>" + strings.TrimSpace(inner) + "</figcaption></figure>"
 	})
+	s = figcaption.ReplaceAllString(s, "<p><em>$1</em></p>")
 	s = gallerySC.ReplaceAllStringFunc(s, func(m string) string {
 		ids := galleryIDs.FindStringSubmatch(m)
 		if ids == nil {
@@ -337,10 +343,10 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 	md = bareURLLine.ReplaceAllStringFunc(md, func(line string) string {
 		u := strings.TrimSpace(line)
 		if m := youtubeURL.FindStringSubmatch(u); m != nil {
-			return "{{< youtube " + m[1] + " >}}"
+			return `{{< pr-video id="` + m[1] + `" >}}`
 		}
 		if m := vimeoURL.FindStringSubmatch(u); m != nil {
-			return "{{< vimeo " + m[1] + " >}}"
+			return `{{< pr-video vimeo="` + m[1] + `" >}}`
 		}
 		if gist := gistURL.FindStringSubmatch(u); gist != nil {
 			return gistShortcode(gist[1])

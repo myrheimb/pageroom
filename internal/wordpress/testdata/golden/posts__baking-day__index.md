@@ -12,11 +12,15 @@ See the [menu](menu.pdf).
 
 {{< audio src="oven.mp3" >}}
 
-{{< video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}
+{{< pr-video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}
+
+{{< pr-video src="https://hannahsbakery.example/wp-content/uploads/2024/04/knead.mp4" >}}
 
 {{< google-map src="https://www.google.com/maps/embed?pb=!1m18!1m12" title="Hannah's Bakery on the map" >}}
 
-{{< youtube dQw4w9WgXcQ >}}
+{{< pr-video id="dQw4w9WgXcQ" >}}
+
+{{< pr-video vimeo="76979871" >}}
 
 {{< gist hannah 0123abcd >}}
 

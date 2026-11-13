@@ -102,7 +102,11 @@ func (s *Site) SavePage(req SaveRequest) (*Page, error) {
 	}
 	fallback := s.DefaultFormat()
 	for k, v := range req.Set {
-		if err := doc.Set(k, coerce(k, v), fallback); err != nil {
+		value := coerce(k, v)
+		if doc.Format == frontmatter.YAML {
+			value = s.inSchemaOrder(k, value)
+		}
+		if err := doc.Set(k, value, fallback); err != nil {
 			return nil, fmt.Errorf("could not save %q: %w", k, err)
 		}
 	}
@@ -126,6 +130,54 @@ func (s *Site) SavePage(req SaveRequest) (*Page, error) {
 		}
 	}
 	return s.GetPage(req.Path)
+}
+
+// inSchemaOrder gives the objects of a repeat field the key order of the
+// schema's fields, so an item with no sibling to copy from is not sorted
+// alphabetically. Other values pass through.
+func (s *Site) inSchemaOrder(key string, value any) any {
+	if s.Prefs == nil {
+		return value
+	}
+	for _, def := range s.Prefs.Fields {
+		if def.Key == key && def.Type == "repeat" {
+			return orderItems(value, def.Fields)
+		}
+	}
+	return value
+}
+
+func orderItems(value any, fields []FieldDef) any {
+	items, ok := value.([]any)
+	if !ok {
+		return value
+	}
+
+	keys := make([]string, len(fields))
+	for i, def := range fields {
+		keys[i] = def.Key
+	}
+	ordered := make([]any, len(items))
+	for i, item := range items {
+		object, ok := item.(map[string]any)
+		if !ok {
+			ordered[i] = item
+			continue
+		}
+		values := make(map[string]any, len(object))
+		for k, v := range object {
+			values[k] = v
+		}
+		for _, def := range fields {
+			if def.Type == "repeat" {
+				if v, ok := values[def.Key]; ok {
+					values[def.Key] = orderItems(v, def.Fields)
+				}
+			}
+		}
+		ordered[i] = frontmatter.OrderedMap{Keys: keys, Values: values}
+	}
+	return ordered
 }
 
 // coerce converts UI values (JSON strings and numbers) back into proper

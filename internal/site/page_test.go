@@ -211,3 +211,57 @@ Body
 		})
 	}
 }
+
+func TestSavePageOrdersNewItemKeysBySchema(t *testing.T) {
+	s := fixture(t)
+	s.Prefs.Fields = []FieldDef{{
+		Key:  "steps",
+		Type: "repeat",
+		Fields: []FieldDef{
+			{Key: "title", Type: "text"},
+			{Key: "text", Type: "textarea"},
+			{Key: "slides", Type: "repeat", Fields: []FieldDef{{Key: "before", Type: "image"}, {Key: "after", Type: "image"}}},
+		},
+	}}
+	full := filepath.Join(s.Root, "content", "solution.md")
+	if err := os.WriteFile(full, []byte(solutionPage), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var steps any
+	value := `[{"title":"One","text":"Alpha","slides":[{"before":"a.jpg","after":"b.jpg"},{"before":"c.jpg","after":"d.jpg"}]},{"title":"Two","text":"Beta","slides":[{"after":"f.jpg","before":"e.jpg"}]}]`
+	if err := json.Unmarshal([]byte(value), &steps); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.SavePage(SaveRequest{Path: "content/solution.md", Set: map[string]any{"steps": steps}}); err != nil {
+		t.Fatal(err)
+	}
+
+	saved, err := os.ReadFile(full)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `---
+title: Solution
+# the steps of the solution
+steps:
+  - title: One # first
+    text: Alpha
+    slides:
+      - before: a.jpg
+        after: b.jpg
+      - before: c.jpg
+        after: d.jpg
+  # the second step
+  - title: Two
+    text: "Beta"
+    slides:
+      - before: e.jpg
+        after: f.jpg
+---
+Body
+`
+	if string(saved) != want {
+		t.Errorf("got:\n%s\nwant:\n%s", saved, want)
+	}
+}

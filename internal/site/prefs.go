@@ -41,13 +41,14 @@ type SectionPrefs struct {
 }
 
 type FieldDef struct {
-	Key      string   `yaml:"key" json:"key"`
-	Label    string   `yaml:"label" json:"label"`
-	Type     string   `yaml:"type" json:"type"` // text, textarea, number, boolean, date, image, list, select
-	Options  []string `yaml:"options" json:"options,omitempty"`
-	Help     string   `yaml:"help" json:"help,omitempty"`
-	Sections []string `yaml:"sections" json:"sections,omitempty"` // limit to these sections
-	Pages    []string `yaml:"pages" json:"pages,omitempty"`       // limit to these pages and their language twins, such as content/solution.md
+	Key      string     `yaml:"key" json:"key"`
+	Label    string     `yaml:"label" json:"label"`
+	Type     string     `yaml:"type" json:"type"` // text, textarea, number, boolean, date, image, list, select, repeat
+	Options  []string   `yaml:"options" json:"options,omitempty"`
+	Help     string     `yaml:"help" json:"help,omitempty"`
+	Sections []string   `yaml:"sections" json:"sections,omitempty"` // limit to these sections
+	Pages    []string   `yaml:"pages" json:"pages,omitempty"`       // limit to these pages and their language twins, such as content/solution.md
+	Fields   []FieldDef `yaml:"fields" json:"fields,omitempty"`     // the keys of each item of a repeat field
 }
 
 func loadPrefs(root string) (*Prefs, error) {

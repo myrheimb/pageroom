@@ -451,6 +451,12 @@ export const ja: Messages = {
     moveToSection: "セクションへ移動…",
   },
 
+  repeat: {
+    item: (number: number) => `項目 ${number}`,
+    empty: "まだ何もありません。",
+    unnamedKey: (key: string) => `${key}（ここでは編集できません）`,
+  },
+
   pageSettings: {
     label: "ページの設定",
     homeTitleNote: "テーマによっては、トップページに表示されません。",

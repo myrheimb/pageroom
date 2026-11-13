@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"gopkg.in/yaml.v3"
 )
@@ -236,4 +237,50 @@ func equalValues(a, b any) bool {
 	ja, err1 := json.Marshal(a)
 	jb, err2 := json.Marshal(b)
 	return err1 == nil && err2 == nil && bytes.Equal(ja, jb)
+}
+
+// OrderedMap is a map that YAML writes with Keys first, in that order, and
+// any other keys after them in alphabetical order.
+type OrderedMap struct {
+	Keys   []string
+	Values map[string]any
+}
+
+func (m OrderedMap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.Values)
+}
+
+func (m OrderedMap) MarshalYAML() (any, error) {
+	node := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
+	written := map[string]bool{}
+	add := func(key string) error {
+		value, ok := m.Values[key]
+		if !ok || written[key] {
+			return nil
+		}
+		written[key] = true
+		var valueNode yaml.Node
+		if err := valueNode.Encode(value); err != nil {
+			return err
+		}
+		node.Content = append(node.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: key}, &valueNode)
+		return nil
+	}
+
+	for _, key := range m.Keys {
+		if err := add(key); err != nil {
+			return nil, err
+		}
+	}
+	rest := make([]string, 0, len(m.Values))
+	for key := range m.Values {
+		rest = append(rest, key)
+	}
+	sort.Strings(rest)
+	for _, key := range rest {
+		if err := add(key); err != nil {
+			return nil, err
+		}
+	}
+	return node, nil
 }

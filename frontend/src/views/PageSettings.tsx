@@ -4,6 +4,7 @@ import { api, type FieldDef, type Page } from "../api";
 import { useStore } from "../store";
 import { ask, Switch } from "../ui";
 import { t } from "../i18n";
+import { scopedFields } from "./scope";
 
 interface Props {
   page: Page;
@@ -18,19 +19,14 @@ interface Props {
 // Keys with their own controls, hidden from "Other settings".
 const handled = new Set(["title", "draft", "date", "description", "summary", "image", "imageAlt", "tags", "categories", "weight", "slug", "url", "aliases", "menus", "menu", "lastmod", "publishDate"]);
 
-// content/solution.ja.md is the language twin of content/solution.md.
-const withoutLanguage = (path: string) => path.replace(/\.[a-z]{2,3}(-[A-Za-z]+)?\.md$/, ".md");
-
 export function PageSettings({ page, fields, setField, resolveImage, pickImage, onRenamed, save }: Props) {
   const site = useStore((s) => s.site);
   const error = useStore((s) => s.error);
   const [more, setMore] = useState(false);
   const section = page.path.split("/")[1] ?? "";
-  const custom = useMemo(
-    () => (site?.info.prefs.fields ?? []).filter((f) => !handled.has(f.key) && (!f.sections?.length || f.sections.includes(section)) && (!f.pages?.length || f.pages.some((p) => withoutLanguage(p) === withoutLanguage(page.path)))),
-    [site, section, page.path],
-  );
-  const customKeys = new Set(custom.map((f) => f.key));
+  const scoped = useMemo(() => scopedFields(site?.info.prefs.fields ?? [], page.path), [site, page.path]);
+  const custom = useMemo(() => scoped.filter((f) => !handled.has(f.key) && f.type !== "repeat"), [scoped]);
+  const customKeys = new Set(scoped.map((f) => f.key));
   const isPost = /^(posts?|blog|news|articles)$/i.test(section);
   const others = Object.keys(fields).filter((k) => !handled.has(k) && !customKeys.has(k));
 
@@ -139,7 +135,7 @@ function toLocalInput(v: any): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function ImageField({ label, value, onChange, resolve, pick }: { label: string; value: any; onChange: (v: any) => void; resolve: (s: string) => string | null; pick: Props["pickImage"] }) {
+export function ImageField({ label, value, onChange, resolve, pick }: { label: string; value: any; onChange: (v: any) => void; resolve: (s: string) => string | null; pick: Props["pickImage"] }) {
   const src = typeof value === "string" ? value : "";
   const url = src ? resolve(src) : null;
   return (
@@ -188,8 +184,8 @@ function ListField({ label, value, onChange, placeholder }: { label: string; val
   );
 }
 
-function CustomField({ def, value, onChange, resolve, pick }: { def: FieldDef; value: any; onChange: (v: any) => void; resolve: Props["resolveImage"]; pick: Props["pickImage"] }) {
-  const id = "cf-" + def.key;
+export function CustomField({ def, value, onChange, resolve, pick, idPrefix = "cf-" }: { idPrefix?: string; def: FieldDef; value: any; onChange: (v: any) => void; resolve: Props["resolveImage"]; pick: Props["pickImage"] }) {
+  const id = idPrefix + def.key;
   const label = def.label || def.key;
   switch (def.type) {
     case "image":

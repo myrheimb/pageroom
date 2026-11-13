@@ -50,7 +50,7 @@ export interface Welcome { recent: RecentSite[]; name: string; email: string; si
 export interface UpdateRelease { version: string; url: string }
 
 export interface SectionPrefs { label: string; icon: string; hidden: boolean }
-export interface FieldDef { key: string; label: string; type: string; options?: string[]; help?: string; sections?: string[]; pages?: string[] }
+export interface FieldDef { key: string; label: string; type: string; options?: string[]; help?: string; sections?: string[]; pages?: string[]; fields?: FieldDef[] }
 export interface Prefs {
   version: number;
   hugo: { version: string };

@@ -408,6 +408,12 @@ export const en = {
     moveToSection: "Move to section…",
   },
 
+  repeat: {
+    item: (number: number) => `Item ${number}`,
+    empty: "Nothing here yet.",
+    unnamedKey: (key: string) => `${key} (not editable here)`,
+  },
+
   pageSettings: {
     label: "Page settings",
     homeTitleNote: "Some themes don't show this on the home page.",

@@ -239,6 +239,32 @@ Second paragraph.]]></content:encoded>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
+<!-- wp:cover {"url":"https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg","id":11} -->
+<div class="wp-block-cover"><span aria-hidden="true" class="wp-block-cover__background has-background-dim"></span><img class="wp-block-cover__image-background wp-image-11" alt="A loaf behind the title" src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" data-object-fit="cover"/><div class="wp-block-cover__inner-container"><!-- wp:heading {"textAlign":"center"} -->
+<h2 class="wp-block-heading has-text-align-center">Bread for everyone</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"center"} -->
+<p class="has-text-align-center">Baked before sunrise.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/about/">Visit us</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="mailto:hannah@hannahsbakery.example">Write to us</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons --></div></div>
+<!-- /wp:cover -->
+
+<!-- wp:cover {"overlayColor":"black"} -->
+<div class="wp-block-cover"><span aria-hidden="true" class="wp-block-cover__background has-black-background-color has-background-dim-100 has-background-dim"></span><div class="wp-block-cover__inner-container"><!-- wp:paragraph -->
+<p>Plain colour cover.</p>
+<!-- /wp:paragraph --></div></div>
+<!-- /wp:cover -->
+
 [gist]https://gist.github.com/hannah/0123abcd[/gist]
 
 <script>var tracking = 1;</script>

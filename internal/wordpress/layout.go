@@ -17,7 +17,7 @@ import (
 // in place of the buttons in prepared HTML. toMarkdown turns the markers into
 // pr-align, pr-columns and pr-button shortcodes once the blocks are Markdown.
 func markLayout(content string) string {
-	if !strings.Contains(content, "align") && !strings.Contains(content, "wp-block-button") && !strings.Contains(content, "wp-block-column") && !strings.Contains(content, "wp-block-media-text") {
+	if !strings.Contains(content, "align") && !strings.Contains(content, "wp-block-button") && !strings.Contains(content, "wp-block-column") && !strings.Contains(content, "wp-block-media-text") && !strings.Contains(content, "wp-block-cover") {
 		return content
 	}
 	body := &nethtml.Node{Type: nethtml.ElementNode, DataAtom: atom.Body, Data: "body"}
@@ -60,6 +60,9 @@ func markElement(el *nethtml.Node) {
 	}
 	if hasClass(el, "wp-block-media-text") {
 		markMediaText(el)
+		return
+	}
+	if hasClass(el, "wp-block-cover") && markCover(el) {
 		return
 	}
 	align := alignOf(el)
@@ -331,6 +334,107 @@ func markMediaText(block *nethtml.Node) {
 	replaceWithColumns(block, "", valign, contents)
 }
 
+var backgroundImage = regexp.MustCompile(`background-image:\s*url\(\s*['"]?([^'")\s]+)`)
+
+// markCover turns a wp:cover block with a background image into markers
+// around its content, with the image first. toMarkdown turns them into a
+// pr-hero. It reports false and leaves the block as it is when there's no
+// image or no content.
+func markCover(cover *nethtml.Node) bool {
+	var inner *nethtml.Node
+	for _, div := range allElements(cover, "div") {
+		if hasClass(div, "wp-block-cover__inner-container") {
+			inner = div
+			break
+		}
+	}
+	src, alt := coverImage(cover)
+	if inner == nil || src == "" {
+		return false
+	}
+	align := alignOf(cover)
+	for child := inner.FirstChild; child != nil && align == ""; child = child.NextSibling {
+		if child.Type == nethtml.ElementNode && isTextBlock(child) {
+			align = alignOf(child)
+		}
+	}
+	attributes := ""
+	if alt = strings.ReplaceAll(strings.ReplaceAll(alt, `"`, ""), `\`, ""); alt != "" && !strings.Contains(alt, "{{") {
+		attributes += fmt.Sprintf(` alt="%s"`, alt)
+	}
+	if link := firstButton(inner); link != nil {
+		text := plainText(renderChildren(link))
+		if buttonShortcode(attr(link, "href"), text, "") != "" {
+			attributes += fmt.Sprintf(` button="%s" link="%s"`, text, attr(link, "href"))
+			removeButton(link)
+		}
+	}
+	if align != "" {
+		attributes += fmt.Sprintf(` align="%s"`, align)
+	}
+
+	picture := &nethtml.Node{Type: nethtml.ElementNode, Data: "p"}
+	picture.AppendChild(&nethtml.Node{Type: nethtml.ElementNode, Data: "img", Attr: []nethtml.Attribute{{Key: "src", Val: src}}})
+	parent := cover.Parent
+	parent.InsertBefore(markerParagraph("PRHEROSTART"+hex.EncodeToString([]byte(attributes))), cover)
+	parent.InsertBefore(picture, cover)
+	for inner.FirstChild != nil {
+		node := inner.FirstChild
+		inner.RemoveChild(node)
+		parent.InsertBefore(node, cover)
+	}
+	parent.InsertBefore(markerParagraph("PRHEROEND"), cover)
+	parent.RemoveChild(cover)
+	return true
+}
+
+// coverImage is the address and alt text of the cover's background image,
+// from an img or from a background-image style.
+func coverImage(cover *nethtml.Node) (string, string) {
+	for _, img := range allElements(cover, "img") {
+		if hasClass(img, "wp-block-cover__image-background") && attr(img, "src") != "" {
+			return attr(img, "src"), attr(img, "alt")
+		}
+	}
+	for _, el := range append([]*nethtml.Node{cover}, allElements(cover, "div")...) {
+		if found := backgroundImage.FindStringSubmatch(attr(el, "style")); found != nil && (el == cover || hasClass(el, "wp-block-cover__image-background")) {
+			return found[1], attr(el, "aria-label")
+		}
+	}
+	return "", ""
+}
+
+func firstButton(inner *nethtml.Node) *nethtml.Node {
+	for _, link := range allElements(inner, "a") {
+		if hasClass(link, "wp-block-button__link") {
+			return link
+		}
+	}
+	return nil
+}
+
+// removeButton takes a button out of its row, and the row when it's empty.
+func removeButton(link *nethtml.Node) {
+	button := link
+	if hasClass(link.Parent, "wp-block-button") {
+		button = link.Parent
+	}
+	row := button.Parent
+	row.RemoveChild(button)
+	if hasClass(row, "wp-block-buttons") && !hasElement(row) {
+		row.Parent.RemoveChild(row)
+	}
+}
+
+func hasElement(el *nethtml.Node) bool {
+	for child := el.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == nethtml.ElementNode {
+			return true
+		}
+	}
+	return false
+}
+
 func replaceWithColumns(block *nethtml.Node, layout, valign string, contents [][]*nethtml.Node) {
 	attributes := ""
 	if layout != "" {
@@ -423,7 +527,7 @@ func fitsColumn(nodes []*nethtml.Node) bool {
 		case node.Type == nethtml.TextNode && strings.TrimSpace(node.Data) == "":
 		case node.Type != nethtml.ElementNode:
 			return false
-		case node.Data == "p" && node.FirstChild != nil && strings.HasPrefix(node.FirstChild.Data, "PRCOLUMN"):
+		case node.Data == "p" && node.FirstChild != nil && (strings.HasPrefix(node.FirstChild.Data, "PRCOLUMN") || strings.HasPrefix(node.FirstChild.Data, "PRHERO")):
 			return false
 		case isColumnMedia(node):
 		case slices.Contains([]string{"p", "h1", "h2", "h3", "h4", "ul", "ol", "blockquote", "table", "pre", "figure"}, node.Data):

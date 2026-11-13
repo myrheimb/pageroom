@@ -104,6 +104,16 @@ Closed on Sundays.
 {{< /pr-column >}}
 {{< /pr-columns >}}
 
+{{< pr-hero image="loaf.jpg" alt="A loaf behind the title" button="Visit us" link="/about/" align="center" >}}
+## Bread for everyone
+
+Baked before sunrise.
+
+[Write to us](mailto:hannah@hannahsbakery.example)
+{{< /pr-hero >}}
+
+Plain colour cover.
+
 {{< gist hannah 0123abcd >}}
 
 [^1]: Mostly _whole_ rye.

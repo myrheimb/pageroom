@@ -42,6 +42,7 @@ var (
 	alignMarker  = regexp.MustCompile(`(?s)PRALIGNSTART(center|right)\s+(.*?)\s+PRALIGNEND`)
 	buttonMarker = regexp.MustCompile(`PRBUTTON([0-9a-f]+)`)
 	columnMarker = regexp.MustCompile(`(?s)PRCOLUMNSSTART([0-9a-f]*)\s+(.*?)\s*PRCOLUMNSEND`)
+	heroMarker   = regexp.MustCompile(`(?s)PRHEROSTART([0-9a-f]*)\s+!\[[^\]]*\]\((\S+?)\)\s*(.*?)\s*PRHEROEND`)
 	moreTag      = regexp.MustCompile(`<!--more\b.*?-->`)
 	audioSC      = regexp.MustCompile(`\[audio(\s[^\]]*)?\](?:\s*\[/audio\])?`)
 	audioSrc     = regexp.MustCompile(`\b(?:src|mp3|m4a|ogg|wav)=["']([^"']+)["']`)
@@ -340,6 +341,11 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 			columns = append(columns, "{{< pr-column >}}\n"+column+"{{< /pr-column >}}")
 		}
 		return "{{< pr-columns" + string(attributes) + " >}}\n" + strings.Join(columns, "\n\n") + "\n{{< /pr-columns >}}"
+	})
+	md = heroMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		parts := heroMarker.FindStringSubmatch(marker)
+		attributes, _ := hex.DecodeString(parts[1])
+		return `{{< pr-hero image="` + parts[2] + `"` + string(attributes) + " >}}\n" + parts[3] + "\n{{< /pr-hero >}}"
 	})
 	md = addFootnotes(md, footnotes)
 	// Longest URLs first so a sized variant isn't partially replaced.

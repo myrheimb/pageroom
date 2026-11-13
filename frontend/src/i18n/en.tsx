@@ -412,6 +412,10 @@ export const en = {
     item: (number: number) => `Item ${number}`,
     empty: "Nothing here yet.",
     unnamedKey: (key: string) => `${key} (not editable here)`,
+    moveUp: (label: string, number: number) => `Move ${label} ${number} up`,
+    moveDown: (label: string, number: number) => `Move ${label} ${number} down`,
+    remove: (label: string, number: number) => `Remove ${label} ${number}`,
+    add: (label: string) => `Add ${label}`,
   },
 
   pageSettings: {

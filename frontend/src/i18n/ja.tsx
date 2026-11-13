@@ -455,6 +455,10 @@ export const ja: Messages = {
     item: (number: number) => `項目 ${number}`,
     empty: "まだ何もありません。",
     unnamedKey: (key: string) => `${key}（ここでは編集できません）`,
+    moveUp: (label: string, number: number) => `${label} ${number} を上へ移動`,
+    moveDown: (label: string, number: number) => `${label} ${number} を下へ移動`,
+    remove: (label: string, number: number) => `${label} ${number} を削除`,
+    add: (label: string) => `${label}を追加`,
   },
 
   pageSettings: {

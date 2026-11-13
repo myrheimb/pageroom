@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { type FieldDef } from "../api";
 import { t } from "../i18n";
 import { CustomField } from "./PageSettings";
@@ -25,6 +26,14 @@ export function RepeatField({ def, value, onChange, resolveImage, pickImage, idP
     onChange(items.map((item, i) => (i === index ? next : item)));
   };
 
+  const move = (index: number, by: number) => {
+    const next = [...items];
+    [next[index], next[index + by]] = [next[index + by], next[index]];
+    onChange(next);
+  };
+
+  const label = def.label || def.key;
+
   return (
     <section className="repeat" aria-labelledby={idPrefix + "label"}>
       <h3 id={idPrefix + "label"} className="repeat-label">{def.label || def.key}</h3>
@@ -34,7 +43,12 @@ export function RepeatField({ def, value, onChange, resolveImage, pickImage, idP
         const itemPrefix = `${idPrefix}${index}-`;
         return (
           <div key={index} className="repeat-card" role="group" aria-label={`${def.label || def.key} ${t.repeat.item(index + 1)}`}>
-            <h4 className="repeat-item">{t.repeat.item(index + 1)}</h4>
+            <div className="repeat-head">
+              <h4 className="repeat-item">{t.repeat.item(index + 1)}</h4>
+              <button className="btn icon sm ghost" onClick={() => move(index, -1)} disabled={index === 0} aria-label={t.repeat.moveUp(label, index + 1)}><ArrowUp size={14} /></button>
+              <button className="btn icon sm ghost" onClick={() => move(index, 1)} disabled={index === items.length - 1} aria-label={t.repeat.moveDown(label, index + 1)}><ArrowDown size={14} /></button>
+              <button className="btn icon sm ghost danger" onClick={() => onChange(items.filter((_, i) => i !== index))} aria-label={t.repeat.remove(label, index + 1)}><X size={14} /></button>
+            </div>
             {schema.map((child) =>
               child.type === "repeat" ? (
                 <RepeatField key={child.key} def={child} value={item[child.key]} onChange={(v) => setKey(index, child.key, v)} resolveImage={resolveImage} pickImage={pickImage} idPrefix={itemPrefix + child.key + "-"} />
@@ -53,6 +67,7 @@ export function RepeatField({ def, value, onChange, resolveImage, pickImage, idP
           </div>
         );
       })}
+      <button className="btn sm" onClick={() => onChange([...items, {}])}><Plus size={14} /> {t.repeat.add(label)}</button>
     </section>
   );
 }

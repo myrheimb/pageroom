@@ -1,6 +1,7 @@
 package wordpress
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -38,6 +39,8 @@ var (
 	googleMapURL = regexp.MustCompile(`^https://(?:www\.|maps\.)?google\.[a-z.]+/maps(?:/d)?(?:/embed\?|\?.*\boutput=embed)`)
 	gistURL      = regexp.MustCompile(`^https?://gist\.github\.com/((?:[\w-]+/)?[0-9a-f]+)(?:\.js)?/?(?:[?#].*)?$`)
 	gistPath     = regexp.MustCompile(`^(?:[\w-]+/)?[0-9a-f]+$`)
+	alignMarker  = regexp.MustCompile(`(?s)PRALIGNSTART(center|right)\s+(.*?)\s+PRALIGNEND`)
+	buttonMarker = regexp.MustCompile(`PRBUTTON([0-9a-f]+)`)
 	moreTag      = regexp.MustCompile(`<!--more\b.*?-->`)
 	audioSC      = regexp.MustCompile(`\[audio(\s[^\]]*)?\](?:\s*\[/audio\])?`)
 	audioSrc     = regexp.MustCompile(`\b(?:src|mp3|m4a|ogg|wav)=["']([^"']+)["']`)
@@ -235,7 +238,7 @@ func prepare(content string, attachments map[int]string, blocks map[int]string) 
 		}
 		s = strings.Join(paras, "\n")
 	}
-	return s
+	return markLayout(s)
 }
 
 // fileURLs lists the images and files the content shows or links to.
@@ -320,6 +323,11 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 	if err != nil {
 		return "", nil, err
 	}
+	md = alignMarker.ReplaceAllString(md, "{{< pr-align to=\"$1\" >}}\n$2\n{{< /pr-align >}}")
+	md = buttonMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		decoded, _ := hex.DecodeString(strings.TrimPrefix(marker, "PRBUTTON"))
+		return string(decoded)
+	})
 	md = addFootnotes(md, footnotes)
 	// Longest URLs first so a sized variant isn't partially replaced.
 	for _, from := range sortedByLength(local) {
@@ -330,13 +338,13 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 		// working. Files in wp-content that failed to download keep their full
 		// address and load from the old site.
 		host := regexp.QuoteMeta(strings.TrimPrefix(oldBase.Hostname(), "www."))
-		re := regexp.MustCompile(`\]\(https?://(?:www\.)?` + host + `(/[^)\s]*)`)
+		re := regexp.MustCompile(`(\]\(|link=")https?://(?:www\.)?` + host + `(/[^)\s"]*)`)
 		md = re.ReplaceAllStringFunc(md, func(m string) string {
-			p := re.FindStringSubmatch(m)[1]
-			if strings.HasPrefix(p, "/wp-content/") {
+			parts := re.FindStringSubmatch(m)
+			if strings.HasPrefix(parts[2], "/wp-content/") {
 				return m
 			}
-			return "](" + p
+			return parts[1] + parts[2]
 		})
 	}
 	// Video links alone on a line were auto-embedded by WordPress.

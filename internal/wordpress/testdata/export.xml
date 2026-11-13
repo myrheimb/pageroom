@@ -101,6 +101,38 @@ Second paragraph.]]></content:encoded>
 <iframe src="https://forms.example.com/embed/signup"></iframe>
 <!-- /wp:html -->
 
+<!-- wp:heading {"textAlign":"center"} -->
+<h2 class="wp-block-heading has-text-align-center">Come by</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"align":"right"} -->
+<p class="has-text-align-right">Open every morning.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:quote {"textAlign":"center"} -->
+<blockquote class="wp-block-quote has-text-align-center"><p>Best bread in town.</p></blockquote>
+<!-- /wp:quote -->
+
+<!-- wp:image {"id":11,"align":"center"} -->
+<figure class="wp-block-image aligncenter"><img src="https://hannahsbakery.example/wp-content/uploads/2024/03/loaf-1024x683.jpg" alt="Another loaf" class="wp-image-11"/></figure>
+<!-- /wp:image -->
+
+<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
+<div class="wp-block-buttons is-content-justification-center"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/about/">Our story</a></div>
+<!-- /wp:button -->
+
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://hannahsbakery.example/wp-content/uploads/2024/04/menu.pdf">Menu</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="mailto:hannah@hannahsbakery.example">Write to us</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
 [gist]https://gist.github.com/hannah/0123abcd[/gist]
 
 <script>var tracking = 1;</script>

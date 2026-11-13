@@ -72,7 +72,7 @@ func newWatcher(root string, onChange func(prefsChanged bool)) (*watcher, error)
 					timer.Stop()
 				}
 				timer = time.AfterFunc(400*time.Millisecond, func() { onChange(prefsTouched.Swap(false)) })
-			case <-fw.Errors:
+			case _ = <-fw.Errors:
 			}
 		}
 	}()

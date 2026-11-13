@@ -181,3 +181,20 @@ func TestYAMLEncodeReturnsEncoderError(t *testing.T) {
 		t.Fatal("Encode accepted a value that is not valid UTF-8")
 	}
 }
+
+func TestYAMLNestedSetChangesOnlyTheChangedLine(t *testing.T) {
+	src := "---\nitems:\n  # first\n  - name: 'a'   # kept\n    tags: [x, y]\n  - name: b\n---\n"
+	d, _ := Parse([]byte(src))
+	items := []any{
+		map[string]any{"name": "c", "tags": []any{"x", "y"}},
+		map[string]any{"name": "b"},
+	}
+	if err := d.Set("items", items, YAML); err != nil {
+		t.Fatal(err)
+	}
+	out, _ := d.Bytes()
+	want := "---\nitems:\n  # first\n  - name: 'c' # kept\n    tags: [x, y]\n  - name: b\n---\n"
+	if string(out) != want {
+		t.Errorf("want %q\ngot  %q", want, out)
+	}
+}

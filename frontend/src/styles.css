@@ -537,3 +537,12 @@ html[data-card-drop] .prosemirror-dropcursor-block { display: none; }
 .cover-picture .cover-actions { display: flex; gap: 6px; }
 .cover-missing { color: var(--text-3); }
 .side-note { margin: -4px 0 10px; }
+
+.repeat { margin-top: 32px; }
+.repeat-label { margin: 0 0 12px; font-size: 16px; }
+.repeat-card { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 0; margin-bottom: 12px; background: var(--surface); }
+.repeat-item { margin: 0 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 650; }
+.repeat .repeat { margin-top: 8px; }
+.repeat-head { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
+.repeat-head .repeat-item { margin: 0 auto 0 0; }
+.repeat > .btn { margin-bottom: 12px; }

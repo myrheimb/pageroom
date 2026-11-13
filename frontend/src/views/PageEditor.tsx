@@ -5,6 +5,8 @@ import { useStore, flatPages, findTranslation } from "../store";
 import { ask, Banner, Dialog, Menu, Spinner, Tip, timeAgo } from "../ui";
 import { BlockEditor, type BlockEditorHandle } from "../editor/BlockEditor";
 import { PageSettings } from "./PageSettings";
+import { scopedFields } from "./scope";
+import { RepeatField } from "./RepeatField";
 import { MediaPicker } from "./MediaPicker";
 import { HistoryDialog } from "./History";
 import { PreviewPane } from "./Preview";
@@ -168,6 +170,7 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
   };
 
   const languages = site?.info.languages ?? [];
+  const repeatFields = page ? scopedFields(site?.info.prefs.fields ?? [], page.path).filter((f) => f.type === "repeat") : [];
   const current = tree ? findTranslation(tree, path) : undefined;
   const addLanguage = async (language: string) => {
     await save();
@@ -263,6 +266,9 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
                 pasteImage={pasteImage}
                 onChange={() => { pending.current.body = true; schedule(); }}
               />
+              {repeatFields.map((def) => (
+                <RepeatField key={def.key} def={def} value={fields[def.key]} onChange={(v) => setField(def.key, v)} resolveImage={resolveImage} pickImage={pickImage} />
+              ))}
             </div>
           )}
         </div>

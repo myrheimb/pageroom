@@ -10,7 +10,7 @@ export interface FieldDef {
     "label": string;
 
     /**
-     * text, textarea, number, boolean, date, image, list, select
+     * text, textarea, number, boolean, date, image, list, select, repeat
      */
     "type": string;
     "options"?: string[] | null;
@@ -20,6 +20,16 @@ export interface FieldDef {
      * limit to these sections
      */
     "sections"?: string[] | null;
+
+    /**
+     * limit to these pages and their language twins, such as content/solution.md
+     */
+    "pages"?: string[] | null;
+
+    /**
+     * the keys of each item of a repeat field
+     */
+    "fields"?: FieldDef[] | null;
 }
 
 export interface HugoPrefs {

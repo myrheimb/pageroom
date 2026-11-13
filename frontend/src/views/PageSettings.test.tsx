@@ -3,6 +3,7 @@ import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { PageSettings } from "./PageSettings";
 import { t } from "../i18n";
+import { useStore } from "../store";
 
 vi.mock("../api", () => ({ api: {} }));
 
@@ -43,5 +44,29 @@ describe("page settings panel", () => {
     }
     expect(host.textContent).toContain(t.pageSettings.otherSettings(1));
     expect(host.textContent).not.toContain(t.pageSettings.otherSettingsHelp);
+  });
+
+  describe("field scope", () => {
+    const fieldDefs = [
+      { key: "onlySolution", label: "Only solution", type: "text", pages: ["content/solution.md"] },
+      { key: "onlyPosts", label: "Only posts", type: "text", sections: ["posts"] },
+      { key: "everywhere", label: "Everywhere", type: "text" },
+    ];
+    async function shownFor(path: string) {
+      useStore.setState({ site: { info: { prefs: { fields: fieldDefs } } } } as never);
+      const host = await render({}, { ...page, path } as never);
+      return fieldDefs.filter((f) => host.textContent?.includes(f.label)).map((f) => f.key);
+    }
+
+    it("shows a pages field on the page and its language twin only", async () => {
+      expect(await shownFor("content/solution.md")).toEqual(["onlySolution", "everywhere"]);
+      expect(await shownFor("content/solution.ja.md")).toEqual(["onlySolution", "everywhere"]);
+      expect(await shownFor("content/about.md")).toEqual(["everywhere"]);
+    });
+
+    it("still matches a sections field on a page and its twin", async () => {
+      expect(await shownFor("content/posts/a.md")).toEqual(["onlyPosts", "everywhere"]);
+      expect(await shownFor("content/posts/a.ja.md")).toEqual(["onlyPosts", "everywhere"]);
+    });
   });
 });

@@ -28,16 +28,43 @@ menus: [main, footer]
 fields:
   - key: subtitle
     label: Subtitle
-    type: text            # text | textarea | number | boolean | date | image | list | select
+    type: text            # text | textarea | number | boolean | date | image | list | select | repeat
     help: Shown under the title.
   - key: hero
     label: Big header image
     type: image
     sections: [posts]     # only for pages in these sections
+  - key: tagline
+    label: Tagline
+    type: text
+    pages: [content/solution.md]   # only for this page and its language twins, such as content/solution.ja.md
   - key: layout
     label: Layout
     type: select
     options: [default, wide, landing]
+  - key: steps
+    label: Steps
+    type: repeat          # a list of objects, shown as cards below the page body
+    pages: [content/solution.md]
+    fields:               # the keys of each item, which can hold another repeat
+      - key: title
+        label: Title
+        type: text
+      - key: slides
+        label: Slides
+        type: repeat
+        fields:
+          - key: before
+            label: Before
+            type: image
+          - key: after
+            label: After
+            type: image
+
+# A repeat field never shows in Page settings. Each item is a card with the
+# controls of its `fields`. A key in an item that `fields` doesn't name shows
+# read-only and is kept on save. A new item's keys are saved in the order of
+# `fields`, but only in YAML front matter. TOML and JSON pages sort them.
 
 media:
   maxWidth: 2400          # larger photos are scaled down on import

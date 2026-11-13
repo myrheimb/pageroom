@@ -1,6 +1,25 @@
 {
-  "hugoVersion": "0.166.0",
+  "hugoVersion": "0.168.0",
   "themes": [
+    {
+      "name": "Ardeidae",
+      "title": "Ardeidae",
+      "description": "A blog theme featuring generative art on the home page.",
+      "author": "Luís Sousa Rêgo",
+      "tags": [
+        "blog",
+        "generative art"
+      ],
+      "license": "MIT",
+      "demo": "https://luisrego.com/ardeidae-demo/",
+      "updated": "2024-03-26T17:01:18Z",
+      "module": "github.com/LuisSousaRego/Ardeidae",
+      "commit": "2b03aa6f994f4d6d548bcf8f3700b31af84d0814",
+      "archive": "https://github.com/LuisSousaRego/Ardeidae/archive/2b03aa6f994f4d6d548bcf8f3700b31af84d0814.tar.gz",
+      "sha256": "701850bc6755c12d87d87b2de13491a918eba93bc71f078edc363e0b94b128b3",
+      "thumbnail": "https://raw.githubusercontent.com/LuisSousaRego/Ardeidae/2b03aa6f994f4d6d548bcf8f3700b31af84d0814/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/LuisSousaRego/Ardeidae/2b03aa6f994f4d6d548bcf8f3700b31af84d0814/images/screenshot.jpg"
+    },
     {
       "name": "Binario",
       "title": "Binario",
@@ -68,13 +87,13 @@
       ],
       "license": "MIT",
       "demo": "https://hugodoit.pages.dev",
-      "updated": "2026-10-26T08:07:54Z",
+      "updated": "2026-11-03T15:32:37Z",
       "module": "github.com/HEIGE-PCloud/DoIt",
-      "commit": "fbf366bdef25593e372a0334b6664046a8e54f54",
-      "archive": "https://github.com/HEIGE-PCloud/DoIt/archive/fbf366bdef25593e372a0334b6664046a8e54f54.tar.gz",
-      "sha256": "d2027b065a2965394ecb1d25f47d8f1a23ea9d619a7108cb96be41db60a21d39",
-      "thumbnail": "https://raw.githubusercontent.com/HEIGE-PCloud/DoIt/fbf366bdef25593e372a0334b6664046a8e54f54/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/HEIGE-PCloud/DoIt/fbf366bdef25593e372a0334b6664046a8e54f54/images/screenshot.png"
+      "commit": "bcc86cc59149140a8961c261fb9396caaf62a36b",
+      "archive": "https://github.com/HEIGE-PCloud/DoIt/archive/bcc86cc59149140a8961c261fb9396caaf62a36b.tar.gz",
+      "sha256": "d56fe49ad8cbb1aa83eae6340104cb0e76ad3e11f0b3fb33a825498a22a1ec16",
+      "thumbnail": "https://raw.githubusercontent.com/HEIGE-PCloud/DoIt/bcc86cc59149140a8961c261fb9396caaf62a36b/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/HEIGE-PCloud/DoIt/bcc86cc59149140a8961c261fb9396caaf62a36b/images/screenshot.png"
     },
     {
       "name": "Hugo-Octopress",
@@ -221,6 +240,28 @@
       "screenshot": "https://raw.githubusercontent.com/josephhutch/aether/81483842bed9996bbe4ddf2d1e750492699c132d/images/screenshot.png"
     },
     {
+      "name": "alpha",
+      "title": "alpha",
+      "description": "Alpha is an accessible Hugo theme built for content driven websites like blogs, and creative-writing type of sites. Designed with readability in mind, Alpha offers a distraction free experience.",
+      "author": "oxypteros",
+      "tags": [
+        "blog",
+        "stories",
+        "book",
+        "tailwind"
+      ],
+      "license": "MIT",
+      "demo": "https://alpha.oxypteros.com",
+      "minHugoVersion": "0.156.0",
+      "updated": "2026-04-03T17:01:13Z",
+      "module": "github.com/oxypteros/alpha",
+      "commit": "450e5d28494b0108057b3e0ed8360c4fe42287c3",
+      "archive": "https://github.com/oxypteros/alpha/archive/450e5d28494b0108057b3e0ed8360c4fe42287c3.tar.gz",
+      "sha256": "f61f5771abf419646c24bdecf450fb79aa2aea98f3cb124e5b76da922507fd06",
+      "thumbnail": "https://raw.githubusercontent.com/oxypteros/alpha/450e5d28494b0108057b3e0ed8360c4fe42287c3/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/oxypteros/alpha/450e5d28494b0108057b3e0ed8360c4fe42287c3/images/screenshot.jpg"
+    },
+    {
       "name": "alpha-church",
       "title": "Alpha Church",
       "description": "A hugo port of html5up Alpha theme. Customised for church use.",
@@ -230,14 +271,14 @@
         "podcast"
       ],
       "license": "Creative Commons Attribution 3.0",
-      "minHugoVersion": "0.156.0",
-      "updated": "2026-05-03T05:51:25Z",
+      "minHugoVersion": "0.160.0",
+      "updated": "2026-10-31T09:22:36Z",
       "module": "github.com/funkydan2/alpha-church",
-      "commit": "a90488b5c84c8e2cfd1f7e856ded7170a3afa090",
-      "archive": "https://github.com/funkydan2/alpha-church/archive/a90488b5c84c8e2cfd1f7e856ded7170a3afa090.tar.gz",
-      "sha256": "48c147c2fe0111310cbb4678b988d1175b021c46cf4a76a6edb91eefbc02ccce",
-      "thumbnail": "https://raw.githubusercontent.com/funkydan2/alpha-church/a90488b5c84c8e2cfd1f7e856ded7170a3afa090/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/funkydan2/alpha-church/a90488b5c84c8e2cfd1f7e856ded7170a3afa090/images/screenshot.png"
+      "commit": "a700100ce69575bb096cbb059be94d789b8000b7",
+      "archive": "https://github.com/funkydan2/alpha-church/archive/a700100ce69575bb096cbb059be94d789b8000b7.tar.gz",
+      "sha256": "59ecbfd9d837901debb744d0552c1ecb920d1a47752da16e351fd3edfdc35ad8",
+      "thumbnail": "https://raw.githubusercontent.com/funkydan2/alpha-church/a700100ce69575bb096cbb059be94d789b8000b7/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/funkydan2/alpha-church/a700100ce69575bb096cbb059be94d789b8000b7/images/screenshot.png"
     },
     {
       "name": "ananke",
@@ -407,7 +448,8 @@
       "commit": "a6bc1e09a12ff2b3f087b4bed0bc7825b1b6e87a",
       "archive": "https://github.com/halogenica/beautifulhugo/archive/a6bc1e09a12ff2b3f087b4bed0bc7825b1b6e87a.tar.gz",
       "sha256": "d91909770bcd13ce40975cc7cc1eaa9e48a96c21face90217297f22c69bdfbfe",
-      "thumbnail": "https://raw.githubusercontent.com/halogenica/beautifulhugo/a6bc1e09a12ff2b3f087b4bed0bc7825b1b6e87a/images/tn.png"
+      "thumbnail": "https://raw.githubusercontent.com/halogenica/beautifulhugo/a6bc1e09a12ff2b3f087b4bed0bc7825b1b6e87a/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/halogenica/beautifulhugo/a6bc1e09a12ff2b3f087b4bed0bc7825b1b6e87a/images/screenshot.jpg"
     },
     {
       "name": "bilberry-hugo-theme",
@@ -512,6 +554,31 @@
       "screenshot": "https://raw.githubusercontent.com/desmondlzy/bloggraph/c18aca2c9fb90cca6adbd1840bbcc23cd261657b/images/screenshot.png"
     },
     {
+      "name": "bodhi",
+      "title": "Bodhi Theme",
+      "description": "A simple, minimal, personal website theme for Hugo.",
+      "author": "Rohan Verma",
+      "tags": [
+        "blog",
+        "minimal",
+        "simple",
+        "personal",
+        "google-analytics",
+        "minimalist",
+        "search"
+      ],
+      "license": "MIT",
+      "demo": "https://rhnvrm.github.io/bodhi/",
+      "minHugoVersion": "0.158.0",
+      "updated": "2026-11-10T06:01:50Z",
+      "module": "github.com/rhnvrm/bodhi",
+      "commit": "7af084068648af5beb03ce251a5d1d036bc0c43b",
+      "archive": "https://github.com/rhnvrm/bodhi/archive/7af084068648af5beb03ce251a5d1d036bc0c43b.tar.gz",
+      "sha256": "17adb28b422dfe8bc166865802c6a229ddbdb42315d1c359c26ebaa22b5acaea",
+      "thumbnail": "https://raw.githubusercontent.com/rhnvrm/bodhi/7af084068648af5beb03ce251a5d1d036bc0c43b/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/rhnvrm/bodhi/7af084068648af5beb03ce251a5d1d036bc0c43b/images/screenshot.png"
+    },
+    {
       "name": "book-landing-hugo-theme",
       "title": "Book Landing Hugo Theme",
       "description": "A modern, responsive Hugo theme for create a landing page for a book",
@@ -531,7 +598,8 @@
       "commit": "349c930395152d2be085522dbf229591dcb0ab0b",
       "archive": "https://github.com/dchucks/book-landing-hugo-theme/archive/349c930395152d2be085522dbf229591dcb0ab0b.tar.gz",
       "sha256": "3fad66d90c8610c4b29c549ffa26cf47523d65bf7f34d4234fa1fa2e28beebed",
-      "thumbnail": "https://raw.githubusercontent.com/dchucks/book-landing-hugo-theme/349c930395152d2be085522dbf229591dcb0ab0b/images/tn.png"
+      "thumbnail": "https://raw.githubusercontent.com/dchucks/book-landing-hugo-theme/349c930395152d2be085522dbf229591dcb0ab0b/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/dchucks/book-landing-hugo-theme/349c930395152d2be085522dbf229591dcb0ab0b/images/screenshot.jpg"
     },
     {
       "name": "bootstrap-bp-hugo-startpage",
@@ -591,6 +659,34 @@
       "sha256": "984b46109e3292e03f8e5d94400de8f7d4b3affddbcd82515a8149638be3c89b",
       "thumbnail": "https://raw.githubusercontent.com/spech66/bootstrap-bp-hugo-theme/006b067dd3fb1aa1ec2276da144e13ace1aa44ee/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/spech66/bootstrap-bp-hugo-theme/006b067dd3fb1aa1ec2276da144e13ace1aa44ee/images/screenshot.png"
+    },
+    {
+      "name": "chaos-theme",
+      "title": "Chaos",
+      "description": "A minimalist Hugo theme designed for clarity, performance, and excellent Chinese typography support.",
+      "author": "Xin Li",
+      "tags": [
+        "blog",
+        "minimal",
+        "responsive",
+        "dark-mode",
+        "chinese",
+        "cjk",
+        "typography",
+        "accessible",
+        "multilingual",
+        "mathematics"
+      ],
+      "license": "Apache-2.0",
+      "demo": "https://blog.delphij.net/",
+      "minHugoVersion": "0.158.0",
+      "updated": "2026-11-13T05:08:03Z",
+      "module": "github.com/delphij/chaos-theme",
+      "commit": "7e57ddc76e9634128ab9d5ecdce9af0819ca0d06",
+      "archive": "https://github.com/delphij/chaos-theme/archive/7e57ddc76e9634128ab9d5ecdce9af0819ca0d06.tar.gz",
+      "sha256": "8acdc2c67824950840b522fa6e7bebda7a7839bd011d0219200495c097838ca2",
+      "thumbnail": "https://raw.githubusercontent.com/delphij/chaos-theme/7e57ddc76e9634128ab9d5ecdce9af0819ca0d06/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/delphij/chaos-theme/7e57ddc76e9634128ab9d5ecdce9af0819ca0d06/images/screenshot.png"
     },
     {
       "name": "charaka-hugo-theme",
@@ -770,13 +866,13 @@
       "license": "MIT",
       "demo": "https://log.birki.io",
       "minHugoVersion": "0.119.0",
-      "updated": "2026-10-04T06:40:12Z",
+      "updated": "2026-11-12T16:17:03Z",
       "module": "github.com/GrantBirki/dario",
-      "commit": "a0ef7e62ffcf8609a216fb4a943df9b2067ab9bd",
-      "archive": "https://github.com/GrantBirki/dario/archive/a0ef7e62ffcf8609a216fb4a943df9b2067ab9bd.tar.gz",
-      "sha256": "0c470a26f3baba8eb207eb5dea07b20d7718b2713075f808ca586fd712efcb04",
-      "thumbnail": "https://raw.githubusercontent.com/GrantBirki/dario/a0ef7e62ffcf8609a216fb4a943df9b2067ab9bd/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/GrantBirki/dario/a0ef7e62ffcf8609a216fb4a943df9b2067ab9bd/images/screenshot.png"
+      "commit": "62c75de75d3f0e93b84efa831fe80f4f2d6a9648",
+      "archive": "https://github.com/GrantBirki/dario/archive/62c75de75d3f0e93b84efa831fe80f4f2d6a9648.tar.gz",
+      "sha256": "83f6108b779c8ccee92c6dcb400f577063893d679272d2d6a18709c2d87ec773",
+      "thumbnail": "https://raw.githubusercontent.com/GrantBirki/dario/62c75de75d3f0e93b84efa831fe80f4f2d6a9648/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/GrantBirki/dario/62c75de75d3f0e93b84efa831fe80f4f2d6a9648/images/screenshot.png"
     },
     {
       "name": "devise",
@@ -983,6 +1079,29 @@
       "screenshot": "https://raw.githubusercontent.com/LukasJoswiak/etch/b304186c260f574d281a495f5ceb4d8ac382cbe5/images/screenshot.png"
     },
     {
+      "name": "evershibui",
+      "title": "Evershibui",
+      "description": "A minimal, quiet Hugo blog theme combining Everforest color palettes with Shibui-inspired simplicity.",
+      "author": "9zxu",
+      "tags": [
+        "blog",
+        "minimal",
+        "personal",
+        "responsive",
+        "dark",
+        "light"
+      ],
+      "license": "MIT",
+      "demo": "https://9zxu.github.io",
+      "updated": "2026-09-05T04:29:36Z",
+      "module": "github.com/9zxu/evershibui",
+      "commit": "d64f4ba64f43ed31658bf3757fbf61603c089bca",
+      "archive": "https://github.com/9zxu/evershibui/archive/d64f4ba64f43ed31658bf3757fbf61603c089bca.tar.gz",
+      "sha256": "d990878bb015067df69576b8855d4dbf38d86ee8d6a046d27d6e64b3b134ff7f",
+      "thumbnail": "https://raw.githubusercontent.com/9zxu/evershibui/d64f4ba64f43ed31658bf3757fbf61603c089bca/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/9zxu/evershibui/d64f4ba64f43ed31658bf3757fbf61603c089bca/images/screenshot.png"
+    },
+    {
       "name": "fieldnotes",
       "title": "Fieldnotes",
       "description": "A theme for a personal site: posts and notes, trips with maps and photo galleries, maths and code, in six presets and fourteen colour schemes.",
@@ -1047,13 +1166,13 @@
       ],
       "license": "MIT",
       "minHugoVersion": "0.148",
-      "updated": "2026-10-16T19:52:45Z",
+      "updated": "2026-10-30T13:06:59Z",
       "module": "github.com/jbub/ghostwriter",
-      "commit": "13037a3d783e8ef2bae92ef8edf800c1e7abb312",
-      "archive": "https://github.com/jbub/ghostwriter/archive/13037a3d783e8ef2bae92ef8edf800c1e7abb312.tar.gz",
-      "sha256": "90044702d5008bc6a257367edc3f1a9e8cba7572906ca2189a18a7c811b94971",
-      "thumbnail": "https://raw.githubusercontent.com/jbub/ghostwriter/13037a3d783e8ef2bae92ef8edf800c1e7abb312/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/jbub/ghostwriter/13037a3d783e8ef2bae92ef8edf800c1e7abb312/images/screenshot.png"
+      "commit": "74a14a12e30aaac94a2fbf8b8f0d1d7028f9e256",
+      "archive": "https://github.com/jbub/ghostwriter/archive/74a14a12e30aaac94a2fbf8b8f0d1d7028f9e256.tar.gz",
+      "sha256": "9ea968107e1fb387e3bb73ae6d63518016af4acd01cd869a66e8cbf5e90d8b01",
+      "thumbnail": "https://raw.githubusercontent.com/jbub/ghostwriter/74a14a12e30aaac94a2fbf8b8f0d1d7028f9e256/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/jbub/ghostwriter/74a14a12e30aaac94a2fbf8b8f0d1d7028f9e256/images/screenshot.png"
     },
     {
       "name": "gokarna",
@@ -1072,13 +1191,13 @@
       "license": "GNU GPLv3",
       "demo": "https://gokarna-hugo.netlify.app",
       "minHugoVersion": "0.158.0",
-      "updated": "2026-10-05T05:35:12Z",
+      "updated": "2026-11-06T10:38:48Z",
       "module": "github.com/526avijitgupta/gokarna",
-      "commit": "da475a91c05abd24c6ec09e66e4f6769a78c40a5",
-      "archive": "https://github.com/526avijitgupta/gokarna/archive/da475a91c05abd24c6ec09e66e4f6769a78c40a5.tar.gz",
-      "sha256": "c2c06656a062879b01a3cf71f1afd177d7593970de13101bde854e694158e225",
-      "thumbnail": "https://raw.githubusercontent.com/526avijitgupta/gokarna/da475a91c05abd24c6ec09e66e4f6769a78c40a5/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/526avijitgupta/gokarna/da475a91c05abd24c6ec09e66e4f6769a78c40a5/images/screenshot.png"
+      "commit": "582aa9873ecccf21648d8eec87e14bed000589ac",
+      "archive": "https://github.com/526avijitgupta/gokarna/archive/582aa9873ecccf21648d8eec87e14bed000589ac.tar.gz",
+      "sha256": "de0a450a2f6ca306b6705d3d71d3ad1fb0358e3cd70ec4728b467e875bd8ec9b",
+      "thumbnail": "https://raw.githubusercontent.com/526avijitgupta/gokarna/582aa9873ecccf21648d8eec87e14bed000589ac/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/526avijitgupta/gokarna/582aa9873ecccf21648d8eec87e14bed000589ac/images/screenshot.png"
     },
     {
       "name": "goldmaster",
@@ -1120,6 +1239,33 @@
       "screenshot": "https://raw.githubusercontent.com/matsuyoshi30/harbor/a32ed6a39b1ba27a88f2b5650c3e4c01c50748b8/images/screenshot.png"
     },
     {
+      "name": "hermit-V2",
+      "title": "Hermit-V2",
+      "description": "Minimalist, production-ready Hugo theme with crisp typography, lightweight, mobile-ready, SEO-optimized and responsive design for modern bloggers \u0026 developers",
+      "author": "BLZR",
+      "tags": [
+        "blog",
+        "minimal",
+        "dark",
+        "responsive",
+        "landing",
+        "dark mode",
+        "gallery",
+        "multilingual",
+        "personal",
+        "portfolio"
+      ],
+      "license": "MIT",
+      "demo": "https://1bl4z3r.github.io/hermit-V2/",
+      "updated": "2026-10-15T14:24:28Z",
+      "module": "github.com/1bl4z3r/hermit-V2",
+      "commit": "6c1589c63b33177cbd82d9fffe4f5e8dc1ab7b0b",
+      "archive": "https://github.com/1bl4z3r/hermit-V2/archive/6c1589c63b33177cbd82d9fffe4f5e8dc1ab7b0b.tar.gz",
+      "sha256": "d5b4c79e0eeeb1dc4baf4609eb018ab421782f604a8b3e0143928ac90bb1c0d8",
+      "thumbnail": "https://raw.githubusercontent.com/1bl4z3r/hermit-V2/6c1589c63b33177cbd82d9fffe4f5e8dc1ab7b0b/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/1bl4z3r/hermit-V2/6c1589c63b33177cbd82d9fffe4f5e8dc1ab7b0b/images/screenshot.jpg"
+    },
+    {
       "name": "hestia-pure",
       "title": "Hestia Pure",
       "description": "A simple Hugo blog theme built with Pure.css.",
@@ -1138,6 +1284,33 @@
       "sha256": "7d2864b49fe95ca859dd7b2d836489cbf2a44b48b20d940130d6a033dc465c2b",
       "thumbnail": "https://raw.githubusercontent.com/diwao/hestia-pure/87413b1adf84dc8325ef617e32fb9ccb3b77a1c9/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/diwao/hestia-pure/87413b1adf84dc8325ef617e32fb9ccb3b77a1c9/images/screenshot.png"
+    },
+    {
+      "name": "hextra",
+      "title": "Hextra",
+      "description": "Modern, responsive, batteries-included Hugo theme for creating beautiful static websites.",
+      "author": "Xin",
+      "tags": [
+        "Modern",
+        "Elegant",
+        "Blog",
+        "Documentation",
+        "Responsive",
+        "Clean",
+        "Light",
+        "Dark",
+        "Minimal"
+      ],
+      "license": "MIT",
+      "demo": "https://imfing.github.io/hextra/",
+      "minHugoVersion": "0.146.0",
+      "updated": "2026-10-20T19:09:24Z",
+      "module": "github.com/imfing/hextra",
+      "commit": "e58687ee6c2e7ccd054c7ef31307d2147a7b8bd7",
+      "archive": "https://github.com/imfing/hextra/archive/e58687ee6c2e7ccd054c7ef31307d2147a7b8bd7.tar.gz",
+      "sha256": "b9a72e0165b185ee304cdcc6e3e7c47c79dc4ddcca336149b93fbe8d9a518c7a",
+      "thumbnail": "https://raw.githubusercontent.com/imfing/hextra/e58687ee6c2e7ccd054c7ef31307d2147a7b8bd7/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/imfing/hextra/e58687ee6c2e7ccd054c7ef31307d2147a7b8bd7/images/screenshot.jpg"
     },
     {
       "name": "heyo-hugo-theme",
@@ -1177,13 +1350,13 @@
       ],
       "license": "MIT",
       "demo": "https://hudocs.com",
-      "updated": "2026-10-01T19:11:11Z",
+      "updated": "2026-11-11T20:40:29Z",
       "module": "github.com/zkreations/hudocs",
-      "commit": "5a7859e66bb904908030d1db0b273f6fa9331a87",
-      "archive": "https://github.com/zkreations/hudocs/archive/5a7859e66bb904908030d1db0b273f6fa9331a87.tar.gz",
-      "sha256": "13b096bda98e51b9096f8534308553db7c0fdb35a908256816a46c049dbbbe84",
-      "thumbnail": "https://raw.githubusercontent.com/zkreations/hudocs/5a7859e66bb904908030d1db0b273f6fa9331a87/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/zkreations/hudocs/5a7859e66bb904908030d1db0b273f6fa9331a87/images/screenshot.png"
+      "commit": "ebad57cddb16263703d5b6cf7d4e6e8ba9a22ca7",
+      "archive": "https://github.com/zkreations/hudocs/archive/ebad57cddb16263703d5b6cf7d4e6e8ba9a22ca7.tar.gz",
+      "sha256": "7c131040c316dec77832740356537d243ba76f743bb65b6ffd72f8ccc73c73ce",
+      "thumbnail": "https://raw.githubusercontent.com/zkreations/hudocs/ebad57cddb16263703d5b6cf7d4e6e8ba9a22ca7/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/zkreations/hudocs/ebad57cddb16263703d5b6cf7d4e6e8ba9a22ca7/images/screenshot.png"
     },
     {
       "name": "hugo-JuiceBar",
@@ -1268,6 +1441,29 @@
       "sha256": "432305e9bd23d5bc103f6880457cb433fa9396a3f99bf9e73cc05268d47137b1",
       "thumbnail": "https://raw.githubusercontent.com/wonyoung-jang/hugo-PolyRhythmic/8626c997dc742a0b1ec46848125c0fff42e9658b/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/wonyoung-jang/hugo-PolyRhythmic/8626c997dc742a0b1ec46848125c0fff42e9658b/images/screenshot.png"
+    },
+    {
+      "name": "hugo-air",
+      "title": "Air",
+      "description": "Hugo Air Theme",
+      "author": "fducat18",
+      "tags": [
+        "gallery",
+        "blog",
+        "company",
+        "website",
+        "portfolio"
+      ],
+      "license": "MIT",
+      "demo": "https://fducat18.github.io/hugo-air-demo",
+      "minHugoVersion": "0.147.7",
+      "updated": "2026-11-02T20:55:51Z",
+      "module": "github.com/fducat18/hugo-air",
+      "commit": "ca8bf51b623af027d0e030c1934a823b7fa34d82",
+      "archive": "https://github.com/fducat18/hugo-air/archive/ca8bf51b623af027d0e030c1934a823b7fa34d82.tar.gz",
+      "sha256": "523f92e6897be8b96248d287c6a9a599b7173f7b105052fcbfbcbf3f38a1646a",
+      "thumbnail": "https://raw.githubusercontent.com/fducat18/hugo-air/ca8bf51b623af027d0e030c1934a823b7fa34d82/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/fducat18/hugo-air/ca8bf51b623af027d0e030c1934a823b7fa34d82/images/screenshot.jpg"
     },
     {
       "name": "hugo-arcana",
@@ -1814,13 +2010,13 @@
       "license": "MIT",
       "demo": "https://hugo-geekblog.geekdocs.de/",
       "minHugoVersion": "0.160",
-      "updated": "2026-10-26T08:24:28Z",
+      "updated": "2026-11-09T06:34:29Z",
       "module": "github.com/thegeeklab/hugo-geekblog",
-      "commit": "d86ae357f24550c22c268718d90f288a9c75042f",
-      "archive": "https://github.com/thegeeklab/hugo-geekblog/archive/d86ae357f24550c22c268718d90f288a9c75042f.tar.gz",
-      "sha256": "c1f327edfc191e41292e35bfd6422d034c77f527464f694092c7c3873efdab3f",
-      "thumbnail": "https://raw.githubusercontent.com/thegeeklab/hugo-geekblog/d86ae357f24550c22c268718d90f288a9c75042f/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/thegeeklab/hugo-geekblog/d86ae357f24550c22c268718d90f288a9c75042f/images/screenshot.png"
+      "commit": "a7375a423cc034c351ba875c460b91d82e524c75",
+      "archive": "https://github.com/thegeeklab/hugo-geekblog/archive/a7375a423cc034c351ba875c460b91d82e524c75.tar.gz",
+      "sha256": "ea7cc6766db12778cc6a8606bcdb053967599a947346e252ef6ebbcfae27e6ca",
+      "thumbnail": "https://raw.githubusercontent.com/thegeeklab/hugo-geekblog/a7375a423cc034c351ba875c460b91d82e524c75/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/thegeeklab/hugo-geekblog/a7375a423cc034c351ba875c460b91d82e524c75/images/screenshot.png"
     },
     {
       "name": "hugo-geekdoc",
@@ -1836,13 +2032,13 @@
       "license": "MIT",
       "demo": "https://geekdocs.de/",
       "minHugoVersion": "0.160",
-      "updated": "2026-10-26T08:24:07Z",
+      "updated": "2026-11-09T17:21:45Z",
       "module": "github.com/thegeeklab/hugo-geekdoc",
-      "commit": "6720863110af4a820cc834712259cc5c3db8caf1",
-      "archive": "https://github.com/thegeeklab/hugo-geekdoc/archive/6720863110af4a820cc834712259cc5c3db8caf1.tar.gz",
-      "sha256": "f4deae7383a68cd48cbe68c488e5d79969591fcc050db5f8bef4bc65ff2d1622",
-      "thumbnail": "https://raw.githubusercontent.com/thegeeklab/hugo-geekdoc/6720863110af4a820cc834712259cc5c3db8caf1/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/thegeeklab/hugo-geekdoc/6720863110af4a820cc834712259cc5c3db8caf1/images/screenshot.png"
+      "commit": "1495b0d75b3bd0a6c82c49e1c139297b910d5bdd",
+      "archive": "https://github.com/thegeeklab/hugo-geekdoc/archive/1495b0d75b3bd0a6c82c49e1c139297b910d5bdd.tar.gz",
+      "sha256": "3799fd101948b74792c5116f86e315710c101668621262518cfeaa0ac44b02e1",
+      "thumbnail": "https://raw.githubusercontent.com/thegeeklab/hugo-geekdoc/1495b0d75b3bd0a6c82c49e1c139297b910d5bdd/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/thegeeklab/hugo-geekdoc/1495b0d75b3bd0a6c82c49e1c139297b910d5bdd/images/screenshot.png"
     },
     {
       "name": "hugo-h5bp-simple",
@@ -1911,14 +2107,14 @@
         "responsive"
       ],
       "license": "MIT",
-      "minHugoVersion": "0.128.0",
-      "updated": "2025-10-25T21:12:03Z",
+      "minHugoVersion": "0.158.0",
+      "updated": "2026-11-09T00:39:05Z",
       "module": "github.com/funkydan2/hugo-kiera",
-      "commit": "3546672a40fe375134e8a4a508163619d73f0a47",
-      "archive": "https://github.com/funkydan2/hugo-kiera/archive/3546672a40fe375134e8a4a508163619d73f0a47.tar.gz",
-      "sha256": "2aff7236715cdd1fc7eb840b0b0de19ea7fd4173988dbdcfeca6b5a41ce2d0a1",
-      "thumbnail": "https://raw.githubusercontent.com/funkydan2/hugo-kiera/3546672a40fe375134e8a4a508163619d73f0a47/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/funkydan2/hugo-kiera/3546672a40fe375134e8a4a508163619d73f0a47/images/screenshot.png"
+      "commit": "09dc8443254d5fd0ea07bfb2aa0e4341c5679f2f",
+      "archive": "https://github.com/funkydan2/hugo-kiera/archive/09dc8443254d5fd0ea07bfb2aa0e4341c5679f2f.tar.gz",
+      "sha256": "01b7b1ca897026e2314a10cb348243d1beffd63d3756ce186f29a1c118a0f57c",
+      "thumbnail": "https://raw.githubusercontent.com/funkydan2/hugo-kiera/09dc8443254d5fd0ea07bfb2aa0e4341c5679f2f/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/funkydan2/hugo-kiera/09dc8443254d5fd0ea07bfb2aa0e4341c5679f2f/images/screenshot.png"
     },
     {
       "name": "hugo-liftoff",
@@ -1936,13 +2132,13 @@
       ],
       "license": "MIT",
       "demo": "https://hugo-liftoff.kevinhorst.de",
-      "updated": "2026-10-25T17:41:28Z",
+      "updated": "2026-11-09T07:45:49Z",
       "module": "codeberg.org/head1328/hugo-liftoff",
-      "commit": "2d7fb6988ee2567138de20be1c11edb004336981",
-      "archive": "https://codeberg.org/head1328/hugo-liftoff/archive/2d7fb6988ee2567138de20be1c11edb004336981.tar.gz",
-      "sha256": "697244a5ebc6368123b8215706c199c3727e2c168d2968945b3dd186549a510e",
-      "thumbnail": "https://codeberg.org/head1328/hugo-liftoff/raw/commit/2d7fb6988ee2567138de20be1c11edb004336981/images/tn.png",
-      "screenshot": "https://codeberg.org/head1328/hugo-liftoff/raw/commit/2d7fb6988ee2567138de20be1c11edb004336981/images/screenshot.png"
+      "commit": "b1569ceeda0604f86d20153f1da8235813a99cb8",
+      "archive": "https://codeberg.org/head1328/hugo-liftoff/archive/b1569ceeda0604f86d20153f1da8235813a99cb8.tar.gz",
+      "sha256": "681300d6d089c6099a887c61545f9ced4be3e445e0974cf4a386170c32072a4c",
+      "thumbnail": "https://codeberg.org/head1328/hugo-liftoff/raw/commit/b1569ceeda0604f86d20153f1da8235813a99cb8/images/tn.png",
+      "screenshot": "https://codeberg.org/head1328/hugo-liftoff/raw/commit/b1569ceeda0604f86d20153f1da8235813a99cb8/images/screenshot.png"
     },
     {
       "name": "hugo-lithium-theme",
@@ -2073,14 +2269,14 @@
         "dark"
       ],
       "license": "MIT",
-      "demo": "https://zavarov.com/",
-      "updated": "2026-10-27T09:08:34Z",
+      "demo": "https://hugo-mini-demo.vercel.app/",
+      "updated": "2026-11-12T21:22:16Z",
       "module": "github.com/zavarovkv/hugo-mini/v3",
-      "commit": "c7783b75b1c262521ab7355ba001c4b7cb10eee4",
-      "archive": "https://github.com/zavarovkv/hugo-mini/archive/c7783b75b1c262521ab7355ba001c4b7cb10eee4.tar.gz",
-      "sha256": "e91d74c1d29f10efd66f767733e024ca7044e405488eb7346d3d6cd0652d8125",
-      "thumbnail": "https://raw.githubusercontent.com/zavarovkv/hugo-mini/c7783b75b1c262521ab7355ba001c4b7cb10eee4/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/zavarovkv/hugo-mini/c7783b75b1c262521ab7355ba001c4b7cb10eee4/images/screenshot.png"
+      "commit": "a3641826d3451b23c90c9422ba3f35349d4b1d96",
+      "archive": "https://github.com/zavarovkv/hugo-mini/archive/a3641826d3451b23c90c9422ba3f35349d4b1d96.tar.gz",
+      "sha256": "93927b52bed5dceb132dad574275e4266020e2c4799cf97779efee59c7349525",
+      "thumbnail": "https://raw.githubusercontent.com/zavarovkv/hugo-mini/a3641826d3451b23c90c9422ba3f35349d4b1d96/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/zavarovkv/hugo-mini/a3641826d3451b23c90c9422ba3f35349d4b1d96/images/screenshot.png"
     },
     {
       "name": "hugo-modus",
@@ -2125,13 +2321,13 @@
       "license": "AGPL-3.0",
       "demo": "https://tom2almighty.github.io/hugo-narrow/",
       "minHugoVersion": "0.165.0",
-      "updated": "2026-10-27T07:09:57Z",
+      "updated": "2026-11-08T02:11:40Z",
       "module": "github.com/tom2almighty/hugo-narrow",
-      "commit": "ef5df5efc6edb7a8dd6de749f5f265690ec2064d",
-      "archive": "https://github.com/tom2almighty/hugo-narrow/archive/ef5df5efc6edb7a8dd6de749f5f265690ec2064d.tar.gz",
-      "sha256": "a84807ae42b103397233a8926990cd7e1f7db19783a36f21bb170fd3272b0b88",
-      "thumbnail": "https://raw.githubusercontent.com/tom2almighty/hugo-narrow/ef5df5efc6edb7a8dd6de749f5f265690ec2064d/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/tom2almighty/hugo-narrow/ef5df5efc6edb7a8dd6de749f5f265690ec2064d/images/screenshot.png"
+      "commit": "1741c1aa97306549068f6ed98c393178a4e2688a",
+      "archive": "https://github.com/tom2almighty/hugo-narrow/archive/1741c1aa97306549068f6ed98c393178a4e2688a.tar.gz",
+      "sha256": "d275c8ba1b1dcd5cb68025a77b99fa2f247d4387c273d76cda06b914f72ee974",
+      "thumbnail": "https://raw.githubusercontent.com/tom2almighty/hugo-narrow/1741c1aa97306549068f6ed98c393178a4e2688a/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/tom2almighty/hugo-narrow/1741c1aa97306549068f6ed98c393178a4e2688a/images/screenshot.png"
     },
     {
       "name": "hugo-nimbus",
@@ -2293,6 +2489,28 @@
       "screenshot": "https://raw.githubusercontent.com/nanxiaobei/hugo-paper/f7ed52a1da04aa2c536a9c075354191dc10152f8/images/screenshot.png"
     },
     {
+      "name": "hugo-pure",
+      "title": "hugo-pure",
+      "author": "Undus",
+      "tags": [
+        "Blog",
+        "Minimal",
+        "Responsive",
+        "Light",
+        "Dark",
+        "Multilingual"
+      ],
+      "license": "MIT",
+      "demo": "https://hugo-pure.undus.net",
+      "updated": "2026-11-02T01:57:46Z",
+      "module": "github.com/undus5/hugo-pure",
+      "commit": "6209a7f1656a0b55155b45bdbd91099ded3efeb0",
+      "archive": "https://github.com/undus5/hugo-pure/archive/6209a7f1656a0b55155b45bdbd91099ded3efeb0.tar.gz",
+      "sha256": "900207939b57b449df4d2c3da1edd8e590bbc57fdba0ff295df5a04c1082dfad",
+      "thumbnail": "https://raw.githubusercontent.com/undus5/hugo-pure/6209a7f1656a0b55155b45bdbd91099ded3efeb0/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/undus5/hugo-pure/6209a7f1656a0b55155b45bdbd91099ded3efeb0/images/screenshot.jpg"
+    },
+    {
       "name": "hugo-saasify-theme",
       "title": "Hugo Saasify",
       "description": "A modern Hugo theme for SaaS websites built with TailwindCSS",
@@ -2315,32 +2533,6 @@
       "sha256": "e179684a00d9947636c1b29f51307a036c7003ff259649683741fb8e66433219",
       "thumbnail": "https://raw.githubusercontent.com/chaoming/hugo-saasify-theme/f6d7dc30d1f923f508e4e4208f5abb62834c3339/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/chaoming/hugo-saasify-theme/f6d7dc30d1f923f508e4e4208f5abb62834c3339/images/screenshot.png"
-    },
-    {
-      "name": "hugo-seotax",
-      "title": "SeoTax",
-      "description": "Hugo theme for bloggers with advanced taxonomy search for better content discovery.",
-      "author": "minyeamer",
-      "tags": [
-        "blog",
-        "light",
-        "dark",
-        "dark mode",
-        "search",
-        "categories",
-        "responsive",
-        "multilingual"
-      ],
-      "license": "MIT",
-      "demo": "https://minyeamer.github.io/hugo-seotax/",
-      "minHugoVersion": "0.158.0",
-      "updated": "2026-10-11T13:23:42Z",
-      "module": "github.com/minyeamer/hugo-seotax",
-      "commit": "b614eed6f60729ae270b39015a44d64b287ee443",
-      "archive": "https://github.com/minyeamer/hugo-seotax/archive/b614eed6f60729ae270b39015a44d64b287ee443.tar.gz",
-      "sha256": "9aa22c5a5d3c3f8d23464109b177b867796649c629aea813fdd7f7f50f356d17",
-      "thumbnail": "https://raw.githubusercontent.com/minyeamer/hugo-seotax/b614eed6f60729ae270b39015a44d64b287ee443/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/minyeamer/hugo-seotax/b614eed6f60729ae270b39015a44d64b287ee443/images/screenshot.png"
     },
     {
       "name": "hugo-simple",
@@ -2627,13 +2819,13 @@
       ],
       "license": "MIT",
       "demo": "https://g1en.site",
-      "updated": "2026-10-06T11:43:38Z",
+      "updated": "2026-11-13T04:02:02Z",
       "module": "github.com/g1eny0ung/hugo-theme-dream",
-      "commit": "1bf86a1b1f7a5cf2be8538446bd6804292687686",
-      "archive": "https://github.com/g1eny0ung/hugo-theme-dream/archive/1bf86a1b1f7a5cf2be8538446bd6804292687686.tar.gz",
-      "sha256": "99ae789905ed0bdc9451e015bd17877164fccd363cf3d0a9fbf7668e4acc8c72",
-      "thumbnail": "https://raw.githubusercontent.com/g1eny0ung/hugo-theme-dream/1bf86a1b1f7a5cf2be8538446bd6804292687686/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/g1eny0ung/hugo-theme-dream/1bf86a1b1f7a5cf2be8538446bd6804292687686/images/screenshot.png"
+      "commit": "b59beba26056676efc02fdea62deafa33a421cd0",
+      "archive": "https://github.com/g1eny0ung/hugo-theme-dream/archive/b59beba26056676efc02fdea62deafa33a421cd0.tar.gz",
+      "sha256": "421e4872368bb68ce11dcfdb520d2aea9c2ef25c254700f9f481005eb7e7ef55",
+      "thumbnail": "https://raw.githubusercontent.com/g1eny0ung/hugo-theme-dream/b59beba26056676efc02fdea62deafa33a421cd0/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/g1eny0ung/hugo-theme-dream/b59beba26056676efc02fdea62deafa33a421cd0/images/screenshot.png"
     },
     {
       "name": "hugo-theme-event",
@@ -2684,6 +2876,28 @@
       "sha256": "dce82c36bbfb7fdc0f7bd2cb37621f60de9ca7b2fa45c2b290e81be509f22420",
       "thumbnail": "https://raw.githubusercontent.com/wayjam/hugo-theme-fluency/2cbfdc7b76d3cbd8591783f6d2d66a6b086317d0/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/wayjam/hugo-theme-fluency/2cbfdc7b76d3cbd8591783f6d2d66a6b086317d0/images/screenshot.png"
+    },
+    {
+      "name": "hugo-theme-gallery",
+      "title": "Gallery",
+      "description": "A very simple and opinionated photo gallery theme for Hugo",
+      "author": "Nico Kaiser",
+      "tags": [
+        "gallery",
+        "responsive",
+        "minimal",
+        "dark"
+      ],
+      "license": "MIT",
+      "demo": "https://nicokaiser.github.io/hugo-theme-gallery/",
+      "minHugoVersion": "0.123.0",
+      "updated": "2026-05-28T13:56:15Z",
+      "module": "github.com/nicokaiser/hugo-theme-gallery/v4",
+      "commit": "748df10e7c9a42db91b55c1da1f4b9e903295ae0",
+      "archive": "https://github.com/nicokaiser/hugo-theme-gallery/archive/748df10e7c9a42db91b55c1da1f4b9e903295ae0.tar.gz",
+      "sha256": "70d920dcedf2edad4022e6dec8ae52e2ccd0fbfd5b0078007a1faffc3aeabe97",
+      "thumbnail": "https://raw.githubusercontent.com/nicokaiser/hugo-theme-gallery/748df10e7c9a42db91b55c1da1f4b9e903295ae0/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/nicokaiser/hugo-theme-gallery/748df10e7c9a42db91b55c1da1f4b9e903295ae0/images/screenshot.jpg"
     },
     {
       "name": "hugo-theme-hamburg",
@@ -3079,14 +3293,14 @@
         "flexbox"
       ],
       "license": "GPLv3",
-      "minHugoVersion": "0.70.0",
-      "updated": "2026-10-26T22:00:10Z",
+      "minHugoVersion": "0.158.0",
+      "updated": "2026-11-08T14:44:32Z",
       "module": "github.com/gevhaz/hugo-theme-notrack",
-      "commit": "f3c113421cc59b1b37f43b6fdf8d9409ef0a6870",
-      "archive": "https://github.com/gevhaz/hugo-theme-notrack/archive/f3c113421cc59b1b37f43b6fdf8d9409ef0a6870.tar.gz",
-      "sha256": "c3ab88b63b0dfbbc22ea2fb32ccdfa77eff5b6a854109703cf0398d1249818b5",
-      "thumbnail": "https://raw.githubusercontent.com/gevhaz/hugo-theme-notrack/f3c113421cc59b1b37f43b6fdf8d9409ef0a6870/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/gevhaz/hugo-theme-notrack/f3c113421cc59b1b37f43b6fdf8d9409ef0a6870/images/screenshot.png"
+      "commit": "99cd63fb7fcd18402dbe618a73e38bbf7d4103d6",
+      "archive": "https://github.com/gevhaz/hugo-theme-notrack/archive/99cd63fb7fcd18402dbe618a73e38bbf7d4103d6.tar.gz",
+      "sha256": "b9d78b19526a33945d68927232ced567ea44199ec9a357b97a0335ee4c51e2d4",
+      "thumbnail": "https://raw.githubusercontent.com/gevhaz/hugo-theme-notrack/99cd63fb7fcd18402dbe618a73e38bbf7d4103d6/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/gevhaz/hugo-theme-notrack/99cd63fb7fcd18402dbe618a73e38bbf7d4103d6/images/screenshot.png"
     },
     {
       "name": "hugo-theme-pico-corp",
@@ -3164,13 +3378,13 @@
       "license": "MIT",
       "demo": "https://popular.mariatta.ca/",
       "minHugoVersion": "0.146.0",
-      "updated": "2026-10-06T03:29:57Z",
+      "updated": "2026-11-10T19:00:36Z",
       "module": "github.com/Mariatta/hugo-theme-popular",
-      "commit": "83fa03f12d36ab8ad3f06ac500167a561ead63a6",
-      "archive": "https://github.com/Mariatta/hugo-theme-popular/archive/83fa03f12d36ab8ad3f06ac500167a561ead63a6.tar.gz",
-      "sha256": "d71a8be33ba739229cd45393b30943bb8779fcc4d91535ed6237eafd561a6f5f",
-      "thumbnail": "https://raw.githubusercontent.com/Mariatta/hugo-theme-popular/83fa03f12d36ab8ad3f06ac500167a561ead63a6/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/Mariatta/hugo-theme-popular/83fa03f12d36ab8ad3f06ac500167a561ead63a6/images/screenshot.png"
+      "commit": "d97757ba5f68e79bb806082017fbf85e873580e3",
+      "archive": "https://github.com/Mariatta/hugo-theme-popular/archive/d97757ba5f68e79bb806082017fbf85e873580e3.tar.gz",
+      "sha256": "198f8e43582f47a53869b5975943f1fbd970b429d9b77e8d1057001833691bbf",
+      "thumbnail": "https://raw.githubusercontent.com/Mariatta/hugo-theme-popular/d97757ba5f68e79bb806082017fbf85e873580e3/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/Mariatta/hugo-theme-popular/d97757ba5f68e79bb806082017fbf85e873580e3/images/screenshot.png"
     },
     {
       "name": "hugo-theme-prav",
@@ -3288,13 +3502,13 @@
       ],
       "license": "MIT",
       "demo": "https://mcshelby.github.io/hugo-theme-relearn",
-      "updated": "2026-10-25T21:02:18Z",
+      "updated": "2026-11-13T11:59:26Z",
       "module": "github.com/McShelby/hugo-theme-relearn",
-      "commit": "53bcfee6cae7631003a0ba06a1c9281351269dc8",
-      "archive": "https://github.com/McShelby/hugo-theme-relearn/archive/53bcfee6cae7631003a0ba06a1c9281351269dc8.tar.gz",
-      "sha256": "9ee92895a85f393c22d211c8655fb709bc0bde62f802e4aa8a31254e55f0f5ff",
-      "thumbnail": "https://raw.githubusercontent.com/McShelby/hugo-theme-relearn/53bcfee6cae7631003a0ba06a1c9281351269dc8/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/McShelby/hugo-theme-relearn/53bcfee6cae7631003a0ba06a1c9281351269dc8/images/screenshot.png"
+      "commit": "289a03821aae0c5fc5dcd823f7bb000fd2b5d857",
+      "archive": "https://github.com/McShelby/hugo-theme-relearn/archive/289a03821aae0c5fc5dcd823f7bb000fd2b5d857.tar.gz",
+      "sha256": "4ac92e5d615a10b09185cdfd44fbcd39c24ddf55c7555bff49e97666d56443aa",
+      "thumbnail": "https://raw.githubusercontent.com/McShelby/hugo-theme-relearn/289a03821aae0c5fc5dcd823f7bb000fd2b5d857/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/McShelby/hugo-theme-relearn/289a03821aae0c5fc5dcd823f7bb000fd2b5d857/images/screenshot.png"
     },
     {
       "name": "hugo-theme-retrocss",
@@ -3370,13 +3584,13 @@
       "license": "MIT",
       "demo": "https://ouatis.com/hugo-theme-sigil/",
       "minHugoVersion": "0.166.0",
-      "updated": "2026-10-25T13:22:08Z",
+      "updated": "2026-11-09T07:19:36Z",
       "module": "github.com/ouatis/hugo-theme-sigil",
-      "commit": "ae945ffda26332f5a2f4ef96d97221e5d98c85f5",
-      "archive": "https://github.com/ouatis/hugo-theme-sigil/archive/ae945ffda26332f5a2f4ef96d97221e5d98c85f5.tar.gz",
-      "sha256": "247e6f37af1a6b0ff7f9b23bbc14622f386316b971eef65e57b4801b45c1a0bc",
-      "thumbnail": "https://raw.githubusercontent.com/ouatis/hugo-theme-sigil/ae945ffda26332f5a2f4ef96d97221e5d98c85f5/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/ouatis/hugo-theme-sigil/ae945ffda26332f5a2f4ef96d97221e5d98c85f5/images/screenshot.png"
+      "commit": "66605f2beda41273d139c8fd166556c67f81ef8e",
+      "archive": "https://github.com/ouatis/hugo-theme-sigil/archive/66605f2beda41273d139c8fd166556c67f81ef8e.tar.gz",
+      "sha256": "e465c41cd07ffe7be3ec12d49a02c023f67e7c114e1a98aa9655676e0d533cca",
+      "thumbnail": "https://raw.githubusercontent.com/ouatis/hugo-theme-sigil/66605f2beda41273d139c8fd166556c67f81ef8e/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/ouatis/hugo-theme-sigil/66605f2beda41273d139c8fd166556c67f81ef8e/images/screenshot.png"
     },
     {
       "name": "hugo-theme-simple-blog",
@@ -3479,6 +3693,36 @@
       "sha256": "e368dab4308fa7e31b00e40837e93646933899d98846171ca698b160bff52b08",
       "thumbnail": "https://raw.githubusercontent.com/J-Siu/hugo-theme-sk3/10d43d929fda199863b8d8f4faa1f9e2b585e8ff/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/J-Siu/hugo-theme-sk3/10d43d929fda199863b8d8f4faa1f9e2b585e8ff/images/screenshot.png"
+    },
+    {
+      "name": "hugo-theme-spectra",
+      "title": "Spectra",
+      "description": "A sci-fi fusion Hugo theme with smooth animations, dark/light mode, and parallax banner.",
+      "author": "JoeYang1412",
+      "tags": [
+        "blog",
+        "responsive",
+        "dark",
+        "light",
+        "search",
+        "animated",
+        "sci-fi",
+        "multilingual",
+        "katex",
+        "toc",
+        "lightbox",
+        "series"
+      ],
+      "license": "MIT",
+      "demo": "https://joeyang1412.github.io/hugo-theme-spectra/",
+      "minHugoVersion": "0.157.0",
+      "updated": "2026-09-09T06:18:55Z",
+      "module": "github.com/JoeYang1412/hugo-theme-spectra",
+      "commit": "500778fe3c18282710d97da9a124cfe2cbf8cb52",
+      "archive": "https://github.com/JoeYang1412/hugo-theme-spectra/archive/500778fe3c18282710d97da9a124cfe2cbf8cb52.tar.gz",
+      "sha256": "5a0ce77cafbfbeeedb3cdbaaea0ed114f04f82038961689d0a9909e6399bdb0f",
+      "thumbnail": "https://raw.githubusercontent.com/JoeYang1412/hugo-theme-spectra/500778fe3c18282710d97da9a124cfe2cbf8cb52/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/JoeYang1412/hugo-theme-spectra/500778fe3c18282710d97da9a124cfe2cbf8cb52/images/screenshot.jpg"
     },
     {
       "name": "hugo-theme-stack",
@@ -3706,13 +3950,13 @@
       "license": "GPLv2",
       "demo": "https://zen-demo.xdeb.org/",
       "minHugoVersion": "0.158.0",
-      "updated": "2026-10-17T15:39:54Z",
+      "updated": "2026-11-05T08:42:14Z",
       "module": "github.com/frjo/hugo-theme-zen/v5",
-      "commit": "6427494c9bff25dd6621540ecdac7d731d539116",
-      "archive": "https://github.com/frjo/hugo-theme-zen/archive/6427494c9bff25dd6621540ecdac7d731d539116.tar.gz",
-      "sha256": "339fb6f2381715be675809dc38dc6d863885ef185431363fce33a07ec974ff02",
-      "thumbnail": "https://raw.githubusercontent.com/frjo/hugo-theme-zen/6427494c9bff25dd6621540ecdac7d731d539116/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/frjo/hugo-theme-zen/6427494c9bff25dd6621540ecdac7d731d539116/images/screenshot.png"
+      "commit": "1ca6552dca8546b2b333ffd79c85917ad0840b31",
+      "archive": "https://github.com/frjo/hugo-theme-zen/archive/1ca6552dca8546b2b333ffd79c85917ad0840b31.tar.gz",
+      "sha256": "d43b28a90f854198b0c6605062617e0724b4cf1f6af06a9df3705803d49d2173",
+      "thumbnail": "https://raw.githubusercontent.com/frjo/hugo-theme-zen/1ca6552dca8546b2b333ffd79c85917ad0840b31/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/frjo/hugo-theme-zen/1ca6552dca8546b2b333ffd79c85917ad0840b31/images/screenshot.png"
     },
     {
       "name": "hugo-tikva",
@@ -3792,6 +4036,29 @@
       "screenshot": "https://raw.githubusercontent.com/binbinsh/hugo-trainsh/b2ddc5c1cb25260c65f27fc8e663745c67e82967/images/screenshot.png"
     },
     {
+      "name": "hugo-twitter-style",
+      "title": "Hugo Twitter Style",
+      "description": "X/Twitter profile timeline style theme for Hugo",
+      "author": "Kyure_A",
+      "tags": [
+        "blog",
+        "profile",
+        "twitter",
+        "x",
+        "timeline"
+      ],
+      "license": "GPL-3.0-only",
+      "demo": "https://hugo.kyre.moe/",
+      "minHugoVersion": "0.156.0",
+      "updated": "2026-06-08T07:46:50Z",
+      "module": "github.com/Kyure-A/hugo-twitter-style",
+      "commit": "4a3780366eda7c5a313080009b12259943dd0e15",
+      "archive": "https://github.com/Kyure-A/hugo-twitter-style/archive/4a3780366eda7c5a313080009b12259943dd0e15.tar.gz",
+      "sha256": "cdee51332b18b6e48f988122eb5bc07476f29fc959fae60bfcf9d75c2d2781b4",
+      "thumbnail": "https://raw.githubusercontent.com/Kyure-A/hugo-twitter-style/4a3780366eda7c5a313080009b12259943dd0e15/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/Kyure-A/hugo-twitter-style/4a3780366eda7c5a313080009b12259943dd0e15/images/screenshot.jpg"
+    },
+    {
       "name": "hugo-vitae",
       "title": "Vitae",
       "description": "Vitae is a feature-rich blog theme for Hugo that focuses on your content and supports RTL.",
@@ -3815,13 +4082,13 @@
       ],
       "license": "GPL-3.0-or-later",
       "minHugoVersion": "0.62.0",
-      "updated": "2026-10-26T09:00:41Z",
+      "updated": "2026-11-12T19:04:45Z",
       "module": "codeberg.org/farooqkz/hugo-vitae",
-      "commit": "db913483e04c217cebfcaec6836a5f13dc645e10",
-      "archive": "https://codeberg.org/farooqkz/hugo-vitae/archive/db913483e04c217cebfcaec6836a5f13dc645e10.tar.gz",
-      "sha256": "8887a8d48fc5c748634ea7b414699ebabe9b0d49b97874f68bcbe5c1aa97523c",
-      "thumbnail": "https://codeberg.org/farooqkz/hugo-vitae/raw/commit/db913483e04c217cebfcaec6836a5f13dc645e10/images/tn.png",
-      "screenshot": "https://codeberg.org/farooqkz/hugo-vitae/raw/commit/db913483e04c217cebfcaec6836a5f13dc645e10/images/screenshot.png"
+      "commit": "5b14091a0bc795ef668e87364184a9a742294826",
+      "archive": "https://codeberg.org/farooqkz/hugo-vitae/archive/5b14091a0bc795ef668e87364184a9a742294826.tar.gz",
+      "sha256": "c3dfdd5026002d6027b12dd13382300bb6996ca0188fcfddbe70af5788aceee9",
+      "thumbnail": "https://codeberg.org/farooqkz/hugo-vitae/raw/commit/5b14091a0bc795ef668e87364184a9a742294826/images/tn.png",
+      "screenshot": "https://codeberg.org/farooqkz/hugo-vitae/raw/commit/5b14091a0bc795ef668e87364184a9a742294826/images/screenshot.png"
     },
     {
       "name": "hugo-webslides",
@@ -3988,6 +4255,30 @@
       "screenshot": "https://raw.githubusercontent.com/spf13/hyde/2a3f431a852b2fddade17352c1544e12ff7d703f/images/screenshot.png"
     },
     {
+      "name": "indiepaper",
+      "title": "Indiepaper",
+      "description": "A brutalist, smolweb-compliant, accessibility-first, indieweb-native Hugo theme",
+      "author": "Brennan Brown",
+      "tags": [
+        "blog",
+        "minimal",
+        "responsive",
+        "accessible",
+        "indieweb",
+        "microformats",
+        "brutalist"
+      ],
+      "license": "AGPL-3.0",
+      "demo": "https://indiepaper.netlify.app",
+      "updated": "2026-06-25T06:50:43Z",
+      "module": "github.com/brennanbrown/indiepaper",
+      "commit": "147b5ac4b632ee8ac275f0414be3ce426fd9bf88",
+      "archive": "https://github.com/brennanbrown/indiepaper/archive/147b5ac4b632ee8ac275f0414be3ce426fd9bf88.tar.gz",
+      "sha256": "efe7b77c99569b2d80bd590a7cc93d99facf78beb2692c4ca2ba802287b37572",
+      "thumbnail": "https://raw.githubusercontent.com/brennanbrown/indiepaper/147b5ac4b632ee8ac275f0414be3ce426fd9bf88/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/brennanbrown/indiepaper/147b5ac4b632ee8ac275f0414be3ce426fd9bf88/images/screenshot.jpg"
+    },
+    {
       "name": "inkblotty",
       "title": "Inkblotty",
       "description": "Responsive Hugo theme based on Inkblot of WordPress theme",
@@ -4077,27 +4368,6 @@
       "sha256": "bdc033cf308a0a04fb537be89cfc3a5187d72059332633f44d7506e45a0c4973",
       "thumbnail": "https://raw.githubusercontent.com/jota-ele-ene/just-me/2ce1d38b8ea35591e8dc5c4837eb3efd0207c996/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/jota-ele-ene/just-me/2ce1d38b8ea35591e8dc5c4837eb3efd0207c996/images/screenshot.png"
-    },
-    {
-      "name": "kana-hugo-theme",
-      "title": "Kana Theme",
-      "description": "A warm, earthy dark theme.",
-      "author": "Chris Wiegman",
-      "tags": [
-        "blog",
-        "minimal",
-        "dark"
-      ],
-      "license": "MIT",
-      "demo": "https://chriswiegman.com",
-      "minHugoVersion": "0.152.0",
-      "updated": "2026-08-29T13:49:33Z",
-      "module": "github.com/ChrisWiegman/kana-hugo-theme",
-      "commit": "ec8a26a28df4c705795c8e9ab5f23001e205b362",
-      "archive": "https://github.com/ChrisWiegman/kana-hugo-theme/archive/ec8a26a28df4c705795c8e9ab5f23001e205b362.tar.gz",
-      "sha256": "48bbb5bcc894df91e731001a61de202c432e703a0e52e2e66ce02ebe35a86ed3",
-      "thumbnail": "https://raw.githubusercontent.com/ChrisWiegman/kana-hugo-theme/ec8a26a28df4c705795c8e9ab5f23001e205b362/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/ChrisWiegman/kana-hugo-theme/ec8a26a28df4c705795c8e9ab5f23001e205b362/images/screenshot.png"
     },
     {
       "name": "kavu",
@@ -4336,6 +4606,25 @@
       "sha256": "9a3866f05b46a49ad0e40e6e0f8cde5e01cfa2fdcb95e1d9c596dd0439a8eeae",
       "thumbnail": "https://raw.githubusercontent.com/binokochumolvarghese/lightbi-hugo/eb0642601a4b03b077e997795e2adc8301975a90/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/binokochumolvarghese/lightbi-hugo/eb0642601a4b03b077e997795e2adc8301975a90/images/screenshot.png"
+    },
+    {
+      "name": "liquorice",
+      "title": "liquorice",
+      "description": "Liquorice is a small black and white theme for Hugo.",
+      "author": "Markus Eliasson",
+      "tags": [
+        "",
+        ""
+      ],
+      "license": "MIT",
+      "minHugoVersion": "0.2",
+      "updated": "2020-06-22T11:54:11Z",
+      "module": "github.com/eliasson/liquorice",
+      "commit": "8eac8aa9859376fbfe53aa026dcf065eace44a21",
+      "archive": "https://github.com/eliasson/liquorice/archive/8eac8aa9859376fbfe53aa026dcf065eace44a21.tar.gz",
+      "sha256": "9fc27d3ec558a74811bdf7a0968335fb631c0d809bf82705793f5f82d919039d",
+      "thumbnail": "https://raw.githubusercontent.com/eliasson/liquorice/8eac8aa9859376fbfe53aa026dcf065eace44a21/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/eliasson/liquorice/8eac8aa9859376fbfe53aa026dcf065eace44a21/images/screenshot.png"
     },
     {
       "name": "localcraft",
@@ -4679,13 +4968,41 @@
       ],
       "license": "MIT",
       "demo": "https://www.nocturnalzone.com/",
-      "updated": "2026-08-31T09:44:46Z",
+      "updated": "2026-11-09T17:17:20Z",
       "module": "github.com/noxyzone/nocturnalzone-hugo-theme",
-      "commit": "19a1a92aec1ac3e824219a8f2f355bdb6624dd70",
-      "archive": "https://github.com/noxyzone/nocturnalzone-hugo-theme/archive/19a1a92aec1ac3e824219a8f2f355bdb6624dd70.tar.gz",
-      "sha256": "582e30ad568309916f9744db1f67c25f4815c6df5e1bf7209681b1ad9f184c07",
-      "thumbnail": "https://raw.githubusercontent.com/noxyzone/nocturnalzone-hugo-theme/19a1a92aec1ac3e824219a8f2f355bdb6624dd70/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/noxyzone/nocturnalzone-hugo-theme/19a1a92aec1ac3e824219a8f2f355bdb6624dd70/images/screenshot.png"
+      "commit": "3fafec91368459278cdb695ecdabb1f51059db12",
+      "archive": "https://github.com/noxyzone/nocturnalzone-hugo-theme/archive/3fafec91368459278cdb695ecdabb1f51059db12.tar.gz",
+      "sha256": "c71b5f0cf0fc740e1e0b957af61dd607af2363b7689a25594e2e609558867e68",
+      "thumbnail": "https://raw.githubusercontent.com/noxyzone/nocturnalzone-hugo-theme/3fafec91368459278cdb695ecdabb1f51059db12/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/noxyzone/nocturnalzone-hugo-theme/3fafec91368459278cdb695ecdabb1f51059db12/images/screenshot.png"
+    },
+    {
+      "name": "noesis",
+      "title": "noesis",
+      "description": "Noesis is a blog theme with a calm editorial aesthetic, balancing generous whitespace, subtle typography, and understated visual depth.",
+      "author": "Joe Hutchinson",
+      "tags": [
+        "blog",
+        "personal",
+        "responsive",
+        "minimal",
+        "simple",
+        "clean",
+        "modern",
+        "technical",
+        "syntax highlighting",
+        "google analytics",
+        "disqus",
+        "material design"
+      ],
+      "license": "MIT",
+      "updated": "2026-10-06T02:25:54Z",
+      "module": "github.com/josephhutch/noesis",
+      "commit": "0ddb430d76be948e1a365f4ba497634b916a0f30",
+      "archive": "https://github.com/josephhutch/noesis/archive/0ddb430d76be948e1a365f4ba497634b916a0f30.tar.gz",
+      "sha256": "20f3608d2ed1ae37d710784c34b67f78dc06a1cb6ed7a42015be7c1b44377f7d",
+      "thumbnail": "https://raw.githubusercontent.com/josephhutch/noesis/0ddb430d76be948e1a365f4ba497634b916a0f30/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/josephhutch/noesis/0ddb430d76be948e1a365f4ba497634b916a0f30/images/screenshot.jpg"
     },
     {
       "name": "nojs",
@@ -4781,13 +5098,13 @@
       "license": "Apache 2.0",
       "demo": "https://oink.pgsty.com/",
       "minHugoVersion": "0.168.0",
-      "updated": "2026-10-26T13:22:24Z",
+      "updated": "2026-11-06T15:12:37Z",
       "module": "github.com/pgsty/oink",
-      "commit": "ed30247e88f01ae89ef00709fe2e17e211b0a28a",
-      "archive": "https://github.com/pgsty/oink/archive/ed30247e88f01ae89ef00709fe2e17e211b0a28a.tar.gz",
-      "sha256": "c69fd5915e8e6dac217c4753637cea7cd4b3f125b1c9454c6e4dc6ca9a192b82",
-      "thumbnail": "https://raw.githubusercontent.com/pgsty/oink/ed30247e88f01ae89ef00709fe2e17e211b0a28a/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/pgsty/oink/ed30247e88f01ae89ef00709fe2e17e211b0a28a/images/screenshot.png"
+      "commit": "ef3f1192250684b2d92a22a877e220e1ff6789f2",
+      "archive": "https://github.com/pgsty/oink/archive/ef3f1192250684b2d92a22a877e220e1ff6789f2.tar.gz",
+      "sha256": "a6284c1a1daa368e357895cf234cc72660cfbb4913414845a0bc2db3abc7ce9c",
+      "thumbnail": "https://raw.githubusercontent.com/pgsty/oink/ef3f1192250684b2d92a22a877e220e1ff6789f2/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/pgsty/oink/ef3f1192250684b2d92a22a877e220e1ff6789f2/images/screenshot.png"
     },
     {
       "name": "paperesque",
@@ -4939,6 +5256,31 @@
       "screenshot": "https://raw.githubusercontent.com/22decembre/random3/aaecaa508e7558b87b3f24d216b01f688254d315/images/screenshot.png"
     },
     {
+      "name": "rewired",
+      "title": "rewired",
+      "description": "A dark, minimal, terminal-inspired Hugo theme.",
+      "author": "Rodrigo Iglesias",
+      "tags": [
+        "blog",
+        "portfolio",
+        "dark",
+        "minimal",
+        "terminal",
+        "dracula",
+        "multilingual"
+      ],
+      "license": "MIT",
+      "demo": "https://riglegit.github.io/rewired/",
+      "minHugoVersion": "0.160.0",
+      "updated": "2026-05-16T19:42:14Z",
+      "module": "github.com/riglegit/rewired",
+      "commit": "a98dddc14215829c144b3deb1062f4f695160a16",
+      "archive": "https://github.com/riglegit/rewired/archive/a98dddc14215829c144b3deb1062f4f695160a16.tar.gz",
+      "sha256": "13d9a29b7945f371c0620970f5f1facee9f0fb40edf126cb50a7751b2728de8a",
+      "thumbnail": "https://raw.githubusercontent.com/riglegit/rewired/a98dddc14215829c144b3deb1062f4f695160a16/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/riglegit/rewired/a98dddc14215829c144b3deb1062f4f695160a16/images/screenshot.jpg"
+    },
+    {
       "name": "risotto",
       "title": "risotto",
       "description": "A minimalist, responsive theme inspired by terminal ricing aesthetics.",
@@ -5033,13 +5375,13 @@
       ],
       "license": "MIT",
       "demo": "https://rusty-typewriter.netlify.app/demo",
-      "updated": "2026-10-21T14:54:23Z",
+      "updated": "2026-10-28T12:26:47Z",
       "module": "github.com/math-queiroz/rusty-typewriter",
-      "commit": "0b79b1661558f61d37ad7c3d77e03b251bbfe2b4",
-      "archive": "https://github.com/math-queiroz/rusty-typewriter/archive/0b79b1661558f61d37ad7c3d77e03b251bbfe2b4.tar.gz",
-      "sha256": "258f9a5e57c6ead1de7dc99ed1347504ac8479059e2b8b28afa2039b677376bb",
-      "thumbnail": "https://raw.githubusercontent.com/math-queiroz/rusty-typewriter/0b79b1661558f61d37ad7c3d77e03b251bbfe2b4/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/math-queiroz/rusty-typewriter/0b79b1661558f61d37ad7c3d77e03b251bbfe2b4/images/screenshot.png"
+      "commit": "3e440abdef5c2107a1e44ed4a57397a9a03ee67f",
+      "archive": "https://github.com/math-queiroz/rusty-typewriter/archive/3e440abdef5c2107a1e44ed4a57397a9a03ee67f.tar.gz",
+      "sha256": "1b548422599e59ca5a823fe7af2b866aedc74e0539e6969dd57732871024cce1",
+      "thumbnail": "https://raw.githubusercontent.com/math-queiroz/rusty-typewriter/3e440abdef5c2107a1e44ed4a57397a9a03ee67f/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/math-queiroz/rusty-typewriter/3e440abdef5c2107a1e44ed4a57397a9a03ee67f/images/screenshot.png"
     },
     {
       "name": "saral",
@@ -5066,33 +5408,6 @@
       "sha256": "520efe9f4d8f06cbe1bc88dc0540bc10f9bd2d9f00e341a93035c1fb6d064392",
       "thumbnail": "https://raw.githubusercontent.com/dipeshsingh253/saral/edfa5cdb2aa5c468b7c44cbf0291da2085cbfed8/images/tn.png",
       "screenshot": "https://raw.githubusercontent.com/dipeshsingh253/saral/edfa5cdb2aa5c468b7c44cbf0291da2085cbfed8/images/screenshot.png"
-    },
-    {
-      "name": "scanlines",
-      "title": "Scanlines",
-      "description": "A retro CRT terminal theme emulating the DEC VT220: four historically accurate phosphor schemes, pure-CSS scanlines and glow, and zero JavaScript.",
-      "author": "W. Troy House",
-      "tags": [
-        "retro",
-        "terminal",
-        "crt",
-        "monochrome",
-        "blog",
-        "minimal",
-        "dark",
-        "personal",
-        "sass"
-      ],
-      "license": "MIT",
-      "demo": "https://scanlines.pages.dev",
-      "minHugoVersion": "0.146.0",
-      "updated": "2026-08-28T22:27:29Z",
-      "module": "github.com/wthouse/scanlines",
-      "commit": "92e33e0120fe2fec2a8e2a4b51fad18e27421964",
-      "archive": "https://github.com/wthouse/scanlines/archive/92e33e0120fe2fec2a8e2a4b51fad18e27421964.tar.gz",
-      "sha256": "67d95d9ec0033fd5d8a06343c8aebd7f4526523ed8449d28296ede5c00a5ee03",
-      "thumbnail": "https://raw.githubusercontent.com/wthouse/scanlines/92e33e0120fe2fec2a8e2a4b51fad18e27421964/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/wthouse/scanlines/92e33e0120fe2fec2a8e2a4b51fad18e27421964/images/screenshot.png"
     },
     {
       "name": "scholar-lite",
@@ -5278,13 +5593,13 @@
       ],
       "license": "MIT",
       "demo": "https://michimani.github.io/simplog/",
-      "updated": "2026-10-26T16:46:07Z",
+      "updated": "2026-11-12T17:38:53Z",
       "module": "github.com/michimani/simplog",
-      "commit": "d9e64d598cc30e98831eba0a9f751f58ad8079da",
-      "archive": "https://github.com/michimani/simplog/archive/d9e64d598cc30e98831eba0a9f751f58ad8079da.tar.gz",
-      "sha256": "c1179bd603e19186be592deb2f3f186b16adc971b6e5dfc86b118bbe58a7e5bf",
-      "thumbnail": "https://raw.githubusercontent.com/michimani/simplog/d9e64d598cc30e98831eba0a9f751f58ad8079da/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/michimani/simplog/d9e64d598cc30e98831eba0a9f751f58ad8079da/images/screenshot.png"
+      "commit": "09b5593c5c34bda6b466ee02f2f2ebabe5cc2063",
+      "archive": "https://github.com/michimani/simplog/archive/09b5593c5c34bda6b466ee02f2f2ebabe5cc2063.tar.gz",
+      "sha256": "d05277b291d546fd80c70902e315521cdd25d0fc04a19fb00328a721df49fc33",
+      "thumbnail": "https://raw.githubusercontent.com/michimani/simplog/09b5593c5c34bda6b466ee02f2f2ebabe5cc2063/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/michimani/simplog/09b5593c5c34bda6b466ee02f2f2ebabe5cc2063/images/screenshot.png"
     },
     {
       "name": "slick",
@@ -5503,6 +5818,35 @@
       "screenshot": "https://raw.githubusercontent.com/psugam/sugo/526f4f8024c42f291da30bb15fd0aecb22f46cf6/images/screenshot.png"
     },
     {
+      "name": "systemone",
+      "title": "Systemone",
+      "description": "Editorial neubrutalism for Hugo: oversized tightly-tracked display type, monospace utility text, square geometry, thin ink rules and hard offset shadows on warm paper. Hand-written CSS, zero build step, zero runtime dependencies, zero webfonts.",
+      "author": "Adrián Moreno Peña",
+      "tags": [
+        "responsive",
+        "minimal",
+        "editorial",
+        "blog",
+        "typography",
+        "dark",
+        "dark-mode",
+        "light",
+        "accessible",
+        "no-javascript",
+        "print-friendly"
+      ],
+      "license": "MIT",
+      "demo": "https://systemone-demo.vercel.app",
+      "minHugoVersion": "0.146.0",
+      "updated": "2026-09-20T06:12:15Z",
+      "module": "github.com/zetxek/systemone",
+      "commit": "dfe35d35ff6de02701ee3cdee75fe9a9567be3d4",
+      "archive": "https://github.com/zetxek/systemone/archive/dfe35d35ff6de02701ee3cdee75fe9a9567be3d4.tar.gz",
+      "sha256": "748a905efc6f185c669dc135beffa54bc401fe1fb6ff75c76c0e88e0022a8acb",
+      "thumbnail": "https://raw.githubusercontent.com/zetxek/systemone/dfe35d35ff6de02701ee3cdee75fe9a9567be3d4/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/zetxek/systemone/dfe35d35ff6de02701ee3cdee75fe9a9567be3d4/images/screenshot.png"
+    },
+    {
       "name": "tale-hugo",
       "title": "Tale",
       "description": "A port of the Tale theme for Hugo. Tale is a minimal Jekyll theme curated for storytellers.",
@@ -5618,13 +5962,13 @@
       "license": "MPL-2.0",
       "demo": "https://justwheel.github.io/toph-hugo-theme/",
       "minHugoVersion": "0.166.0",
-      "updated": "2026-10-15T02:56:21Z",
+      "updated": "2026-11-12T22:49:37Z",
       "module": "github.com/justwheel/toph-hugo-theme",
-      "commit": "e23db35f8a61c90181a6561c1627f2eb8b70420a",
-      "archive": "https://github.com/justwheel/toph-hugo-theme/archive/e23db35f8a61c90181a6561c1627f2eb8b70420a.tar.gz",
-      "sha256": "15a5b30b19d98221e7c2259653aaa218e9bea41b2adf02f985b6811f41985711",
-      "thumbnail": "https://raw.githubusercontent.com/justwheel/toph-hugo-theme/e23db35f8a61c90181a6561c1627f2eb8b70420a/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/justwheel/toph-hugo-theme/e23db35f8a61c90181a6561c1627f2eb8b70420a/images/screenshot.png"
+      "commit": "e182bffd165f0fe54db92f34039d15947ce9939f",
+      "archive": "https://github.com/justwheel/toph-hugo-theme/archive/e182bffd165f0fe54db92f34039d15947ce9939f.tar.gz",
+      "sha256": "1a45e323a56b0a702670e5a4ee76077e151badd26c6f0e24ae5a101b5bb2fc1b",
+      "thumbnail": "https://raw.githubusercontent.com/justwheel/toph-hugo-theme/e182bffd165f0fe54db92f34039d15947ce9939f/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/justwheel/toph-hugo-theme/e182bffd165f0fe54db92f34039d15947ce9939f/images/screenshot.png"
     },
     {
       "name": "vellum",
@@ -5670,14 +6014,14 @@
       ],
       "license": "MIT",
       "demo": "https://vinooganesh.github.io/hugo-ink/",
-      "minHugoVersion": "0.123.0",
-      "updated": "2026-02-18T03:16:26Z",
+      "minHugoVersion": "0.158.0",
+      "updated": "2026-11-07T20:35:43Z",
       "module": "github.com/vinooganesh/hugo-ink",
-      "commit": "c8ad3d242990691158ddca7520df9f5a2273e93a",
-      "archive": "https://github.com/vinooganesh/hugo-ink/archive/c8ad3d242990691158ddca7520df9f5a2273e93a.tar.gz",
-      "sha256": "f7edd903ea8153cb5943e7bdae8ed2a084908d1471c4d8943ee44bf72e2553f8",
-      "thumbnail": "https://raw.githubusercontent.com/vinooganesh/hugo-ink/c8ad3d242990691158ddca7520df9f5a2273e93a/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/vinooganesh/hugo-ink/c8ad3d242990691158ddca7520df9f5a2273e93a/images/screenshot.png"
+      "commit": "3cbbcac2a146a2d2aeb7d6b808daad2b2d2156ca",
+      "archive": "https://github.com/vinooganesh/hugo-ink/archive/3cbbcac2a146a2d2aeb7d6b808daad2b2d2156ca.tar.gz",
+      "sha256": "621345664beeb8fd547e57d045722654be57f5c1091948bef47bffd31582c9f7",
+      "thumbnail": "https://raw.githubusercontent.com/vinooganesh/hugo-ink/3cbbcac2a146a2d2aeb7d6b808daad2b2d2156ca/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/vinooganesh/hugo-ink/3cbbcac2a146a2d2aeb7d6b808daad2b2d2156ca/images/screenshot.png"
     },
     {
       "name": "vintage-web-hugo-theme",
@@ -5735,6 +6079,30 @@
       "screenshot": "https://raw.githubusercontent.com/mohamedelhefni/vitis/031c5c0b47e7b2bf211681e0660f2efe98ce3dfe/images/screenshot.png"
     },
     {
+      "name": "vortisil",
+      "title": "Vortisil",
+      "description": "A fast, minimal and restrained Hugo theme...",
+      "author": "Hao Wu",
+      "tags": [
+        "blog",
+        "responsive",
+        "clean",
+        "light",
+        "dark",
+        "personal"
+      ],
+      "license": "GPL-3.0-or-later",
+      "demo": "https://github.com/khitezza/vortisil",
+      "minHugoVersion": "0.142.0",
+      "updated": "2025-06-27T12:26:12Z",
+      "module": "github.com/khitezza/vortisil",
+      "commit": "ff033770f428fb5efa310572ea33252aa3950afd",
+      "archive": "https://github.com/khitezza/vortisil/archive/ff033770f428fb5efa310572ea33252aa3950afd.tar.gz",
+      "sha256": "d287578c3158e49e08ce6ea0474cde298a290762086c3c38753c7371fedcc0e4",
+      "thumbnail": "https://raw.githubusercontent.com/khitezza/vortisil/ff033770f428fb5efa310572ea33252aa3950afd/images/tn.jpg",
+      "screenshot": "https://raw.githubusercontent.com/khitezza/vortisil/ff033770f428fb5efa310572ea33252aa3950afd/images/screenshot.png"
+    },
+    {
       "name": "whiteplain",
       "title": "Whiteplain",
       "description": "Simple and functional theme for Hugo",
@@ -5747,13 +6115,13 @@
       "license": "MIT",
       "demo": "https://whiteplain.pages.dev/",
       "minHugoVersion": "0.30",
-      "updated": "2024-08-31T22:55:29Z",
+      "updated": "2026-11-04T04:29:32Z",
       "module": "github.com/taikii/whiteplain",
-      "commit": "e80918a53acdd30e3e55cef6f2c7cabbaf33b71d",
-      "archive": "https://github.com/taikii/whiteplain/archive/e80918a53acdd30e3e55cef6f2c7cabbaf33b71d.tar.gz",
-      "sha256": "18552e9083b1f65171737cf4551f3944d08a3e2c50cfa0860236a33e894a0f18",
-      "thumbnail": "https://raw.githubusercontent.com/taikii/whiteplain/e80918a53acdd30e3e55cef6f2c7cabbaf33b71d/images/tn.png",
-      "screenshot": "https://raw.githubusercontent.com/taikii/whiteplain/e80918a53acdd30e3e55cef6f2c7cabbaf33b71d/images/screenshot.png"
+      "commit": "a5e277e723b61c9a186962e8cb3a6458964aaf9e",
+      "archive": "https://github.com/taikii/whiteplain/archive/a5e277e723b61c9a186962e8cb3a6458964aaf9e.tar.gz",
+      "sha256": "91b01af6e344b4f88037f95c9345ee64e8e2f2ca7cfece0aec6fa42355fe4a28",
+      "thumbnail": "https://raw.githubusercontent.com/taikii/whiteplain/a5e277e723b61c9a186962e8cb3a6458964aaf9e/images/tn.png",
+      "screenshot": "https://raw.githubusercontent.com/taikii/whiteplain/a5e277e723b61c9a186962e8cb3a6458964aaf9e/images/screenshot.png"
     },
     {
       "name": "zen",

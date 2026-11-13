@@ -1,6 +1,14 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/pelletier/go-toml/v2"
+)
 
 func TestHostURLs(t *testing.T) {
 	const commit = "abc123"
@@ -38,5 +46,47 @@ func TestHostURLs(t *testing.T) {
 
 	if _, err := archiveURL("go.example.com/theme", commit); err == nil {
 		t.Error("expected unsupported hosts to be rejected")
+	}
+}
+
+func TestAuthorName(t *testing.T) {
+	for _, test := range []struct{ toml, want string }{
+		{"[author]\nname = ' Ada '", "Ada"},
+		{"author = 'Ada'", "Ada"},
+		{"name = 'Theme'", ""},
+	} {
+		var meta themeMeta
+		if err := toml.Unmarshal([]byte(test.toml), &meta); err != nil {
+			t.Fatalf("%q: %v", test.toml, err)
+		}
+		if got := authorName(meta.Author); got != test.want {
+			t.Errorf("%q: got %q, want %q", test.toml, got, test.want)
+		}
+	}
+}
+
+func TestFindImage(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "images"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range []string{"tn.jpg", "screenshot.png", "screenshot.jpg"} {
+		if err := os.WriteFile(filepath.Join(dir, "images", file), nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for name, want := range map[string]string{"tn": "images/tn.jpg", "screenshot": "images/screenshot.png", "banner": ""} {
+		if got := findImage(dir, name); got != want {
+			t.Errorf("%s: got %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestBuildErrorKeepsTheCause(t *testing.T) {
+	err := errors.New("ERROR render of \"" + strings.Repeat("/long/path", 100) + "\" failed:\n  can't evaluate field Author")
+	got := buildError(err)
+	if !strings.HasSuffix(got, "failed: can't evaluate field Author") || len([]rune(got)) != 401 {
+		t.Errorf("got %q", got)
 	}
 }

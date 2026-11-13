@@ -367,6 +367,27 @@ func TestImportReadsLinkedStylesheets(t *testing.T) {
 	}
 }
 
+func TestImportPicksTheThemeFromTheHomePage(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "site")
+	if err := starter.CreateEmpty(root, "Bakery", "0.168.0"); err != nil {
+		t.Fatal(err)
+	}
+	s, err := site.Open(root, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := map[string]string{"https://bakery.example/": `<html><body><div class="wp-block-cover"></div></body></html>`}
+	export := &Export{Title: "Bakery", Link: "https://bakery.example/"}
+
+	rep, err := Import(context.Background(), export, Options{Site: s, DownloadImages: true, Fetch: homepageFetcher{files}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.Theme != "pageroom-studio" {
+		t.Fatalf("got theme %q, want pageroom-studio", rep.Theme)
+	}
+}
+
 func TestImportCopiesSiteFonts(t *testing.T) {
 	page, err := os.ReadFile(filepath.Join("testdata", "themes", "twentytwentyfive.html"))
 	if err != nil {

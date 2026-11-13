@@ -59,9 +59,16 @@ func (a *App) runImport(s *site.Site, e *wordpress.Export, download, pickTheme b
 			break
 		}
 	}
+	fetch := a.wordPressFetch
+	if fetch == nil {
+		fetch = wordpress.NewHTTPFetcher()
+	}
 	rep, err := wordpress.Import(ctx, e, wordpress.Options{
-		Site: s, PostsSection: section, DownloadImages: download, Fetch: wordpress.NewHTTPFetcher(),
+		Site: s, PostsSection: section, DownloadImages: download, Fetch: fetch,
 		Progress: func(done, total int, label string) {
+			if application.Get() == nil {
+				return
+			}
 			application.Get().Event.Emit("wp:progress", map[string]any{"done": done, "total": total, "label": label})
 		},
 	})

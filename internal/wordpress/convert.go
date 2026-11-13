@@ -41,6 +41,7 @@ var (
 	gistPath     = regexp.MustCompile(`^(?:[\w-]+/)?[0-9a-f]+$`)
 	alignMarker  = regexp.MustCompile(`(?s)PRALIGNSTART(center|right)\s+(.*?)\s+PRALIGNEND`)
 	buttonMarker = regexp.MustCompile(`PRBUTTON([0-9a-f]+)`)
+	columnMarker = regexp.MustCompile(`(?s)PRCOLUMNSSTART([0-9a-f]*)\s+(.*?)\s*PRCOLUMNSEND`)
 	moreTag      = regexp.MustCompile(`<!--more\b.*?-->`)
 	audioSC      = regexp.MustCompile(`\[audio(\s[^\]]*)?\](?:\s*\[/audio\])?`)
 	audioSrc     = regexp.MustCompile(`\b(?:src|mp3|m4a|ogg|wav)=["']([^"']+)["']`)
@@ -327,6 +328,18 @@ func toMarkdown(prepared, footnotes string, local map[string]string, oldBase *ur
 	md = buttonMarker.ReplaceAllStringFunc(md, func(marker string) string {
 		decoded, _ := hex.DecodeString(strings.TrimPrefix(marker, "PRBUTTON"))
 		return string(decoded)
+	})
+	md = columnMarker.ReplaceAllStringFunc(md, func(marker string) string {
+		parts := columnMarker.FindStringSubmatch(marker)
+		attributes, _ := hex.DecodeString(parts[1])
+		var columns []string
+		for _, column := range strings.Split(parts[2], "PRCOLUMNNEXT") {
+			if column = strings.TrimSpace(column); column != "" {
+				column += "\n"
+			}
+			columns = append(columns, "{{< pr-column >}}\n"+column+"{{< /pr-column >}}")
+		}
+		return "{{< pr-columns" + string(attributes) + " >}}\n" + strings.Join(columns, "\n\n") + "\n{{< /pr-columns >}}"
 	})
 	md = addFootnotes(md, footnotes)
 	// Longest URLs first so a sized variant isn't partially replaced.

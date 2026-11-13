@@ -18,14 +18,17 @@ interface Props {
 // Keys with their own controls, hidden from "Other settings".
 const handled = new Set(["title", "draft", "date", "description", "summary", "image", "imageAlt", "tags", "categories", "weight", "slug", "url", "aliases", "menus", "menu", "lastmod", "publishDate"]);
 
+// content/solution.ja.md is the language twin of content/solution.md.
+const withoutLanguage = (path: string) => path.replace(/\.[a-z]{2,3}(-[A-Za-z]+)?\.md$/, ".md");
+
 export function PageSettings({ page, fields, setField, resolveImage, pickImage, onRenamed, save }: Props) {
   const site = useStore((s) => s.site);
   const error = useStore((s) => s.error);
   const [more, setMore] = useState(false);
   const section = page.path.split("/")[1] ?? "";
   const custom = useMemo(
-    () => (site?.info.prefs.fields ?? []).filter((f) => !handled.has(f.key) && (!f.sections?.length || f.sections.includes(section))),
-    [site, section],
+    () => (site?.info.prefs.fields ?? []).filter((f) => !handled.has(f.key) && (!f.sections?.length || f.sections.includes(section)) && (!f.pages?.length || f.pages.some((p) => withoutLanguage(p) === withoutLanguage(page.path)))),
+    [site, section, page.path],
   );
   const customKeys = new Set(custom.map((f) => f.key));
   const isPost = /^(posts?|blog|news|articles)$/i.test(section);

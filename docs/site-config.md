@@ -34,6 +34,10 @@ fields:
     label: Big header image
     type: image
     sections: [posts]     # only for pages in these sections
+  - key: tagline
+    label: Tagline
+    type: text
+    pages: [content/solution.md]   # only for this page and its language twins, such as content/solution.ja.md
   - key: layout
     label: Layout
     type: select

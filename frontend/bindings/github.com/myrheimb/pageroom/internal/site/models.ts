@@ -20,6 +20,11 @@ export interface FieldDef {
      * limit to these sections
      */
     "sections"?: string[] | null;
+
+    /**
+     * limit to these pages and their language twins, such as content/solution.md
+     */
+    "pages"?: string[] | null;
 }
 
 export interface HugoPrefs {

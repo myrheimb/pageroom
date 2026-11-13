@@ -47,6 +47,7 @@ type FieldDef struct {
 	Options  []string `yaml:"options" json:"options,omitempty"`
 	Help     string   `yaml:"help" json:"help,omitempty"`
 	Sections []string `yaml:"sections" json:"sections,omitempty"` // limit to these sections
+	Pages    []string `yaml:"pages" json:"pages,omitempty"`       // limit to these pages and their language twins, such as content/solution.md
 }
 
 func loadPrefs(root string) (*Prefs, error) {

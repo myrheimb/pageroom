@@ -73,6 +73,9 @@ export const en = {
     showSidebar: "Show sidebar",
     hideSidebar: "Hide sidebar",
     toggleSidebar: "Toggle sidebar",
+    showPageList: "Show page list",
+    hidePageList: "Hide page list",
+    togglePageList: "Toggle page list",
     unpublishedChanges: (count: number) => `${plural(count, "unpublished change", "unpublished changes")}`,
     liveSite: "Live site",
     previewSite: "Preview site",
@@ -321,9 +324,6 @@ export const en = {
     imageAdded: "Image added",
     privacyStripped: "Hidden camera and location details were removed for your privacy.",
     couldntOpen: "This page couldn't be opened",
-    showPageList: "Show page list",
-    hidePageList: "Hide page list",
-    togglePageList: "Toggle page list",
     draftTip: "Visitors can't see this page. Click to make it visible after you publish.",
     visibleTip: "Visitors can see this page. Click to hide it.",
     hiddenDraft: "Hidden draft",
@@ -373,6 +373,7 @@ export const en = {
 
   pageTree: {
     openLanguage: (language: string) => `Open the ${language} version`,
+    noTranslation: (language: string) => `No ${language} version yet`,
     newPageIn: (section: string) => `New page in “${section}”`,
     newSectionIn: (section: string) => `New section in “${section}”`,
     title: "Title",

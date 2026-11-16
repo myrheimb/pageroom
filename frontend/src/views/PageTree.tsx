@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, use
 import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen, GripVertical, MoreHorizontal, Plus, Search, Trash2, Link2, FolderInput, Pencil, FilePlus2, FolderPlus, AlertTriangle } from "lucide-react";
 import { api, type TreeNode } from "../api";
 import { useStore, parentOf, findTranslation } from "../store";
-import { ask, Menu } from "../ui";
+import { ask, Menu, Tip } from "../ui";
 import { t } from "../i18n";
 
 interface Props {
@@ -75,6 +75,7 @@ export function PageTree({ tree, selected, languages, changed, onOpen, onChanged
         label={n.kind === "section" ? labelFor(n) : n.title}
         selected={selected === n.path || selected === n.indexFile || !!n.translations?.some((x) => x.path === selected)}
         multilingual={multilingual}
+        missing={n.translations?.length ? languages.filter((language) => !n.translations!.some((x) => x.language === language)) : []}
         expanded={open.has(n.path) || !!query}
         changed={changed.has(n.path) || (!!n.indexFile && changed.has(n.indexFile)) || hasChangedChild(n, changed)}
         onToggle={() => toggle(n.path)}
@@ -123,7 +124,7 @@ export function PageTree({ tree, selected, languages, changed, onOpen, onChanged
 }
 
 function Row(p: {
-  node: TreeNode; depth: number; label: string; selected: boolean; expanded: boolean; changed: boolean; isRoot?: boolean; multilingual: boolean;
+  node: TreeNode; depth: number; label: string; selected: boolean; expanded: boolean; changed: boolean; isRoot?: boolean; multilingual: boolean; missing?: string[];
   onToggle: () => void; onActivate: () => void; onOpen: (path: string) => void; menu: React.ComponentProps<typeof Menu>["items"]; dropInto: boolean;
 }) {
   const { node } = p;
@@ -154,6 +155,11 @@ function Row(p: {
         <span className="lang-tags" onClick={(e) => e.stopPropagation()}>
           {node.translations?.map((translation) => (
             <button key={translation.language} className="pill" aria-label={t.pageTree.openLanguage(translation.language)} onClick={() => p.onOpen(translation.path)}>{translation.language}</button>
+          ))}
+          {p.missing?.map((language) => (
+            <Tip key={language} label={t.pageTree.noTranslation(language)}>
+              <span className="pill missing" role="img" aria-label={t.pageTree.noTranslation(language)}>{language}</span>
+            </Tip>
           ))}
         </span>
       )}

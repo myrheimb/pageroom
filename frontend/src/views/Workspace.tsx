@@ -19,7 +19,7 @@ import { SettingsView } from "./Settings";
 const SYNC_EVERY_MS = 5 * 60 * 1000;
 
 export function Workspace() {
-  const { site, view, go, sidebarHidden, changes, publishOpen, set, refresh, refreshChanges, flushAll, toast, error, setTree } = useStore();
+  const { site, view, go, sidebarHidden, pageListHidden, changes, publishOpen, set, refresh, refreshChanges, flushAll, toast, error, setTree } = useStore();
   const [syncConflicts, setSyncConflicts] = useState<Conflict[] | null>(null);
   const [sitePreview, setSitePreview] = useState(false);
   const syncing = useStore((s) => s.syncing);
@@ -83,9 +83,16 @@ export function Workspace() {
   ];
 
 
+  const rail = view.kind === "pages";
+  const status = offline
+    ? { icon: <CloudOff size={14} />, text: t.workspace.offline }
+    : site.git.remote
+      ? { icon: syncing ? <Spinner size={13} /> : <CheckCircle2 size={13} />, text: syncing ? t.workspace.checkingForUpdates : lastSync ? t.workspace.upToDateAgo(timeAgo(lastSync)) : t.workspace.connected }
+      : { icon: <CircleDot size={13} />, text: t.workspace.onlyOnThisComputer };
+
   return (
-    <div className={"shell" + (sidebarHidden ? " no-sidebar" : "")}>
-      {!sidebarHidden && <aside className={"sidebar" + (isMac ? " mac" : "")}>
+    <div className={"shell" + (rail ? " rail" : sidebarHidden ? " no-sidebar" : "")}>
+      {(rail || !sidebarHidden) && <aside className={"sidebar" + (isMac ? " mac" : "")}>
         <Menu
           align="start"
           trigger={
@@ -108,24 +115,20 @@ export function Workspace() {
         <nav className="nav" aria-label={t.workspace.mainNavigation}>
           {nav.map((n) => (
             <button key={n.label} className={"nav-item" + (view.kind === n.v.kind ? " active" : "")} onClick={() => go(n.v)}>
-              {n.icon} {n.label} {n.count != null && <span className="count">{n.count}</span>}
+              {n.icon} <span className="nav-text">{n.label}</span> {n.count != null && <span className="count">{n.count}</span>}
             </button>
           ))}
           <div className="nav-group">
             <div className="nav-label">{t.workspace.designAndSetup}</div>
             {look.map((n) => (
               <button key={n.label} className={"nav-item" + (view.kind === n.v.kind ? " active" : "")} onClick={() => go(n.v)}>
-                {n.icon} {n.label}
+                {n.icon} <span className="nav-text">{n.label}</span>
               </button>
             ))}
           </div>
         </nav>
         <div className="sidebar-foot">
-          {offline ? <><CloudOff size={14} /> {t.workspace.offline}</> : site.git.remote ? (
-            <>{syncing ? <Spinner size={13} /> : <CheckCircle2 size={13} />} {syncing ? t.workspace.checkingForUpdates : lastSync ? t.workspace.upToDateAgo(timeAgo(lastSync)) : t.workspace.connected}</>
-          ) : (
-            <><CircleDot size={13} /> {t.workspace.onlyOnThisComputer}</>
-          )}
+          <span className="foot-status">{status.icon} <span className="nav-text">{status.text}</span></span>
           {site.git.remote && (
             <Tip label={t.workspace.getLatestTip}>
               <button className="btn dark-ghost icon sm" onClick={() => sync(false)} disabled={syncing} aria-label={t.workspace.getLatest}><RefreshCw size={14} /></button>
@@ -136,9 +139,15 @@ export function Workspace() {
 
       <div className="main">
         <header className={"topbar" + (isMac ? " mac" : "")}>
-          <Tip label={sidebarHidden ? t.workspace.showSidebar : t.workspace.hideSidebar}>
-            <button className="btn ghost icon sm" onClick={() => set({ sidebarHidden: !sidebarHidden })} aria-label={t.workspace.toggleSidebar}><PanelLeft size={16} /></button>
-          </Tip>
+          {view.kind === "pages" ? (
+            <Tip label={pageListHidden ? t.workspace.showPageList : t.workspace.hidePageList}>
+              <button className="btn ghost icon sm" onClick={() => set({ pageListHidden: !pageListHidden })} disabled={!view.path} aria-label={t.workspace.togglePageList}><PanelLeft size={16} /></button>
+            </Tip>
+          ) : (
+            <Tip label={sidebarHidden ? t.workspace.showSidebar : t.workspace.hideSidebar}>
+              <button className="btn ghost icon sm" onClick={() => set({ sidebarHidden: !sidebarHidden })} aria-label={t.workspace.toggleSidebar}><PanelLeft size={16} /></button>
+            </Tip>
+          )}
           <div className="crumbs">
             <Home size={15} />
             <ChevronRight size={13} />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, CloudOff, Eye, EyeOff, FolderTree, History, ImagePlus, Loader2, Monitor, MoreHorizontal, PanelRight, Trash2, ExternalLink, RotateCw } from "lucide-react";
+import { CheckCircle2, CloudOff, Eye, EyeOff, History, ImagePlus, Loader2, Monitor, MoreHorizontal, PanelRight, Trash2, ExternalLink, RotateCw } from "lucide-react";
 import { api, on, resolveImageRef, siteFileURL, translate, type AppError, type MediaItem, type Page, type TreeNode } from "../api";
 import { useStore, flatPages, findTranslation } from "../store";
 import { ask, Banner, Dialog, Menu, Spinner, Tip, timeAgo } from "../ui";
@@ -15,7 +15,7 @@ import { t } from "../i18n";
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 export function PageEditor({ path, onPathChange, onDeleted }: { path: string; onPathChange: (p: string) => void; onDeleted: () => void }) {
-  const { site, pageListHidden, set, refreshChanges, registerFlush, error, setTree } = useStore();
+  const { site, refreshChanges, registerFlush, error, setTree } = useStore();
   const [page, setPage] = useState<Page | null>(null);
   const [loadErr, setLoadErr] = useState<AppError | null>(null);
   const [title, setTitle] = useState("");
@@ -186,7 +186,6 @@ export function PageEditor({ path, onPathChange, onDeleted }: { path: string; on
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div className="editor-toolbar">
-        <Tip label={pageListHidden ? t.pageEditor.showPageList : t.pageEditor.hidePageList}><button className="btn ghost icon sm" onClick={() => set({ pageListHidden: !pageListHidden })} aria-label={t.pageEditor.togglePageList}><FolderTree size={16} /></button></Tip>
         <SaveIndicator state={state} savedAt={savedAt} onRetry={() => save()} />
         {languages.length > 1 && current && (
           <LanguageSwitch

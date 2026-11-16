@@ -152,12 +152,13 @@ export interface MenuEntry {
   run?: () => void;
 }
 
-export function Menu({ trigger, items, align = "end" }: { trigger: ReactNode; items: MenuEntry[]; align?: "start" | "end" }) {
+export function Menu({ trigger, items, align = "end", heading, open, onOpenChange }: { trigger: ReactNode; items: MenuEntry[]; align?: "start" | "end"; heading?: string; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root open={open} onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content className="menu-pop" align={align} sideOffset={4}>
+          {heading && <DropdownMenu.Label className="menu-heading">{heading}</DropdownMenu.Label>}
           {items.map((it, i) =>
             it.separator ? (
               <DropdownMenu.Separator key={i} className="sep" />

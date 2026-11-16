@@ -6,12 +6,16 @@ import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TableKit } from "@tiptap/extension-table";
 import { Placeholder } from "@tiptap/extensions";
 import { NodeSelection } from "@tiptap/pm/state";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { AlignCenter, AlignLeft, AlignRight, Bold, Code, GripVertical, Heading2, Heading3, Italic, Link2, Plus, Quote, Strikethrough, Unlink, Underline } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, CheckSquare, Trash2, Code, Columns2, Columns3, GripVertical, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, PanelTop, Plus, Quote, Strikethrough, Type, Unlink, Underline } from "lucide-react";
 import { htmlToMarkdown, markdownToHtml } from "./markdown";
 import { alignableBlock, BlockAlign, ButtonBlock, CardBlock, CardsBlock, ColumnBlock, ColumnsBlock, HeroBlock, ImageBlock, RawHtmlBlock, RawHtmlInline, setBlockAlign, ShortcodeBlock, ShortcodeInline, VideoBlock } from "./nodes";
 import { SlashCommand, type SlashHooks } from "./slash";
+import { deleteBlock, turnInto, turnIntoTargets, type Target } from "./blockMenu";
 import { t } from "../i18n";
+import { useStore } from "../store";
+import { Menu, type MenuEntry } from "../ui";
 
 export interface BlockEditorHandle {
   getMarkdown: () => string;
@@ -44,6 +48,8 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
   // The extensions capture hooks once. A ref keeps them fresh.
   const hooks = useRef(props);
   hooks.current = props;
+  const hovered = useRef<{ node: PMNode; pos: number } | null>(null);
+  const [blockMenu, setBlockMenu] = useState<{ pos: number; targets: Target[] } | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -126,9 +132,48 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
   }), [editor, props.markdown]);
 
   if (!editor) return null;
+
+  const targetLabels: Record<Target, { label: string; icon: React.ReactNode }> = {
+    paragraph: { label: t.slash.text, icon: <Type size={15} /> },
+    heading2: { label: t.slash.heading, icon: <Heading1 size={15} /> },
+    heading3: { label: t.slash.subheading, icon: <Heading2 size={15} /> },
+    heading4: { label: t.slash.smallHeading, icon: <Heading3 size={15} /> },
+    bulletList: { label: t.slash.bulletedList, icon: <List size={15} /> },
+    orderedList: { label: t.slash.numberedList, icon: <ListOrdered size={15} /> },
+    taskList: { label: t.slash.checklist, icon: <CheckSquare size={15} /> },
+    blockquote: { label: t.slash.quote, icon: <Quote size={15} /> },
+    codeBlock: { label: t.slash.code, icon: <Code size={15} /> },
+    prHero: { label: t.slash.hero, icon: <PanelTop size={15} /> },
+    prCards: { label: t.slash.cards, icon: <Columns3 size={15} /> },
+    prColumns: { label: t.slash.columns, icon: <Columns2 size={15} /> },
+  };
+  const openBlockMenu = () => {
+    const block = hovered.current;
+    const node = block && editor.state.doc.nodeAt(block.pos);
+    if (!block || !node || node.type !== block.node.type) return;
+    // Keeps the handle, which the menu is anchored to, from following the pointer into the menu.
+    editor.commands.setMeta("lockDragHandle", true);
+    setBlockMenu({ pos: block.pos, targets: turnIntoTargets(node, editor.state.doc.resolve(block.pos).parent) });
+  };
+  const closeBlockMenu = () => {
+    setBlockMenu(null);
+    editor.commands.setMeta("lockDragHandle", false);
+  };
+  const blockMenuItems: MenuEntry[] = blockMenu
+    ? [
+        ...blockMenu.targets.map((target) => ({ ...targetLabels[target], run: () => void runTurnInto(blockMenu.pos, target) })),
+        ...(blockMenu.targets.length ? [{ separator: true }] : []),
+        { label: t.common.delete, icon: <Trash2 size={15} />, danger: true, run: () => deleteBlock(editor, blockMenu.pos) },
+      ]
+    : [];
+  const runTurnInto = async (pos: number, target: Target) => {
+    const moved = await turnInto(editor, pos, target, hooks.current.addPageBlock);
+    if (moved) useStore.getState().toast({ kind: "info", title: t.editor.turnIntoMoved(moved) });
+  };
+
   return (
     <>
-      <DragHandle editor={editor} className="drag-handle-wrap" nested={{ defaultRules: false, rules: dragRules }}>
+      <DragHandle editor={editor} className="drag-handle-wrap" nested={{ defaultRules: false, rules: dragRules }} onNodeChange={({ node, pos }) => { hovered.current = node ? { node, pos } : null; }}>
         <div className="row" style={{ gap: 0, marginLeft: -50 }}>
           <button
             className="add-block"
@@ -142,7 +187,17 @@ export const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEd
           >
             <Plus size={16} />
           </button>
-          <div className="drag-handle" title={t.editor.dragToMove}><GripVertical size={15} /></div>
+          <div className="drag-handle" title={t.editor.dragToMove} onClick={(e) => { if (e.currentTarget.contains(e.target as globalThis.Node)) openBlockMenu(); }}>
+            <GripVertical size={15} />
+            <Menu
+              open={!!blockMenu}
+              onOpenChange={(open) => { if (!open) closeBlockMenu(); }}
+              align="start"
+              heading={blockMenu?.targets.length ? t.editor.turnInto : undefined}
+              trigger={<span className="block-menu-anchor" aria-hidden />}
+              items={blockMenuItems}
+            />
+          </div>
         </div>
       </DragHandle>
       <FormatBubble editor={editor} addAlignTemplate={() => hooks.current.addPageBlock("align")} />

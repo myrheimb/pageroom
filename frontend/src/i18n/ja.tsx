@@ -116,6 +116,9 @@ export const ja: Messages = {
     showSidebar: "サイドバーを表示",
     hideSidebar: "サイドバーを隠す",
     toggleSidebar: "サイドバーの表示切り替え",
+    showPageList: "ページ一覧を表示",
+    hidePageList: "ページ一覧を隠す",
+    togglePageList: "ページ一覧の表示切り替え",
     unpublishedChanges: (count: number) => `未公開の変更 ${count}件`,
     liveSite: "公開中のサイト",
     previewSite: "サイトをプレビュー",
@@ -364,9 +367,6 @@ export const ja: Messages = {
     imageAdded: "画像を追加しました",
     privacyStripped: "プライバシー保護のため、隠れたカメラ情報と位置情報を取り除きました。",
     couldntOpen: "このページを開けませんでした",
-    showPageList: "ページ一覧を表示",
-    hidePageList: "ページ一覧を隠す",
-    togglePageList: "ページ一覧の表示切り替え",
     draftTip: "訪問者にはこのページが見えません。クリックすると、公開後に表示されるようになります。",
     visibleTip: "訪問者にはこのページが見えます。クリックすると非表示にします。",
     hiddenDraft: "非表示（下書き）",
@@ -416,6 +416,7 @@ export const ja: Messages = {
 
   pageTree: {
     openLanguage: (language: string) => `「${language}」版を開く`,
+    noTranslation: (language: string) => `「${language}」版はまだありません`,
     newPageIn: (section: string) => `「${section}」に新しいページ`,
     newSectionIn: (section: string) => `「${section}」に新しいセクション`,
     title: "タイトル",

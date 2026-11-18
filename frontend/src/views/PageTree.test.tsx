@@ -60,6 +60,12 @@ describe("page tree languages", () => {
     expect(createPage).toHaveBeenCalledWith({ section: "content", title: "Hello", bundle: true, language: "ja" });
   });
 
+  it("marks the languages a page is missing", async () => {
+    const { host } = await mount(["en", "ja"]);
+    const missing = Array.from(host.querySelectorAll(".lang-tags .missing")).map((tag) => tag.getAttribute("aria-label"));
+    expect(missing).toEqual([t.pageTree.noTranslation("ja")]);
+  });
+
   it("shows no language controls on a single-language site", async () => {
     const { host } = await mount(["en"]);
     expect(host.querySelector(".lang-tags")).toBeNull();

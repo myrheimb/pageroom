@@ -10,7 +10,7 @@ info:
   description: "Desktop CMS for Hugo"
   copyright: "Copyright © 2026 Bjørnar Myrheim"
   comments: "Desktop CMS for Hugo"
-  version: "0.1.0"
+  version: "0.2.0"
 
 dev_mode:
   root_path: .

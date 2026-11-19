@@ -10,7 +10,7 @@
   <Identity 
     Name="io.github.myrheimb.pageroom"
     Publisher="CN=Pageroom"
-    Version="0.1.0.0" 
+    Version="0.2.0.0" 
     ProcessorArchitecture="arm64" />
   
   <Properties>

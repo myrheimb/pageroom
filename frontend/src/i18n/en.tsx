@@ -181,6 +181,9 @@ export const en = {
     openAgain: "Open GitHub again",
     waiting: "Waiting for approval…",
     youChoose: "You choose which repositories Pageroom may use. Pageroom never sees your GitHub password.",
+    selectRepositoriesBody: "You're signed in. Now select which repositories Pageroom may use. Select your site's repository on GitHub, then come back and continue.",
+    selectRepositories: "Select repositories",
+    noAccess: "Pageroom doesn't have access to this repository yet. Select it on GitHub, then try again.",
     tokenGitHub: (link: (text: string) => ReactNode, githubPages: boolean): ReactNode => (
       <>Create a {link("fine-grained token")} with access to just this site's repository and {githubPages ? <><em>Contents: Read and write</em> and <em>Workflows: Read and write</em> permissions (GitHub Pages needs both)</> : <><em>Contents: Read and write</em> permission</>}, then paste it here.</>
     ),

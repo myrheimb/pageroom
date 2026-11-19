@@ -3,7 +3,7 @@ import { ArrowRight, ArrowRightLeft, CloudDownload, FileText, FolderOpen, Globe,
 import { api, type Welcome as WelcomeData, type AppError } from "../api";
 import { useStore } from "../store";
 import { Banner, Dialog, Menu, Spinner, timeAgo } from "../ui";
-import { SignInDialog } from "../dialogs/SignIn";
+import { githubAppInstallUrl, SignInDialog, signedInWithGitHub } from "../dialogs/SignIn";
 import { WordPressImport } from "../dialogs/WordPress";
 import { t } from "../i18n";
 
@@ -117,6 +117,7 @@ function CloneDialog({ onClose, githubSignIn }: { onClose: () => void; githubSig
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<AppError | null>(null);
   const [signIn, setSignIn] = useState(false);
+  const [needsRepository, setNeedsRepository] = useState(false);
   const setSite = useStore((s) => s.setSite);
 
   const clone = async () => {
@@ -125,7 +126,9 @@ function CloneDialog({ onClose, githubSignIn }: { onClose: () => void; githubSig
     try {
       setSite(await api.cloneSite(url, ""));
     } catch (e) {
-      setErr(e as AppError);
+      const cloneError = e as AppError;
+      setNeedsRepository((cloneError.code === "no-access" || cloneError.code === "not-found") && (await signedInWithGitHub(url)));
+      setErr(cloneError);
     } finally {
       setBusy(false);
     }
@@ -151,10 +154,16 @@ function CloneDialog({ onClose, githubSignIn }: { onClose: () => void; githubSig
           <label htmlFor="clone-url">{t.welcome.repoAddress}</label>
           <input id="clone-url" className="input" autoFocus placeholder="https://github.com/your-name/your-site" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && url && clone()} />
         </div>
-        {err && (
-          <Banner kind={err.code === "auth" || err.code === "not-found" ? "warn" : "danger"} title={err.code === "auth" || err.code === "not-found" ? t.welcome.signInToContinue : t.welcome.couldntDownload}>
+        {err && needsRepository && (
+          <Banner kind="warn" title={t.welcome.couldntDownload}>
+            <div className="small">{t.signIn.noAccess}</div>
+            <button className="btn sm" style={{ marginTop: 8 }} onClick={() => api.openExternal(githubAppInstallUrl)}>{t.signIn.selectRepositories}</button>
+          </Banner>
+        )}
+        {err && !needsRepository && (
+          <Banner kind={signInProblem(err) ? "warn" : "danger"} title={signInProblem(err) ? t.welcome.signInToContinue : t.welcome.couldntDownload}>
             <div className="small">{err.message}</div>
-            {(err.code === "auth" || err.code === "not-found") && (
+            {signInProblem(err) && (
               <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setSignIn(true)}>{githubSignIn ? t.welcome.signInWithGitHub : t.common.signIn}</button>
             )}
           </Banner>
@@ -164,6 +173,10 @@ function CloneDialog({ onClose, githubSignIn }: { onClose: () => void; githubSig
       {signIn && <SignInDialog remote={url} onClose={() => setSignIn(false)} onDone={() => { setSignIn(false); clone(); }} />}
     </>
   );
+}
+
+function signInProblem(cloneError: AppError): boolean {
+  return cloneError.code === "auth" || cloneError.code === "no-access" || cloneError.code === "not-found";
 }
 
 function CreateDialog({ onClose }: { onClose: () => void }) {

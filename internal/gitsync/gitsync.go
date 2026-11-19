@@ -117,9 +117,10 @@ func friendly(err error) error {
 	}
 	s := strings.ToLower(err.Error())
 	switch {
-	case errors.Is(err, transport.ErrAuthenticationRequired), errors.Is(err, transport.ErrAuthorizationFailed),
-		strings.Contains(s, "authentication required"), strings.Contains(s, "authorization failed"):
+	case errors.Is(err, transport.ErrAuthenticationRequired), strings.Contains(s, "authentication required"):
 		return &UserError{Code: "auth", Msg: "The online repository didn't accept your sign-in. Please sign in again.", Err: err}
+	case errors.Is(err, transport.ErrAuthorizationFailed), strings.Contains(s, "authorization failed"):
+		return &UserError{Code: "no-access", Msg: "Your sign-in doesn't have access to this repository.", Err: err}
 	case errors.Is(err, transport.ErrRepositoryNotFound), strings.Contains(s, "repository not found"):
 		return &UserError{Code: "not-found", Msg: "That repository couldn't be found, or your account doesn't have access to it.", Err: err}
 	case strings.Contains(s, "no such host"), strings.Contains(s, "network is unreachable"), strings.Contains(s, "connection refused"),

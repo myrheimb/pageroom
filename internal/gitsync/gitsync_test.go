@@ -283,6 +283,9 @@ func TestFriendlyErrors(t *testing.T) {
 		{"command error on refs/heads/main: refusing to allow a GitHub App to create or update workflow `.github/workflows/pages.yml` without `workflows` permission", "workflow-permission"},
 		{"command error on refs/heads/main: protected branch hook declined", "protected"},
 		{"dial tcp: lookup github.com: no such host", "offline"},
+		{"authentication required: Invalid username or token", "auth"},
+		{"authorization failed: Write access to repository not granted", "no-access"},
+		{"repository not found", "not-found"},
 	} {
 		var userError *UserError
 		if !errors.As(friendly(errors.New(test.message)), &userError) || userError.Code != test.code {

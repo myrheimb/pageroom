@@ -62,6 +62,7 @@ export const ja: Messages = {
     "language-in-use": (details) => `「${details.language}」で書かれたページがまだあるため、この言語は削除できません（${(JSON.parse(details.titles) as string[]).map((title) => `「${title}」`).join("、")}${details.pages.endsWith("…") ? "など" : ""}）。`,
     "name-required": () => "名前を入力してください。",
     "need-identity": () => "誰が公開したかチームメイトにわかるように、お名前を教えてください。",
+    "no-access": () => "お使いのサインインには、このリポジトリへのアクセス権がありません。",
     "no-remote": () => "公開する前に、このサイトをGitHub（または他のGitホスト）に接続してください。",
     "no-repo": () => "このサイトはまだオンラインのリポジトリに接続されていません。",
     "no-site": () => "サイトが開かれていません。",
@@ -224,6 +225,9 @@ export const ja: Messages = {
     openAgain: "GitHubをもう一度開く",
     waiting: "承認を待っています…",
     youChoose: "Pageroomが使えるリポジトリはあなたが選びます。PageroomがGitHubのパスワードを見ることはありません。",
+    selectRepositoriesBody: "サインインしました。次にPageroomが使えるリポジトリを選びます。GitHubでサイトのリポジトリを選んでから、ここに戻って「続ける」を押してください。",
+    selectRepositories: "リポジトリを選ぶ",
+    noAccess: "Pageroomはまだこのリポジトリにアクセスできません。GitHubでこのリポジトリを選んでから、もう一度お試しください。",
     tokenGitHub: (link: (text: string) => ReactNode, githubPages: boolean): ReactNode => (
       <>このサイトのリポジトリだけにアクセスできる{link("fine-grained token")}を、{githubPages ? <><em>Contents: Read and write</em> と <em>Workflows: Read and write</em> の権限付きで作成し（GitHub Pagesには両方必要です）</> : <><em>Contents: Read and write</em> の権限付きで作成し</>}、ここに貼り付けてください。</>
     ),

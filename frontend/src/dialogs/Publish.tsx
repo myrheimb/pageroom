@@ -4,7 +4,7 @@ import { api, type AppError, type ChangeView, type Choice, type Conflict, type O
 import { useStore } from "../store";
 import { markdownToHtml, stripUnsafeUrls } from "../editor/markdown";
 import { ask, Banner, Dialog, Spinner } from "../ui";
-import { SignInDialog } from "./SignIn";
+import { githubAppInstallUrl, SignInDialog, signedInWithGitHub } from "./SignIn";
 import { IdentityDialog } from "./Identity";
 import { t } from "../i18n";
 
@@ -51,7 +51,9 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
     } catch (e) {
       const err = e as AppError;
       setPhase({ kind: "review" });
-      if (err.code === "auth") setNeed("signin");
+      if ((err.code === "no-access" || err.code === "not-found") && (await signedInWithGitHub(site?.git.remote ?? ""))) {
+        toast({ kind: "error", title: t.publish.didntFinish, body: t.signIn.noAccess, action: { label: t.signIn.selectRepositories, run: () => api.openExternal(githubAppInstallUrl) } });
+      } else if (err.code === "auth" || err.code === "no-access") setNeed("signin");
       else if (err.code === "need-identity") setNeed("identity");
       else if (err.code === "offline") set({ offline: true }), error(err, t.publish.offline);
       else if (err.code === "workflow-permission") toast({ kind: "error", title: t.publish.didntFinish, body: err.message, action: { label: t.publish.openTokenSettings, run: () => api.openExternal("https://github.com/settings/personal-access-tokens") } });

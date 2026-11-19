@@ -17,7 +17,7 @@
         PackageDisplayName="Pageroom"
         PublisherName="CN=Pageroom"
         PublisherDisplayName="Pageroom"
-        Version="0.2.0.0"
+        Version="0.2.1.0"
         PackageDescription="Desktop CMS for Hugo">
         <Capabilities>
             <Capability Name="runFullTrust" />

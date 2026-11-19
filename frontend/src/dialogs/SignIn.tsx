@@ -5,6 +5,13 @@ import { useStore } from "../store";
 import { Banner, Dialog, Spinner } from "../ui";
 import { t } from "../i18n";
 
+export const githubAppInstallUrl = "https://github.com/apps/pageroom/installations/new";
+
+/** A GitHub sign-in reaches only the repositories the person chose when installing Pageroom's GitHub App. */
+export async function signedInWithGitHub(remote: string): Promise<boolean> {
+  return (await api.getAuthStatus(remote).catch(() => null))?.kind === "oauth";
+}
+
 /**
  * Sign in to the site's git host. GitHub uses the device flow, so no password
  * is ever typed into Pageroom. Other hosts use an access token. Either way the
@@ -34,6 +41,7 @@ function DeviceFlow({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState<DeviceCode | null>(null);
   const [err, setErr] = useState<AppError | null>(null);
   const [copied, setCopied] = useState(false);
+  const [approved, setApproved] = useState(false);
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -42,7 +50,7 @@ function DeviceFlow({ onDone }: { onDone: () => void }) {
         if (!alive) return;
         setCode(dc);
         await api.waitGitHubSignIn();
-        if (alive) onDone();
+        if (alive) setApproved(true);
       } catch (e) {
         if (alive && (e as AppError).code !== "cancelled") setErr(e as AppError);
       }
@@ -50,6 +58,17 @@ function DeviceFlow({ onDone }: { onDone: () => void }) {
     return () => { alive = false; api.cancelSignIn(); };
   }, []);
   if (err) return <Banner kind="danger" title={t.signIn.didntWork}>{err.message}</Banner>;
+  if (approved) {
+    return (
+      <div className="stack">
+        <p className="muted" style={{ margin: 0 }}>{t.signIn.selectRepositoriesBody}</p>
+        <div className="dialog-actions">
+          <button className="btn" onClick={() => api.openExternal(githubAppInstallUrl)}><ExternalLink size={15} /> {t.signIn.selectRepositories}</button>
+          <button className="btn primary" onClick={onDone}>{t.common.continue}</button>
+        </div>
+      </div>
+    );
+  }
   if (!code) return <div className="row"><Spinner /> <span className="muted">{t.signIn.contacting}</span></div>;
   return (
     <div className="stack">

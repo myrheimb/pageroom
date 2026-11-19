@@ -546,7 +546,8 @@ func probePage(t *testing.T, page, windowSize, probe string) []byte {
 		args = append([]string{"--headless=new"}, args...)
 	}
 	out, err := exec.Command(browser, args...).CombinedOutput()
-	if err != nil {
+	// A single-process browser sometimes crashes while shutting down, after it has printed the whole page.
+	if err != nil && !strings.Contains(string(out), "</html>") {
 		t.Fatalf("browser: %v\n%s", err, out)
 	}
 	return out

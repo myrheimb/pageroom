@@ -30,6 +30,8 @@ async function openSite(remote = false): Promise<Page> {
 
 async function openPost(page: Page) {
   await page.getByRole("button", { name: "Pages & posts" }).click();
+  // The sidebar stays open over the page list while the mouse rests on it
+  await page.mouse.move(viewport.width, viewport.height);
   await page.getByRole("treeitem", { name: "Hello, world" }).click();
   await page.locator(".ProseMirror").waitFor();
 }

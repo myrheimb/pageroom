@@ -53,6 +53,15 @@ describe("markdown round trip", () => {
     expect(roundTrip(md)).toBe(md);
   });
 
+  it.each([
+    'Get it from the [Download page]({{< relref "/download" >}}).\n',
+    'Read [about us]({{< ref "about.md" >}} "About").\n',
+    '![Logo]({{< param "logo" >}})\n',
+  ])("keeps a shortcode inside a link or image: %s", (md) => {
+    expect(roundTrip(md)).toBe(md);
+    expect(htmlToMarkdown(editorFor(md).getHTML())).toBe(md);
+  });
+
   it("handles unicode in shortcodes", () => {
     const md = '{{< figure src="ø.jpg" caption="Blåbær 🫐" >}}\n';
     expect(roundTrip(md)).toBe(md);

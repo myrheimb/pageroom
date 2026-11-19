@@ -333,6 +333,10 @@ export function markdownToHtml(src: string): string {
   const extracted = extractPrBlocks(src);
   const lifted = liftShortcodes(extracted.text);
   let html = md.render(lifted.text);
+  // A chip can't sit inside an attribute, so a shortcode in a link or image URL stays as its text
+  html = html.replace(/<[^>]*PRSC(?:BLOCK|INLINE)\d+X[^>]*>/g, (tag) =>
+    tag.replace(/PRSC(BLOCK|INLINE)(\d+)X/g, (_, kind, i) => esc((kind === "BLOCK" ? lifted.blocks : lifted.inlines)[+i])),
+  );
   html = html.replace(/<p>PRBLOCK(\d+)X<\/p>\n?/g, (_, i) => extracted.blocks[+i]);
   html = html.replace(/<p>PRSCBLOCK(\d+)X<\/p>\n?/g, (_, i) => `<div data-shortcode="${b64(lifted.blocks[+i])}"></div>`);
   // a block placeholder that markdown-it merged into a paragraph
@@ -416,9 +420,20 @@ td.addRule("rawInline", {
   filter: (n) => n.nodeName === "SPAN" && (n as HTMLElement).hasAttribute("data-raw-inline"),
   replacement: (_c, n) => unb64((n as HTMLElement).getAttribute("data-raw-inline") || ""),
 });
+const hasShortcode = (url: string) => /\{\{[<%]/.test(url);
+
+// Hugo expands the shortcode before it reads the Markdown, so the URL must stay exactly as written
+td.addRule("shortcodeLink", {
+  filter: (n) => n.nodeName === "A" && hasShortcode(n.getAttribute("href") || ""),
+  replacement: (content, n) => {
+    const title = (n as HTMLElement).getAttribute("title");
+    return `[${content}](${(n as HTMLElement).getAttribute("href")}${title ? ` "${title.replace(/"/g, '\\"')}"` : ""})`;
+  },
+});
 function imageMarkdown(el: HTMLElement): string {
   const alt = (el.getAttribute("alt") || "").replace(/([\[\]])/g, "\\$1");
-  const src = (el.getAttribute("data-src") || el.getAttribute("src") || "").replace(/\s/g, "%20");
+  const rawSrc = el.getAttribute("data-src") || el.getAttribute("src") || "";
+  const src = hasShortcode(rawSrc) ? rawSrc : rawSrc.replace(/\s/g, "%20");
   const title = el.getAttribute("title");
   const t = title ? ` "${title.replace(/"/g, '\\"')}"` : "";
   return `![${alt}](${src}${t})`;

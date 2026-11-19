@@ -28,9 +28,18 @@
     npm.enable = true;
   };
 
-  # Chromium for `task screenshots`. The npm playwright-core version in frontend/package.json must match this one.
+  # Chromium for `task screenshots`. The playwright-core pin in frontend/package.json must use the same Chromium revision.
   env.PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
   env.PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
+
+  # A nixpkgs update can move Chromium away from the pin, and Playwright only notices halfway through `task screenshots`.
+  enterShell = ''
+    wanted=$(node -e 'const browsers = JSON.parse(require("fs").readFileSync("frontend/node_modules/playwright-core/browsers.json", "utf8")).browsers; console.log(browsers.find((browser) => browser.name === "chromium-headless-shell").revision)' 2>/dev/null)
+    if [ -n "$wanted" ] && [ ! -d "$PLAYWRIGHT_BROWSERS_PATH/chromium_headless_shell-$wanted" ]; then
+      shipped=$(ls "$PLAYWRIGHT_BROWSERS_PATH" | grep '^chromium_headless_shell-' | cut -d- -f2)
+      echo "Warning. playwright-core in frontend/package.json wants Chromium $wanted, but devenv has $shipped. Pin the playwright-core version that uses $shipped."
+    fi
+  '';
 
   # nixpkgs lags behind the Wails version in go.mod, and the CLI must match it.
   scripts.wails3.exec = ''go tool wails3 "$@"'';
